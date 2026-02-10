@@ -1,0 +1,26 @@
+# Use Node LTS
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first (for better cache)
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install --production
+
+# Copy source code
+COPY . .
+
+# Build nếu có (bỏ dòng này nếu không dùng TS)
+# RUN npm run build
+
+# Render uses PORT env
+ENV NODE_ENV=production
+
+# Expose port (Render sẽ inject PORT)
+EXPOSE 3000
+
+# Start server
+CMD ["npm", "start"]

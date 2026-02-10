@@ -1,0 +1,39 @@
+const express = require("express");
+const router = express.Router();
+const doctorController = require('../controllers/doctorController');
+
+// middleware giả định
+const auth = require("../middlewares/authMiddleware");
+const admin = require("../middlewares/adminMiddleware");
+
+// Admin tạo hồ sơ bác sĩ
+router.post(
+  '/',
+  auth,
+  admin,
+  doctorController.createDoctorProfile
+);
+
+// Lấy danh sách bác sĩ (public)
+router.get('/', doctorController.getAllDoctorProfiles);
+
+// Lấy chi tiết bác sĩ
+router.get('/:userId', doctorController.getDoctorProfileByUserId);
+
+// Admin cập nhật hồ sơ
+router.patch(
+  '/:id',
+  auth,
+  admin,
+  doctorController.updateDoctorProfile
+);
+
+// Admin bật / tắt bác sĩ
+router.patch(
+  '/:id/toggle-status',
+  auth,
+  admin,
+  doctorController.toggleDoctorStatus
+);
+
+module.exports = router;
