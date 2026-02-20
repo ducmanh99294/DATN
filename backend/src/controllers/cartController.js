@@ -12,9 +12,14 @@ exports.getCart = async (req, res) => {
   }
 
   const items = await CartItem.find({ cart: cart._id })
-    .populate("product");
+     .populate({
+    path: "product",
+    populate: {
+      path: "category",
+      select: "name _id"
+    }});
 
-  res.json({
+    res.json({
     cartId: cart._id,
     items
   });
@@ -24,7 +29,7 @@ exports.getCart = async (req, res) => {
  * ➕ ADD ITEM TO CART
  */
 exports.addToCart = async (req, res) => {
-  const { productId, quantity = 1, color, material, note } = req.body;
+  const { productId, quantity = 1 } = req.body;
 
   let cart = await Cart.findOne({ user: req.user.id });
 
@@ -50,9 +55,6 @@ exports.addToCart = async (req, res) => {
     cart: cart._id,
     product: productId,
     quantity,
-    // color,
-    // material,
-    // note
   });
 
   res.status(201).json(newItem);

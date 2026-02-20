@@ -1,21 +1,52 @@
 const Product = require("../models/Product");
 
-/**
- * 📦 GET ALL PRODUCTS (PUBLIC)
- */
 exports.getProducts = async (req, res) => {
-  const { category, keyword } = req.query;
+  try {
+    const { category, keyword, page = 1, limit = 10 } = req.query;
 
-  const filter = { isActive: true };
+    const filter = { isSelling: true }; 
 
-  if (category) filter.category = category;
-  if (keyword) {
-    filter.name = { $regex: keyword, $options: "i" };
+    if (category && category !== "all") {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        filter.category = category;
+      }
+    }
+    
+    if (keyword) {
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.name = { $regex: escapedKeyword, $options: "i" };
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate("category", "name _id") 
+        .select("-__v") // bỏ field không cần thiết
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(), // giảm RAM
+      Product.countDocuments(filter)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      total,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
+      products
+    });
+
+  } catch (error) {
+    console.error("Get Products Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
   }
-
-  const products = await Product.find(filter).sort({ createdAt: -1 });
-  res.json(products);
 };
+
 
 /**
  * 🔍 GET PRODUCT DETAIL

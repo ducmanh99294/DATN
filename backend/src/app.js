@@ -15,7 +15,8 @@ const timeSlotRoutes = require('./routes/timeSlotRoutes')
 const appointmentRoutes = require('./routes/appointmentRoutes')
 const doctorRoutes = require('./routes/doctorRoutes')
 const speciallyRoutes = require('./routes/speciallyRoutes')
-
+const categoryRoutes =  require("./routes/categoryRoutes");
+const chatRoutes =  require("./routes/chatRoutes");
 const app = express()
 
 app.use(express.json())
@@ -38,6 +39,8 @@ app.use("/api/timeSlot", timeSlotRoutes);
 app.use("/api/appointment", appointmentRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/specially", speciallyRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/chatbot", chatRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running')

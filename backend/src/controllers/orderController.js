@@ -3,64 +3,83 @@ const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
 const OrderItem = require("../models/OrderItem");
 
-/**
- * 🧾 CREATE ORDER FROM CART
- */
+//create
 exports.createOrder = async (req, res) => {
-  const { shippingAddress } = req.body;
+  try {
+    const { shippingAddress, note } = req.body;
 
-  const cart = await Cart.findOne({ user: req.user.id });
-  if (!cart) {
-    return res.status(400).json({ message: "Cart is empty" });
-  }
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
 
-  const cartItems = await CartItem.find({ cart: cart._id })
-    .populate("product");
+    const cartItems = await CartItem.find({ cart: cart._id })
+      .populate("product");
+    console.log("Cart items:", cartItems);
+    if (cartItems.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
 
-  if (cartItems.length === 0) {
-    return res.status(400).json({ message: "Cart is empty" });
-  }
-
-  // 1️⃣ Create order
-  const order = await Order.create({
-    user: req.user.id,
-    shippingAddress
-  });
-
-  let totalPrice = 0;
-
-  // 2️⃣ Create order items
-  for (const item of cartItems) {
-    const price = item.product.price || 0;
-    totalPrice += price * item.quantity;
-
-    await OrderItem.create({
-      order: order._id,
-      product: item.product._id,
-      quantity: item.quantity,
-      price,
-      // note: item.note
+    // Create order
+    const order = await Order.create({
+      user: req.user.id,
+      shippingAddress,
+      note
     });
-  }
 
-  // 3️⃣ Update total
-  order.totalPrice = totalPrice;
-  await order.save();
+    let totalPrice = 0;
 
-  // 4️⃣ Clear cart
-  await CartItem.deleteMany({ cart: cart._id });
+    // Create order items
+    for (const item of cartItems) {
+      const price = item.product.price || 0;
+      totalPrice += price * item.quantity;
 
-  res.status(201).json(order);
+      await OrderItem.create({
+        order: order._id,
+        product: item.product._id,
+        quantity: item.quantity,
+        price,
+      });
+    }
+
+    // Update total
+    order.totalPrice = totalPrice;
+    await order.save();
+
+    // Clear cart
+    await CartItem.deleteMany({ cart: cart._id });
+
+    res.status(201).json(order);
+  } catch (error) {
+      res.status(500).json({ message: "Lỗi server" });
+    }
 };
 
-/**
- * 📦 USER GET ORDERS
- */
+//get my orders
 exports.getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user.id })
-    .sort({ createdAt: -1 });
+  try {
+    const orders = await Order.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .lean();
 
-  res.json(orders);
+    const orderIds = orders.map(order => order._id);
+
+    const orderItems = await OrderItem.find({
+      order: { $in: orderIds }
+    }).populate("product");
+
+    const ordersWithItems = orders.map(order => ({
+      ...order,
+      items: orderItems.filter(
+        item => item.order.toString() === order._id.toString()
+      )
+    }));
+
+    res.json(ordersWithItems);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Get orders failed" });
+  }
 };
 
 /**

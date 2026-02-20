@@ -3,8 +3,7 @@ const TimeSlot = require("../models/TimeSlot");
 
 exports.createAppointment = async (req, res) => {
   try {
-    const { doctorId, specialtyId, slotId, symptoms, description, duration } = req.body;
-    const patientId = req.user.id;
+    const { doctorId, specialtyId, slotId, symptoms, description, patientId } = req.body;
 
     // 1. Kiểm tra slot
     const slot = await TimeSlot.findOne({
@@ -26,7 +25,6 @@ exports.createAppointment = async (req, res) => {
       slotId,
       symptoms, 
       description, 
-      duration,
     });
 
     // 3. Cập nhật slot
@@ -71,15 +69,15 @@ exports.cancelAppointment = async (req, res) => {
   }
 };
 
-exports.completeAppointment = async (req, res) => {
+exports.confirmedAppointment = async (req, res) => {
   try {
     const { id } = req.params;
 
     await Appointment.findByIdAndUpdate(id, {
-      status: "completed",
+      status: "confirmed",
     });
 
-    res.json({ message: "Lịch khám đã hoàn thành" });
+    res.json({ message: "Lịch khám đã được xác nhận" });
   } catch (error) {
     res.status(500).json({ message: "Cập nhật thất bại" });
   }
@@ -91,6 +89,22 @@ exports.getMyAppointments = async (req, res) => {
 
     const appointments = await Appointment.find({ patientId })
       .populate("doctorId")
+      .populate("specialtyId")
+      .populate("slotId")
+      .sort({ createdAt: -1 });
+
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: "Không lấy được lịch hẹn" });
+  }
+};
+
+exports.getAppointmentsByDoctor = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    console.log("Doctor ID:", doctorId);
+    const appointments = await Appointment.find({ doctorId })
+      .populate("patientId")
       .populate("specialtyId")
       .populate("slotId")
       .sort({ createdAt: -1 });

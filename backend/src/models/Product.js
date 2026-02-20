@@ -7,18 +7,16 @@ const productSchema = new mongoose.Schema({
   },
 
   category: {
-    type: String,
-    enum: ["chair", "table", "cabinet", "Sofa", "bed", "decor"],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
     required: true
   },
 
   description: {type: String},
 
-  detailedDescription: {type: String},
-
   price: {
     type: Number,
-    default: 0 // bán phụ → có thể = 0
+    default: 0
   },
   rating: {
     type: Number,
@@ -27,36 +25,62 @@ const productSchema = new mongoose.Schema({
     default: 0
   },
 
-  dimensions: {type: String},
+  images: [String],
 
-  materials: [String],   // gỗ sồi, MDF, kim loại...
-  colors: [String],      // trắng, nâu, đen...
+  price: {
+    type: Number,
+    required: true
+  },
 
-  images: [String],      // url ảnh
-  features: [String],
-  model3D: String,       // url .glb
-  has3d: {
-    type: Boolean,
-    default: false
+  discount: {
+    type: Number,
+    default: 0
   },
-  tags: {
-    type: [String],
-    index: true
+
+  stock: {
+    type: Number,
+    default: 0
   },
+
+  rating: {
+    type: Number,
+    default: 0,
+    max: 5,
+    min: 0
+  },
+
   reviewCount: {
     type: Number,
     default: 0
   },
+
   sellCount: {
     type: Number,
     default: 0
   },
-  isActive: {
+  //hướng dân sử dụng
+  useFors: {type: String},
+  //công dụng
+  uses: {type: String},
+  // tác dụng phụ
+  sideEffects: {type: String},
+
+  isSelling: {
     type: Boolean,
     default: true
   },
 
+  prescriptionRequired: {
+    type: Boolean,
+    default: false
+  }
+
 }, { timestamps: true });
+
+productSchema.index({ name: "text" });
+productSchema.index({ category: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ isSelling: 1 });
 
 module.exports = mongoose.model("Product", productSchema);
 

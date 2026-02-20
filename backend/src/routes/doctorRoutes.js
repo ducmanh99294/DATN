@@ -5,6 +5,7 @@ const doctorController = require('../controllers/doctorController');
 // middleware giả định
 const auth = require("../middlewares/authMiddleware");
 const admin = require("../middlewares/adminMiddleware");
+const doctor = require("../middlewares/doctorMiddleware");
 
 // Admin tạo hồ sơ bác sĩ
 router.post(
@@ -21,10 +22,10 @@ router.get('/', doctorController.getAllDoctorProfiles);
 router.get('/:userId', doctorController.getDoctorProfileByUserId);
 
 // Admin cập nhật hồ sơ
-router.patch(
+router.put(
   '/:id',
   auth,
-  admin,
+  doctor,
   doctorController.updateDoctorProfile
 );
 

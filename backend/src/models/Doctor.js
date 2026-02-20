@@ -8,9 +8,7 @@ const doctorProfileSchema = new mongoose.Schema(
       required: true,
       unique: true // 1 user chỉ có 1 hồ sơ bác sĩ
     },
-    image: {
-      type: String
-    },
+
     rating: {
       type: Number,
       max: 5,

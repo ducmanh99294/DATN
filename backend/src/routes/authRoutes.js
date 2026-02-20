@@ -10,6 +10,9 @@ router.post("/login", userCtrl.login);
 router.post("/refresh-token", userCtrl.refreshToken);
 router.post("/logout", userCtrl.logout);
 router.get("/me", auth, userCtrl.getMe);
+router.put("/avatar", auth, userCtrl.updateAvatar);
+router.put("/profile", auth, userCtrl.updateProfile);
+router.put("/change-password", auth, userCtrl.changePassword);
 //admin
 router.post("/ban", auth, admin, userCtrl.banUser);
 router.post("/unban", auth, admin, userCtrl.unbanUser);

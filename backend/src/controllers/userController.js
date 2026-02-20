@@ -113,6 +113,52 @@ exports.logout = async (req, res) => {
   res.json({ message: "Logged out" });
 };
 
+exports.updateProfile = async (req, res) => {
+  const { fullName, phone, email } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { fullName, phone, email },
+    { new: true }
+  );
+
+  res.json(user);
+};
+
+exports.updateAvatar = async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  user.avatar = req.file.path; // hoặc cloudinary url
+  await user.save();
+
+  res.json(user);
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Thiếu dữ liệu" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Sai mật khẩu cũ" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Đổi mật khẩu thành công" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
 exports.banUser = async (req, res) => {
   const { userId, reason } = req.body;
 

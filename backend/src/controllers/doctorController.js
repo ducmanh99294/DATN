@@ -1,12 +1,11 @@
 const DoctorProfile = require('../models/Doctor') 
+const Specialty = require('../models/Speciatly');
 
-/**
- * Create doctor profile
- * (Admin hoặc Doctor tự tạo lần đầu)
- */
+//Create doctor profile
+
 exports.createDoctorProfile = async (req, res) => {
   try {
-    const { userId, specialtyId, experienceYears, description, price,qualifications, rating, image } = req.body;
+    const { userId, specialtyId, experienceYears, description, price,qualifications, rating } = req.body;
 
     const existed = await DoctorProfile.findOne({ userId });
     if (existed) {
@@ -20,8 +19,7 @@ exports.createDoctorProfile = async (req, res) => {
       description, 
       price,
       qualifications, 
-      rating, 
-      image 
+      rating
     });
 
     res.status(201).json(profile);
@@ -30,13 +28,11 @@ exports.createDoctorProfile = async (req, res) => {
   }
 };
 
-/**
- * Get all doctors
- */
+//Get all doctors
 exports.getAllDoctorProfiles = async (req, res) => {
   try {
     const doctors = await DoctorProfile.find()
-      .populate('userId', 'fullName email phone')
+      .populate('userId', 'fullName email phone image')
       .populate('specialtyId', 'name');
 
     res.json(doctors);
@@ -45,9 +41,7 @@ exports.getAllDoctorProfiles = async (req, res) => {
   }
 };
 
-/**
- * Get doctor by id
- */
+//Get doctor by id
 exports.getDoctorProfileByUserId = async (req, res) => {
   try {
     const doctor = await DoctorProfile.findOne({ userId: req.params.userId })
@@ -64,30 +58,54 @@ exports.getDoctorProfileByUserId = async (req, res) => {
   }
 };
 
-/**
- * Update doctor profile
- */
+// Update doctor profile
 exports.updateDoctorProfile = async (req, res) => {
   try {
+    const {
+      specialtyId,        // thực tế là specialty name
+      experienceYears,
+      qualifications,
+      description,
+      price
+    } = req.body;
+
+    let updateData = {
+      experienceYears,
+      qualifications,
+      description,
+      price
+    };
+
+    // Nếu có gửi specialty name lên
+    if (specialtyId) {
+      const specialty = await Specialty.findOne({ name: specialtyId });
+
+      if (!specialty) {
+        return res.status(400).json({ message: "Specialty not found" });
+      }
+
+      updateData.specialtyId = specialty._id;
+    }
+
     const updated = await DoctorProfile.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
-    );
+    ).populate("specialtyId"); // nếu muốn trả luôn thông tin specialty
 
     if (!updated) {
-      return res.status(404).json({ message: 'Doctor not found' });
+      return res.status(404).json({ message: "Doctor not found" });
     }
 
     res.json(updated);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-/**
- * Toggle active status
- */
+
+//Toggle active status
 exports.toggleDoctorStatus = async (req, res) => {
   try {
     const doctor = await DoctorProfile.findById(req.params.id);

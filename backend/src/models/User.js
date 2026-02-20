@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  image: {
+    type: String,
+    default: 'https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?semt=ais_hybrid&w=740&q=80'
+  },
   password: {
     type: String,
   },
@@ -33,6 +37,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  image: String,
+  
   bannedAt: Date,
   banReason: String
 }, { timestamps: true })

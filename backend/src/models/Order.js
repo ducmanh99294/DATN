@@ -17,18 +17,14 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  note: String,
 
   shippingAddress: {
-    firstName: String,
-    lastName: String,
-    email: String,
+    fullName: String,
     phone: String,
-    city: String,
+    district: String,
+    ward: String,
     address: String,
-    state: String,
-    zipCode: String,
-    country: String,
-    note: String
   }
 
 }, { timestamps: true });

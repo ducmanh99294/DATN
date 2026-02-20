@@ -4,31 +4,27 @@ const router = express.Router();
 const {
   createAppointment,
   cancelAppointment,
-  completeAppointment,
+  confirmedAppointment,
   getMyAppointments,
+  getAppointmentsByDoctor
 } = require("../controllers/appointmentController");
 
 const auth = require("../middlewares/authMiddleware");
-const admin = require("../middlewares/adminMiddleware");
+const doctor = require("../middlewares/doctorMiddleware");
 
-/**
- * Bệnh nhân đặt lịch
- */
+// Bệnh nhân đặt lịch
 router.post("/", auth, createAppointment);
 
-/**
- * Bệnh nhân xem lịch của mình
- */
+// Bệnh nhân xem lịch của mình
 router.get("/me", auth, getMyAppointments);
 
-/**
- * Huỷ lịch
- */
+// bác sĩ xem lịch của mình
+router.get("/doctor/:doctorId", auth,doctor, getAppointmentsByDoctor);
+
+// Huỷ lịch
 router.put("/:id/cancel", auth, cancelAppointment);
 
-/**
- * Hoàn thành lịch (admin / bác sĩ)
- */
-router.put("/:id/complete", auth, completeAppointment);
+//Hoàn thành lịch (admin / bác sĩ)
+router.put("/:id/confirm", auth, confirmedAppointment);
 
 module.exports = router;

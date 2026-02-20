@@ -72,7 +72,6 @@ const TimeSlot = require("../models/TimeSlot");
  * Lấy danh sách slot theo bác sĩ + ngày
  */
   exports.getSlotsByDoctorAndDate = async (req, res) => {
-      console.log("Query params:", req.query);
 
     try {
       const { doctorId, date } = req.query;
