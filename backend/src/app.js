@@ -18,7 +18,9 @@ const speciallyRoutes = require('./routes/speciallyRoutes')
 const categoryRoutes =  require("./routes/categoryRoutes");
 const chatRoutes =  require("./routes/chatRoutes");
 const app = express()
+const passport = require("./controllers/passport");
 
+app.use(passport.initialize());
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({

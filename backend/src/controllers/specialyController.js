@@ -1,10 +1,7 @@
 const Specialty = require('../models/Speciatly');
+const Doctor = require('../models/Doctor');
 
-/**
- * @desc    Create specialty
- * @route   POST /api/specialties
- * @access  Admin
- */
+//create
 exports.createSpecialty = async (req, res) => {
   try {
     if (Array.isArray(req.body)) {
@@ -41,11 +38,7 @@ exports.createSpecialty = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get all specialties
- * @route   GET /api/specialties
- * @access  Public
- */
+//get
 exports.getAllSpecialties = async (req, res) => {
   try {
     const specialties = await Specialty.find().sort({ name: 1 });
@@ -55,11 +48,7 @@ exports.getAllSpecialties = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get specialty by id
- * @route   GET /api/specialties/:id
- * @access  Public
- */
+//getById
 exports.getSpecialtyById = async (req, res) => {
   try {
     const specialty = await Specialty.findById(req.params.id);
@@ -74,11 +63,27 @@ exports.getSpecialtyById = async (req, res) => {
   }
 };
 
-/**
- * @desc    Update specialty
- * @route   PATCH /api/specialties/:id
- * @access  Admin
- */
+//getBySlud
+exports.getSpecialtyBySlug = async (req, res) => {
+  const { slug } = req.params;
+
+  const specialty = await Specialty.findOne({ slug });
+
+  if (!specialty) {
+    return res.status(404).json({ message: "Not found" });
+  }
+
+  const doctors = await Doctor.find({
+    specialtyId: specialty._id
+  }).populate("userId");
+
+  res.json({
+    specialty,
+    doctors
+  });
+};
+
+//update
 exports.updateSpecialty = async (req, res) => {
   try {
     const updated = await Specialty.findByIdAndUpdate(
@@ -97,11 +102,7 @@ exports.updateSpecialty = async (req, res) => {
   }
 };
 
-/**
- * @desc    Delete specialty
- * @route   DELETE /api/specialties/:id
- * @access  Admin
- */
+//delete
 exports.deleteSpecialty = async (req, res) => {
   try {
     const deleted = await Specialty.findByIdAndDelete(req.params.id);

@@ -21,6 +21,9 @@ router.get('/', doctorController.getAllDoctorProfiles);
 // Lấy chi tiết bác sĩ
 router.get('/:userId', doctorController.getDoctorProfileByUserId);
 
+// Lấy bác sĩ theo chuyên khoa
+router.get('/specialty/:specialtyId', doctorController.getDoctorsBySpecialty);
+
 // Admin cập nhật hồ sơ
 router.put(
   '/:id',

@@ -8,9 +8,16 @@ const specialtySchema = new mongoose.Schema(
       unique: true,
       trim: true
     },
+    slug: {
+      type: String,
+      required: true,
+    },
     description: {
       type: String,
       trim: true
+    },
+    image: {
+      type: String,
     }
   },
   {

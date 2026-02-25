@@ -20,7 +20,6 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
-        // 🟢 TRIỆU CHỨNG (AI sẽ dùng)
     symptoms: [{
       type: String,
       required: true,
@@ -49,7 +48,10 @@ const appointmentSchema = new mongoose.Schema(
       enum: ["pending","confirmed", "cancelled", "completed"],
       default: "pending",
     },
-
+    price: {
+      type: Number,
+      default: 0
+    },
     reason: {
       type: String,
       trim: true,

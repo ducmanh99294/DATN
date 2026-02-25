@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
     unique: true,
   },
   image: {
@@ -24,7 +23,10 @@ const userSchema = new mongoose.Schema({
   andress:{
     type: String,
   },
-  gender:String,
+  gender:{
+    type: String,
+    default: "male"
+  },
   role: {
     type: String,
     enum: ["patient", "doctor", 'admin'],

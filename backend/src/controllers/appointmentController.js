@@ -1,5 +1,6 @@
 const Appointment = require("../models/Appointment");
 const TimeSlot = require("../models/TimeSlot");
+const Doctor = require("../models/Doctor");
 
 exports.createAppointment = async (req, res) => {
   try {
@@ -25,6 +26,7 @@ exports.createAppointment = async (req, res) => {
       slotId,
       symptoms, 
       description, 
+      price: doctorId.price, 
     });
 
     // 3. Cập nhật slot
@@ -88,9 +90,16 @@ exports.getMyAppointments = async (req, res) => {
     const patientId = req.user.id;
 
     const appointments = await Appointment.find({ patientId })
-      .populate("doctorId")
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "image fullName email"
+        }
+      })
       .populate("specialtyId")
       .populate("slotId")
+      .populate("patientId")
       .sort({ createdAt: -1 });
 
     res.json(appointments);
@@ -101,8 +110,17 @@ exports.getMyAppointments = async (req, res) => {
 
 exports.getAppointmentsByDoctor = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
-    console.log("Doctor ID:", doctorId);
+    const userId = req.user.id; // lấy từ JWT
+
+    // tìm doctor theo userId
+    const doctor = await Doctor.findOne({ userId });
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Không tìm thấy bác sĩ" });
+    }
+
+    doctorId = doctor._id;
+
     const appointments = await Appointment.find({ doctorId })
       .populate("patientId")
       .populate("specialtyId")

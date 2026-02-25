@@ -19,7 +19,7 @@ router.post("/", auth, createAppointment);
 router.get("/me", auth, getMyAppointments);
 
 // bác sĩ xem lịch của mình
-router.get("/doctor/:doctorId", auth,doctor, getAppointmentsByDoctor);
+router.get("/doctor", auth,doctor, getAppointmentsByDoctor);
 
 // Huỷ lịch
 router.put("/:id/cancel", auth, cancelAppointment);
