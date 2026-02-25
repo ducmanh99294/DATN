@@ -1,0 +1,1729 @@
+BookingFlow.css - Multi-step Booking Flow
+
+/* Biến màu sắc */
+:root {
+  --primary: #0E7490 !important;
+  --primary-light: #06B6D4 !important;
+  --primary-dark: #0c5a7a !important;
+  
+  --accent: #F97316 !important;
+  --accent-light: #fb923c !important;
+  --accent-dark: #ea580c !important;
+  
+  --bg-main: #f8fafc !important;
+  --bg-card: #ffffff !important;
+  --bg-sidebar: #f1f5f9 !important;
+  
+  --text-primary: #1e293b !important;
+  --text-secondary: #475569 !important;
+  --text-muted: #64748b !important;
+  --text-light: #94a3b8 !important;
+  
+  --border-color: #e2e8f0 !important;
+  --border-hover: #cbd5e1 !important;
+  
+  --success: #10b981 !important;
+  --warning: #f59e0b !important;
+  --error: #ef4444 !important;
+  --info: #3b82f6 !important;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07) !important;
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1) !important;
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15) !important;
+  
+  --radius-sm: 8px !important;
+  --radius-md: 12px !important;
+  --radius-lg: 16px !important;
+  --radius-xl: 24px !important;
+  
+  --transition: all 0.3s ease !important;
+}
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg-main);
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.booking-flow-container .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Booking Header */
+.booking-flow-container .booking-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 30px 0;
+  margin-bottom: 40px;
+}
+
+.booking-flow-container .header-content {
+  text-align: center;
+  position: relative;
+}
+
+.booking-flow-container .back-home-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.95rem;
+}
+
+.booking-flow-container .back-home-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.booking-flow-container .header-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.booking-flow-container .header-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Main Layout */
+.booking-flow-container .booking-flow-container .main-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+/* Progress Bar */
+.booking-flow-container .progress-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  grid-column: 1 / -1;
+}
+
+.booking-flow-container .progress-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.booking-flow-container .step-indicator {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  transition: var(--transition);
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.booking-flow-container .step-indicator.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+}
+
+.booking-flow-container .step-info {
+  margin-left: 15px;
+}
+
+.booking-flow-container .step-number {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.booking-flow-container .step-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.booking-flow-container .step-indicator.active ~ .step-info .step-number,
+.booking-flow-container .step-indicator.active ~ .step-info .step-title {
+  color: var(--primary);
+}
+
+/* Main Content */
+.booking-flow-container .booking-content {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+/* Step Content Common */
+.booking-flow-container .step-content {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.booking-flow-container .step-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.booking-flow-container .detail-item strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.booking-flow-container .step-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.5rem;
+  color: #ced3db;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .step-header h3 i {
+  color: var(--primary);
+  font-size: 1.3rem;
+}
+
+.booking-flow-container .step-header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Step 1: Symptoms */
+.booking-flow-container .symptom-input-section {
+  margin-top: 30px;
+}
+
+.booking-flow-container .input-group {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.booking-flow-container .input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.booking-flow-container .input-wrapper i {
+  position: absolute;
+  left: 16px;
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.booking-flow-container .input-wrapper input {
+  width: 100%;
+  padding: 16px 16px 16px 45px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: #1e293b;
+  background: white;
+  transition: var(--transition);
+}
+
+.booking-flow-container .input-wrapper input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+}
+
+.booking-flow-container .clear-input {
+  position: absolute;
+  right: 38px;
+  top: 16px;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.booking-flow-container .clear-input:hover {
+  color: var(--error);
+}
+
+.booking-flow-container .add-symptom-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.booking-flow-container .add-symptom-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Symptom Suggestions */
+.booking-flow-container .symptom-suggestions {
+  margin-bottom: 25px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.booking-flow-container .suggestion-title {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.booking-flow-container .suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-flow-container .suggestion-tag {
+  padding: 8px 16px;
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--primary-light);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.booking-flow-container .suggestion-tag:hover {
+  background: rgba(6, 182, 212, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Selected Symptoms */
+.booking-flow-container .selected-symptoms {
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .selected-title {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+.booking-flow-container .symptom-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-flow-container .symptom-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(14, 116, 144, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(14, 116, 144, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.booking-flow-container .symptom-tag button {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 0.8rem;
+  transition: var(--transition);
+}
+
+.booking-flow-container .symptom-tag button:hover {
+  color: var(--error);
+}
+
+/* Disease Suggestions */
+.booking-flow-container .disease-suggestions {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .disease-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.booking-flow-container .disease-header i {
+  color: var(--warning);
+  font-size: 1.2rem;
+}
+
+.booking-flow-container .disease-header h4 {
+  color: var(--warning);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.booking-flow-container .disease-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.booking-flow-container .disease-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.booking-flow-container .disease-tag i {
+  font-size: 0.8rem;
+}
+
+.booking-flow-container .disease-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.booking-flow-container .disease-note i {
+  color: var(--warning);
+  margin-top: 2px;
+}
+
+/* Appointment Type */
+.booking-flow-container .appointment-type {
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .appointment-type h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #cdd0d3;
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .appointment-type h4 i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.booking-flow-container .type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.booking-flow-container .type-option {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.booking-flow-container .type-option:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.booking-flow-container .type-option.active {
+  border-color: var(--primary);
+  background: rgba(14, 116, 144, 0.05);
+}
+
+.booking-flow-container .type-option.active h5{
+  color: #ffffff;
+  border-color: var(--primary);
+  background: rgba(14, 116, 144, 0.05);
+}
+
+.booking-flow-container .type-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(14, 116, 144, 0.1);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.type-icon i {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.booking-flow-container .type-info h5 {
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.type-info p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Notes Section */
+.booking-flow-container .notes-section {
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .notes-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #e5e6e7;
+  margin-bottom: 15px;
+}
+
+.booking-flow-container .notes-section h4 i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.booking-flow-container .notes-section textarea {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: #1e293b;
+  background: white;
+  transition: var(--transition);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.booking-flow-container .notes-section textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+}
+
+/* Step 2: Doctors */
+.specialty-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-btn:hover {
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Doctors List */
+.booking-flow-container .doctors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.booking-flow-container .doctor-card {
+  background: #0a94b1;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-flow-container .doctor-card:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.booking-flow-container .doctor-card.selected {
+  border-color: var(--primary);
+  background: rgba(14, 116, 144, 0.03);
+}
+
+.booking-flow-container .doctor-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .doctor-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 3px solid var(--primary);
+  flex-shrink: 0;
+}
+
+.booking-flow-container .doctor-main-info {
+  flex: 1;
+}
+
+.booking-flow-container .doctor-main-info h4 {
+  font-size: 1.2rem;
+  color: #1e293b;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.booking-flow-container .doctor-specialty {
+  color: #1e293b;;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.booking-flow-container .doctor-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.booking-flow-container .doctor-rating i {
+  color: #fbbf24;
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .doctor-rating span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.experience {
+  color: var(--text-light) !important;
+  font-size: 0.85rem !important;
+  margin-left: 5px;
+}
+
+.booking-flow-container .doctor-price {
+  text-align: right;
+}
+
+.booking-flow-container .price-label {
+  color: #ffffff;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.booking-flow-container .price-value {
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* Doctor Details */
+.booking-flow-container .doctor-details {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.booking-flow-container .doctor-description {
+  color: #ffffff;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.booking-flow-container .doctor-qualifications {
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .doctor-qualifications h5 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.booking-flow-container .doctor-qualifications h5 i {
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .doctor-qualifications ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.booking-flow-container .doctor-qualifications li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .doctor-qualifications li i {
+  color: var(--success);
+  font-size: 0.8rem;
+}
+
+.booking-flow-container .doctor-availability h5 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.booking-flow-container .doctor-availability h5 i {
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.available-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-flow-container .date-badge {
+  padding: 6px 12px;
+  background: rgb(13, 112, 139);
+  color: #ffffff;;
+  border: 1px solid rgba(14, 116, 144, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.booking-flow-container .date-badge.more {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--text-muted);
+  border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* Doctor Actions */
+.booking-flow-container .doctor-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.booking-flow-container .view-profile-btn,
+.booking-flow-container .select-doctor-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.95rem;
+  border: none;
+}
+
+.booking-flow-container .view-profile-btn {
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.booking-flow-container .view-profile-btn:hover {
+  background: var(--bg-main);
+  border-color: var(--primary-light);
+}
+
+.booking-flow-container .select-doctor-btn {
+  background: var(--primary);
+  color: white;
+}
+
+.booking-flow-container .select-doctor-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.booking-flow-container .select-doctor-btn.selected {
+  background: var(--success);
+}
+
+.booking-flow-container .selection-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--success);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Step 3: Time Selection */
+.booking-flow-container .selected-doctor-info {
+  background: rgba(14, 116, 144, 0.05);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(14, 116, 144, 0.1);
+}
+
+.booking-flow-container .doctor-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.booking-flow-container .doctor-summary img {
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 2px solid var(--primary);
+}
+
+.booking-flow-container .summary-info h4 {
+  font-size: 1.1rem;
+  color: #f0f0f0;
+  margin-bottom: 5px;
+}
+
+.booking-flow-container .summary-specialty {
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.booking-flow-container .summary-price {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Date Selection */
+.booking-flow-container .date-selection {
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .date-selection h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #f3f3f3;
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .date-selection h4 i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.booking-flow-container .date-picker {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.booking-flow-container .nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.booking-flow-container .nav-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.booking-flow-container .date-options {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+  flex: 1;
+}
+
+.booking-flow-container .date-option {
+  min-width: 80px;
+  padding: 15px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.booking-flow-container .date-option:hover {
+  border-color: var(--primary-light);
+}
+
+.booking-flow-container .date-option.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.booking-flow-container .day-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.booking-flow-container .day-date {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Time Selection */
+.booking-flow-container .time-selection {
+  margin-bottom: 30px;
+}
+
+.booking-flow-container .time-selection h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #e6e6e6;
+  margin-bottom: 15px;
+}
+
+.booking-flow-container .time-selection h4 i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.booking-flow-container .time-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .time-info i {
+  color: var(--primary-light);
+}
+
+.booking-flow-container .booked-slot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: var(--error);
+  border-radius: 2px;
+  margin: 0 5px;
+}
+
+.booking-flow-container .time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.booking-flow-container .time-slot {
+  padding: 12px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+  position: relative;
+}
+
+.booking-flow-container .time-slot:hover:not(.booking-flow-container .booked):not(.selected) {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.booking-flow-container .time-slot.booking-flow-container .booked {
+  background: var(--bg-main);
+  border-color: var(--border-color);
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+.booking-flow-container .time-slot.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.booking-flow-container .time-slot i.fa-ban {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-right: 5px;
+}
+
+.selection-check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.8rem;
+}
+
+.booking-flow-container .time-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.booking-flow-container .time-note i {
+  color: var(--warning);
+  font-size: 1.2rem;
+  margin-top: 2px;
+}
+
+.booking-flow-container .time-note p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Step 4: Confirmation */
+.booking-flow-container .confirmation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.booking-flow-container .detail-section {
+  background: #0c89a5;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+}
+
+.booking-flow-container .detail-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.booking-flow-container .detail-section h4 i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.booking-flow-container .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.booking-flow-container .detail-item {
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: #ffffff;
+}
+
+.booking-flow-container .detail-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .detail-value {
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Doctor Confirmation */
+.booking-flow-container .doctor-confirmation {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.booking-flow-container .doctor-confirmation img {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 3px solid var(--primary);
+}
+
+.booking-flow-container .doctor-confirmation-info h5 {
+  font-size: 1.2rem;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .confirmation-specialty {
+  color: #1e293b;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .confirmation-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .confirmation-rating i {
+  color: #fbbf24;
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .confirmation-rating span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .confirmation-price {
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+/* Symptoms Confirmation */
+.booking-flow-container .symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.booking-flow-container .symptom-badge {
+  padding: 8px 16px;
+  background: rgb(235, 236, 236);
+  color: var(--primary);
+  border: 1px solid rgba(14, 116, 144, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.booking-flow-container .notes-confirmation {
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: var(--radius-md);
+  padding: 15px;
+}
+
+.booking-flow-container .notes-confirmation h6 {
+  color: #1e293b;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.booking-flow-container .notes-confirmation p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Payment Summary */
+.booking-flow-container .payment-summary {
+  margin-bottom: 25px;
+}
+
+.booking-flow-container .payment-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.booking-flow-container .payment-row:last-child {
+  border-bottom: none;
+}
+
+.booking-flow-container .payment-row.total {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.booking-flow-container .total-price {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Payment Methods */
+.booking-flow-container .payment-methods h6 {
+  color: #1e293b;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.booking-flow-container .method-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.booking-flow-container .method-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.booking-flow-container .method-option input[type="radio"] {
+  margin-right: 12px;
+}
+
+.booking-flow-container .method-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex: 1;
+  transition: var(--transition);
+}
+
+.booking-flow-container .method-option input[type="radio"]:checked + .booking-flow-container .method-content {
+  border-color: var(--primary);
+  background: rgba(14, 116, 144, 0.05);
+}
+
+.booking-flow-container .method-content i {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.booking-flow-container .method-content span {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Terms Agreement */
+.booking-flow-container .terms-agreement {
+  margin-top: 20px;
+}
+
+.booking-flow-container .terms-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.booking-flow-container .terms-checkbox input {
+  margin-right: 10px;
+}
+
+.booking-flow-container .terms-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .terms-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Confirmation Note */
+.booking-flow-container .confirmation-note {
+  display: flex;
+  gap: 20px;
+  padding: 25px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  margin-top: 30px;
+}
+
+.booking-flow-container .note-icon i {
+  color: var(--success);
+  font-size: 1.5rem;
+}
+
+.booking-flow-container .note-content h6 {
+  color: #ffffff;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.booking-flow-container .note-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.booking-flow-container .note-content li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.booking-flow-container .note-content li:before {
+  content: "•";
+  color: var(--success);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Navigation Buttons */
+.booking-flow-container .navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid var(--border-color);
+}
+
+.booking-flow-container .nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1rem;
+  border: none;
+}
+
+.booking-flow-container .prev-btn {
+  width: 170px;
+  padding: 15px;
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.booking-flow-container .prev-btn:hover {
+  background: var(--bg-main);
+  border-color: var(--primary-light);
+  transform: translateX(-2px);
+}
+
+.booking-flow-container .next-btn {
+  width: 170px;
+  padding:15px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: white;
+}
+
+.booking-flow-container .next-btn:hover {
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Sidebar */
+.booking-flow-container .booking-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.booking-flow-container .sidebar-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.booking-flow-container .sidebar-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.booking-flow-container .sidebar-card h3 i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+/* Summary Card */
+.booking-flow-container .summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.booking-flow-container .summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.booking-flow-container .summary-item:last-child {
+  border-bottom: none;
+}
+
+.booking-flow-container .summary-item.total {
+  border-bottom: none;
+  padding-top: 15px;
+  border-top: 2px solid var(--border-color);
+}
+
+.booking-flow-container .item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .item-label i {
+  color: var(--primary-light);
+  font-size: 0.9rem;
+}
+
+.booking-flow-container .item-value {
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.booking-flow-container .total-price {
+  color: #f3f3f3;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+}
+
+/* Help Section */
+.booking-flow-container .help-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.booking-flow-container .help-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.booking-flow-container .help-item i {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.booking-flow-container .help-content h5 {
+  color: #ffffff;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.booking-flow-container .help-content p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.booking-flow-container .help-content strong {
+  color: var(--primary);
+}
+
+/* Tips Card */
+.booking-flow-container .tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.booking-flow-container .tips-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.booking-flow-container .tips-list li:last-child {
+  margin-bottom: 0;
+}
+
+.booking-flow-container .tips-list li i {
+  color: var(--success);
+  font-size: 0.8rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-sidebar {
+    order: -1;
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-flow-container .container {
+    padding: 0 15px;
+  }
+  
+  .booking-header {
+    padding: 20px 0;
+  }
+  
+  .header-content h1 {
+    font-size: 2rem;
+    padding: 0 50px;
+  }
+  
+  .back-home-btn {
+    position: static;
+    transform: none;
+    margin-bottom: 15px;
+  }
+  
+  .progress-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .progress-step {
+    width: 100%;
+  }
+  
+  .step-connector {
+    position: absolute;
+    left: 30px;
+    top: 60px;
+    width: 2px;
+    height: 40px;
+    margin: 0;
+  }
+  
+  .booking-content {
+    padding: 25px;
+  }
+  
+  .booking-flow-container .input-group {
+    flex-direction: column;
+  }
+  
+  .type-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-flow-container .doctor-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .booking-flow-container .doctor-price {
+    text-align: center;
+  }
+  
+  .booking-flow-container .doctor-actions {
+    flex-direction: column;
+  }
+  
+  .booking-flow-container .time-slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+  
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content h1 {
+    font-size: 1.5rem;
+    padding: 0;
+  }
+  
+  .step-indicator {
+    width: 50px;
+    height: 50px;
+    font-size: 1rem;
+  }
+  
+  .step-title {
+    font-size: 0.9rem;
+  }
+  
+  .booking-flow-container .date-options {
+    flex-wrap: wrap;
+  }
+  
+  .booking-flow-container .date-option {
+    min-width: 60px;
+    padding: 10px;
+  }
+  
+  .symptom-tag,
+  .booking-flow-container .disease-tag,
+  .symptom-badge {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+}

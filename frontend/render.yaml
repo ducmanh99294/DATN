@@ -1,0 +1,10 @@
+services:
+  - type: static
+    name: fe-webdoluuniem
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: dist
+    redirects:
+      - source: "/*"
+        destination: "/index.html"
+        statusCode: 200

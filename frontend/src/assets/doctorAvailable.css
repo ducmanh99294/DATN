@@ -1,0 +1,1088 @@
+/* DoctorSchedule.css - Doctor Schedule Management */
+
+/* Biến màu sắc */
+:root {
+  --primary: #0E7490;
+  --primary-light: #06B6D4;
+  --primary-dark: #0c5a7a;
+  
+  --accent: #F97316;
+  --accent-light: #fb923c;
+  --accent-dark: #ea580c;
+  
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #f1f5f9;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e1;
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
+  --transition: all 0.3s ease;
+}
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg-main);
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.doctor-schedule-container .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+.doctor-schedule-container .schedule-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 25px 0;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-schedule-container .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doctor-schedule-container .doctor-info-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.doctor-schedule-container .doctor-avatar {
+  width: 70px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.doctor-schedule-container .doctor-avatar i {
+  font-size: 2rem;
+  color: white;
+}
+
+.doctor-schedule-container .doctor-details h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  letter-spacing: -0.5px;
+}
+
+.doctor-schedule-container .doctor-specialty {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.doctor-schedule-container .doctor-contact {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.doctor-schedule-container .doctor-contact span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doctor-schedule-container .doctor-contact i {
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .header-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.doctor-schedule-container .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doctor-schedule-container .export-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.doctor-schedule-container .export-btn i {
+  font-size: 1rem;
+}
+
+/* Main Layout */
+.doctor-schedule-container .content-wrapper {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+/* Left Sidebar */
+.doctor-schedule-container .left-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Stats Card */
+.doctor-schedule-container .stats-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .stats-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.doctor-schedule-container .stats-card h3 i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.doctor-schedule-container .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.doctor-schedule-container .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  transition: var(--transition);
+}
+
+.doctor-schedule-container .stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.doctor-schedule-container .stat-item.total {
+  border-left: 4px solid var(--primary);
+}
+
+.doctor-schedule-container .stat-item.available {
+  border-left: 4px solid var(--success);
+}
+
+.doctor-schedule-container .stat-item.booked {
+  border-left: 4px solid var(--info);
+}
+
+.doctor-schedule-container .stat-item.cancelled {
+  border-left: 4px solid var(--error);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.doctor-schedule-container .stat-item.total .stat-icon {
+  background: rgba(14, 116, 144, 0.1);
+  color: var(--primary);
+}
+
+.doctor-schedule-container .stat-item.available .stat-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.doctor-schedule-container .stat-item.booked .stat-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+}
+
+.doctor-schedule-container .stat-item.cancelled .stat-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.doctor-schedule-container .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.doctor-schedule-container .stat-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* Form Card */
+.doctor-schedule-container .form-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .form-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.doctor-schedule-container .form-card h3 i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.doctor-schedule-container .form-group {
+  margin-bottom: 20px;
+}
+
+.doctor-schedule-container .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.doctor-schedule-container .form-group label i {
+  color: var(--primary-light);
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.doctor-schedule-container .form-group input,
+.doctor-schedule-container .form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: #1e293b;
+  background: white;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.doctor-schedule-container .form-group input:focus,
+.doctor-schedule-container .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+}
+
+.doctor-schedule-container .form-group input::placeholder {
+  color: var(--text-light);
+}
+
+.doctor-schedule-container .time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.doctor-schedule-container .patient-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doctor-schedule-container .patient-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .patient-btn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: white;
+}
+
+.doctor-schedule-container .patient-input input {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.doctor-schedule-container .input-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.doctor-schedule-container .input-note i {
+  color: var(--primary-light);
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .form-actions {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+}
+
+.doctor-schedule-container .action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1rem;
+  border: none;
+}
+
+.doctor-schedule-container .cancel-btn {
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .cancel-btn:hover {
+  background: var(--bg-main);
+  border-color: var(--text-light);
+}
+
+.doctor-schedule-container .add-btn,
+.update-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+}
+
+.doctor-schedule-container .add-btn:hover,
+.update-btn:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-schedule-container .form-tips {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .form-tips h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+.doctor-schedule-container .form-tips h4 i {
+  color: var(--warning);
+  font-size: 1rem;
+}
+
+.doctor-schedule-container .form-tips ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.doctor-schedule-container .form-tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.doctor-schedule-container .form-tips li:before {
+  content: "•";
+  color: var(--primary-light);
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Quick Actions Card */
+.doctor-schedule-container .quick-actions-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .quick-actions-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.doctor-schedule-container .quick-actions-card h3 i {
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.doctor-schedule-container .quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-schedule-container .quick-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.doctor-schedule-container .quick-action:hover {
+  background: var(--bg-main);
+  border-color: var(--primary-light);
+  transform: translateX(5px);
+}
+
+.doctor-schedule-container .quick-action i {
+  color: var(--primary);
+  font-size: 1.1rem;
+  width: 24px;
+}
+
+/* Main Content Area */
+.doctor-schedule-container .main-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Calendar View */
+.doctor-schedule-container .calendar-view {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.doctor-schedule-container .calendar-header h3 {
+  font-size: 1.3rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.doctor-schedule-container .nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.95rem;
+}
+
+.doctor-schedule-container .nav-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.doctor-schedule-container .nav-btn i {
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 15px;
+}
+
+.doctor-schedule-container .day-cell {
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 15px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  min-height: 120px;
+}
+
+.doctor-schedule-container .day-cell:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.doctor-schedule-container .day-cell.selected {
+  border-color: var(--primary);
+  background: rgb(11, 104, 129);
+  transform: scale(1.02);
+}
+
+.doctor-schedule-container .day-cell.today {
+  border-color: var(--accent);
+}
+
+.doctor-schedule-container .day-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.doctor-schedule-container .day-name {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.doctor-schedule-container .day-date {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.doctor-schedule-container .day-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-schedule-container .stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.doctor-schedule-container .stat i {
+  color: var(--primary-light);
+  font-size: 0.8rem;
+  width: 16px;
+}
+
+.doctor-schedule-container .no-slots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  gap: 5px;
+  height: 60px;
+}
+
+.doctor-schedule-container .no-slots i {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.doctor-schedule-container .copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(14, 116, 144, 0.1);
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.doctor-schedule-container .copy-btn:hover {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Time Slots Section */
+.doctor-schedule-container .time-slots-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.doctor-schedule-container .section-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  color: #ffffff;
+}
+
+.doctor-schedule-container .section-header h3 i {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.doctor-schedule-container .add-slot-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doctor-schedule-container .add-slot-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Slots List */
+.doctor-schedule-container .slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.doctor-schedule-container .time-slot-card {
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  transition: var(--transition);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.doctor-schedule-container .time-slot-card.available {
+  border-left: 4px solid var(--success);
+}
+
+.doctor-schedule-container .time-slot-card.booked {
+  border-left: 4px solid var(--info);
+  background: rgba(59, 130, 246, 0.03);
+}
+
+.doctor-schedule-container .time-slot-card.cancelled {
+  border-left: 4px solid var(--error);
+  background: rgba(239, 68, 68, 0.03);
+  opacity: 0.7;
+}
+
+.doctor-schedule-container .time-slot-card:hover:not(.booked) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.doctor-schedule-container .slot-time {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.doctor-schedule-container .time-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.doctor-schedule-container .time-range i {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.doctor-schedule-container .duration {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--bg-main);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.doctor-schedule-container .slot-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doctor-schedule-container .status-badge {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.doctor-schedule-container .status-badge.available {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.doctor-schedule-container .status-badge.booked {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+}
+
+.doctor-schedule-container .status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.doctor-schedule-container .slot-patients {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .slot-patients i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.doctor-schedule-container .slot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.doctor-schedule-container .slot-actions .action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.doctor-schedule-container .edit-btn {
+  background: rgba(14, 116, 144, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(14, 116, 144, 0.3);
+}
+
+.doctor-schedule-container .edit-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.doctor-schedule-container .toggle-btn {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.doctor-schedule-container .toggle-btn.activate {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.doctor-schedule-container .toggle-btn:hover {
+  background: var(--warning);
+  color: white;
+}
+
+.doctor-schedule-container .toggle-btn.activate:hover {
+  background: var(--success);
+  color: white;
+}
+
+.doctor-schedule-container .delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.doctor-schedule-container .delete-btn:hover {
+  background: var(--error);
+  color: white;
+}
+
+.doctor-schedule-container .booked-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--warning);
+  font-size: 0.85rem;
+}
+
+.doctor-schedule-container .booked-info i {
+  font-size: 0.9rem;
+}
+
+/* Empty States */
+.doctor-schedule-container .empty-slots,
+.select-day-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.doctor-schedule-container .empty-slots i,
+.select-day-prompt i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  color: var(--primary-light);
+  opacity: 0.5;
+}
+
+.doctor-schedule-container .empty-slots p,
+.select-day-prompt p {
+  font-size: 1.1rem;
+  margin-bottom: 25px;
+  max-width: 400px;
+}
+
+.doctor-schedule-container .add-first-slot-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doctor-schedule-container .add-first-slot-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .doctor-schedule-container .content-wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .left-sidebar {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-schedule-container .header-content {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .doctor-schedule-container .doctor-info-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .doctor-schedule-container .doctor-contact {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .doctor-schedule-container .week-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .doctor-schedule-container .time-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .doctor-schedule-container .slot-info {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .doctor-schedule-container .slot-actions {
+    align-self: flex-end;
+  }
+  
+  .doctor-schedule-container .section-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .calendar-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .doctor-schedule-container .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-schedule-container .week-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .doctor-schedule-container .form-actions {
+    flex-direction: column;
+  }
+  
+  .doctor-schedule-container .slot-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
