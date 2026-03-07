@@ -306,19 +306,6 @@ const Login: React.FC = () => {
                 )}
               </div>
 
-              <div className="form-options">
-                <label className="checkbox-container">
-                  <input
-                    type="checkbox"
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleInputChange}
-                  />
-                  <span className="checkmark"></span>
-                  Ghi nhớ đăng nhập
-                </label>
-              </div>
-
               <button 
                 type="submit" 
                 className="submit-btn"

@@ -4,7 +4,6 @@ const Doctor = require("../models/Doctor");
 const {sendNotification} = require("../sockets");
 
 exports.createAppointment = async (req, res) => {
-  console.log(req.body);
   try {
     const { doctorId, specialtyId, slotId, symptoms, description, patientId, price } = req.body;
 
@@ -26,9 +25,9 @@ exports.createAppointment = async (req, res) => {
       doctorId,
       specialtyId,
       slotId,
-      symptoms, 
-      description, 
-      price: doctorId.price, 
+      symptoms,
+      description,
+      price
     })
     .populate("patientId")
     .populate({
@@ -36,10 +35,7 @@ exports.createAppointment = async (req, res) => {
       populate: { path: "userId" }
     })
     .populate("slotId");
-      symptoms,
-      description,
-      price
-    });
+
 
     // populate sau khi create
     await appointment.populate([
