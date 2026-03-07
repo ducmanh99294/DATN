@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["pending", "confirmed", "designing", "shipping", "completed",'failed', "cancelled"],
+    enum: ["pending", "confirmed", "shipping", "completed", 'failed', "cancelled"],
     default: "pending"
   },
 
@@ -25,8 +25,13 @@ const orderSchema = new mongoose.Schema({
     district: String,
     ward: String,
     address: String,
-  }
-
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  dateConfirmed: Date,
+  reason: String, 
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);

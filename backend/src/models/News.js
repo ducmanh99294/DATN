@@ -28,6 +28,11 @@ const newsSchema = new mongoose.Schema(
       default: "default-news.jpg",
     },
 
+    images : {
+      type: [String],
+      default: [],
+    },
+
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

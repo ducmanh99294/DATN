@@ -8,20 +8,20 @@ import {
   FaBell, 
   FaBars, 
   FaTimes,
-  FaStethoscope,
   FaPills,
   FaRobot,
   FaCalendarAlt,
   FaHome,
   FaClinicMedical,
-  FaUserMd,
-  FaHeartbeat} from 'react-icons/fa';
+  FaNewspaper,
+  } from 'react-icons/fa';
 import { MdHealthAndSafety } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import { useNotify } from '../hooks/useNotification';
 import type Specialty from './Specialty';
 import { getAllSpecially } from '../api/specialyApi';
+import { useSocket } from '../context/SocketContext';
 
 
 const Header: React.FC = () => {
@@ -29,11 +29,14 @@ const Header: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSpecialtiesOpen, setIsSpecialtiesOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [activeNav, setActiveNav] = useState('home');
   const { user, isLoading, logout } = useAuthContext();
   const navigate = useNavigate();
   const notify = useNotify();
+  const { socket } = useSocket();
+  const [notifications, setNotifications] = useState<any[]>([]);
   // Xử lý scroll để thay đổi style header
   useEffect(() => {
     const handleScroll = () => {
@@ -59,7 +62,7 @@ const Header: React.FC = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMenuOpen, isUserMenuOpen]);
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchSpecialties = async () => {
       try {
         const data = await getAllSpecially();
@@ -72,12 +75,37 @@ const Header: React.FC = () => {
     fetchSpecialties();
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("connect", () => {
+      socket.emit("user_ready");
+    });
+
+    socket.on("notification", (data) => {
+      setNotifications(prev => [data, ...prev]);
+    });
+
+    return () => {
+      socket.off("notification");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (isNotificationOpen) setIsNotificationOpen(false);
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isNotificationOpen]);
+
   // Navigation items
   const navItems = [
     { id: 'home', label: 'Trang chủ', icon: <FaHome />, navigateTo: '/' },
     { id: 'pharmacy', label: 'Chuyên khoa', icon: <FaClinicMedical />, navigateTo: '/specialty', isDropdown: true },
     { id: 'clinic', label: 'Thuốc', icon: <FaPills />, navigateTo: '/products' },
-    { id: 'health', label: 'Tin tức', icon: <FaHeartbeat />, navigateTo: '/news' },
+    { id: 'health', label: 'Tin tức', icon: <FaNewspaper />, navigateTo: '/news' },
   ];
 
   // Xử lý click navigation
@@ -124,8 +152,8 @@ const Header: React.FC = () => {
 
       case 'admin':
         return {
-          label: 'Quản lý lịch',
-          onClick: () => navigate('/admin/appointments'),
+          label: 'Dashboard',
+          onClick: () => navigate('/admin'),
         };
 
       default:
@@ -263,13 +291,42 @@ const Header: React.FC = () => {
           </button>
 
           {/* Nút Thông báo */}
-          <button className="action-btn notification-btn" onClick={handleOpenNotifications} title="Thông báo">
-            <FaBell className="action-icon" />
-            {/* {notificationCount > 0 && (
-              <span className="badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
-            )} */}
-            <span className="action-label">Thông báo</span>
-          </button>
+          <div className="notification-wrapper">
+            <button
+              className="action-btn notification-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNotificationOpen(!isNotificationOpen);
+              }}
+              title="Thông báo"
+            >
+              <FaBell className="action-icon" />
+
+              {notifications.length > 0 && (
+                <span className="notification-badge">
+                  {notifications.length > 9 ? "9+" : notifications.length}
+                </span>
+              )}
+
+              <span className="action-label">Thông báo</span>
+            </button>
+
+            {isNotificationOpen && (
+              <div className="notification-dropdown">
+                {notifications.length === 0 ? (
+                  <div className="notification-empty">
+                    Không có thông báo
+                  </div>
+                ) : (
+                  notifications.map((noti, index) => (
+                    <div key={index} className="notification-item">
+                      {noti.message}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           {/* User Menu */}
           <div className="user-menu-container">

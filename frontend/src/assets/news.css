@@ -44,8 +44,7 @@
   background: var(--bg-main);
   min-height: 100vh;
 }
-.news-container {
-.container {
+.news-container .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -108,7 +107,7 @@
   border: 1px solid var(--border-color);
   border-radius: 50px;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: #1e293b;
   background: white;
   box-shadow: var(--shadow-md);
   transition: var(--transition);
@@ -278,7 +277,7 @@
   height: 100%;
   object-fit: cover;
   transition: var(--transition);
-&:hover .article-image img {
+&:hover {
   transform: scale(1.05);
 }
 }
@@ -313,6 +312,7 @@
 }
 
 .article-content {
+  color: #1e293b;
   padding: 20px;
 }
 
@@ -324,6 +324,8 @@
 }
 
 .article-category {
+  color: #ffffff;
+  background: #0f172a;
   padding: 4px 10px;
   border-radius: 50px;
   font-size: 0.8rem;
@@ -348,7 +350,7 @@
 .article-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #1e293b;
   margin-bottom: 10px;
   line-height: 1.4;
   display: -webkit-box;
@@ -587,7 +589,7 @@
 .doctor-feature-card {
   flex: 0 0 180px;
   padding: 20px;
-  background: white;
+  background: #ebebed;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   text-align: center;
@@ -608,14 +610,106 @@
 }
 
 .doctor-feature-card h4 {
-  color: var(--text-primary);
+  color: #1e293b;
   font-size: 1rem;
   margin-bottom: 5px;
 }
 
 .doctor-feature-card p {
-  color: var(--text-secondary);
+  color: #1e293b;
   font-size: 0.85rem;
+}
+
+/* Câu hỏi thường gặp */
+.news-faq-section {
+  margin-top: 60px;
+  padding: 40px 0;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border-radius: var(--radius-xl);
+}
+
+.news-faq-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+}
+
+.news-faq-section h2 i {
+  color: var(--primary);
+}
+
+.news-faq-section .faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.news-faq-section .faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.news-faq-section .faq-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.news-faq-section .faq-item.open {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.1);
+}
+
+.news-faq-section .faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.news-faq-section .faq-question:hover {
+  color: var(--primary);
+}
+
+.news-faq-section .faq-question i {
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+
+.news-faq-section .faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  border-top: 1px solid transparent;
+}
+
+.news-faq-section .faq-item.open .faq-answer {
+  max-height: 500px;
+  border-top-color: var(--border-color);
+}
+
+.news-faq-section .faq-answer p {
+  margin: 0;
+  padding: 16px 20px 18px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 /* Modal */
@@ -798,9 +892,37 @@
   padding: 40px;
 }
 
+.article-detail-content {
+  font-size: 17px;
+  line-height: 1.9;
+  color: #1e293b;
+}
+
+.article-detail-content p {
+  margin-bottom: 16px;
+}
+
+.article-heading {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 28px;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.article-list{
+  margin-left:20px;
+  list-style:disc;
+}
+
+.article-detail-content li {
+  margin-left: 20px;
+  margin-bottom: 6px;
+}
+
 .article-content {
   line-height: 1.8;
-  color: var(--text-primary);
+  color: #1e293b;
   margin-bottom: 30px;
 }
 
@@ -817,7 +939,14 @@
 }
 
 .article-content p {
-  margin-bottom: 15px;
+  line-height:1.8;
+  margin-bottom:10px;
+}
+
+.article-inline-image{
+  width:100%;
+  border-radius:10px;
+  margin:15px 0;
 }
 
 .article-content ul,
@@ -1093,8 +1222,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-&:hover,
-.comment-reply:hover {
+&:hover {
   color: var(--primary);
 }
 }

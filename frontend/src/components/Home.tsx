@@ -450,7 +450,7 @@ const Home = () => {
                   <FaNewspaper className="title-icon" />
                   Tin tức y tế
                 </h2>
-                <button className="view-all">
+                <button type="button" className="view-all" onClick={() => navigate('/news')}>
                   Xem tất cả <FaArrowRight />
                 </button>
               </div>

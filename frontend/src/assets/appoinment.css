@@ -746,7 +746,7 @@
   to { opacity: 1; }
 }
 
-.modal-content {
+.appointments-container .modal-content {
   background: rgba(0, 0, 0, 0.63);
   border-radius: var(--radius-lg);
   max-width: 700px;

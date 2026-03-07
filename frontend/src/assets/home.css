@@ -57,7 +57,7 @@
 /* Reset & Base Styles */
 .home-modern {
     background: radial-gradient(circle, #151e36 10%, #0c5a70 50%, #101523 90%);
-  background-size: 200% 200%;
+    background-size: 200% 200%;
   /* background: linear-gradient(135deg, var(--bg-main) 0%, #1a2238 100%); */
   min-height: 100vh;
   color: var(--text-primary);

@@ -1,6 +1,7 @@
 const Appointment = require("../models/Appointment");
 const TimeSlot = require("../models/TimeSlot");
 const Doctor = require("../models/Doctor");
+const {sendNotification} = require("../sockets");
 
 exports.createAppointment = async (req, res) => {
   try {
@@ -27,12 +28,30 @@ exports.createAppointment = async (req, res) => {
       symptoms, 
       description, 
       price: doctorId.price, 
-    });
+    })
+    .populate("userId")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId" }
+    })
+    .populate("slotId");
 
     // 3. Cập nhật slot
     slot.status = "booked";
     slot.appointmentId = appointment._id;
     await slot.save();
+
+        // thong bao user
+    sendNotification(appointment.userId._id, {
+      type: "appointment_created",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã được tạo thành công`,
+    });
+
+    // thong bao dôctr
+    sendNotification(appointment.doctorId.userId._id, {
+      type: "appointment_created",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã được tạo thành công`,
+    });
 
     res.status(201).json({
       message: "Đặt lịch thành công",
@@ -51,7 +70,13 @@ exports.cancelAppointment = async (req, res) => {
     const { id } = req.params;
     const {reason} = req.body
 
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(id)
+    .populate("userId")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId" }
+    })
+    .populate("slotId");
     if (!appointment) {
       return res.status(404).json({ message: "Không tìm thấy lịch hẹn" });
     }
@@ -63,6 +88,18 @@ exports.cancelAppointment = async (req, res) => {
     await TimeSlot.findByIdAndUpdate(appointment.slotId, {
       status: "available",
       appointmentId: null,
+    });
+
+    // thong bao user
+    sendNotification(appointment.userId._id, {
+      type: "appointment_cancelled",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã bị huỷ. Lý do: ${reason}`,
+    });
+
+    // thong bao dôctr
+    sendNotification(appointment.doctorId.userId._id, {
+      type: "appointment_cancelled",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã bị huỷ. Lý do: ${reason}`,
     });
 
     res.json({ message: "Đã huỷ lịch hẹn" });
@@ -77,8 +114,25 @@ exports.confirmedAppointment = async (req, res) => {
 
     await Appointment.findByIdAndUpdate(id, {
       status: "confirmed",
+    })
+    .populate("userId")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId" }
+    })
+    .populate("slotId");
+
+    // thong bao user
+    sendNotification(appointment.userId._id, {
+      type: "appointment_confirmed",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã được xác nhận`,
     });
 
+    // thong bao dôctr
+    sendNotification(appointment.doctorId.userId._id, {
+      type: "appointment_confirmed",
+      message: `Lịch hẹn ngày ${appointment.slotId.date} đã được xác nhận`,
+    });
     res.json({ message: "Lịch khám đã được xác nhận" });
   } catch (error) {
     res.status(500).json({ message: "Cập nhật thất bại" });
