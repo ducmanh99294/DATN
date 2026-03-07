@@ -62,12 +62,18 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await loginApi(formData.email,formData.password);
+      const data = await loginApi(formData.email,formData.password);
+
+      if(data.isBanned) {
+        notify.error(`Tài khoản đã bị khóa với lí do: ${data.reason}`, "Thông báo")
+        return;
+      }
+
       await fetchMe();
       notify.success("Đăng nhập thành công","Thông báo")
       navigate("/")
+
     } catch (error) {
-      console.error('Login error:', error);
       notify.error("Đăng nhập thất bại, sai tài khoản hoặc mật khẩu","Thông báo")
     } finally {
       setIsLoading(false);

@@ -1,4 +1,4 @@
-import {apiGet,apiPost, apiPut,} from './api'
+import {apiDelete, apiGet,apiPost, apiPut,} from './api'
 
 export const loginApi = async (email:string,password:string) => { 
     return await apiPost('/api/auth/login',{email,password});
@@ -34,7 +34,6 @@ export const logoutApi = async () => {
     return await apiPost("/api/auth/logout",{});
 };
 
-
 export const updateProfile = async (fullName: string, phone: string, email: string, gender: string) => {
     return await apiPut("/api/auth/profile",{
       fullName,phone,email,gender
@@ -47,6 +46,26 @@ export const changePassword = async (oldPassword: string, newPassword: string) =
     });
 };
 
-export const updateAvatar = async (image: File | string) => {
-    return await apiPut("/api/auth/avatar",{image});
+export const updateAvatar = async (image: FormData) => {
+    return await apiPut("/api/auth/avatar", image);
 };
+
+export const getAllUsers = async (params = "") => {    
+  return await apiGet(`/api/auth${params}`);
+};
+
+export const createUser = async (data: any) => {
+  return await apiPost(`/api/auth`, data);
+}
+
+export const deleteUser = async (id: any) => {
+  return await apiDelete(`/api/auth/users/${id}`);
+}
+
+export const banUser = async (id: string, reason: string) => {
+  return await apiPut(`/api/auth/${id}/ban`, { reason });
+}
+
+export const unbanUser = async (id: string) => {
+  return await apiPut(`/api/auth/${id}/unban`, {});
+}

@@ -5,14 +5,17 @@ import { getDoctor } from '../api/doctorApi';
 import { getSlotsByDoctorAndDateApi } from '../api/timeSlotApi';
 import { createAppoinmentApi } from '../api/appointmentApi';
 import { useNotify } from '../hooks/useNotification';
+import { useRef } from "react";
 
 interface BookingData {
   patientId: string;
   symptoms: string[];
+  price: number;
   // suspectedDiseases: string[];
   doctorId: any | null;
   slotId: any | null;
   description: string;
+  paymentMethod: string;
   // appointmentType: string;
 }
 
@@ -52,9 +55,10 @@ const BookingFlow = () => {
   const [suggestedSymptoms, setSuggestedSymptoms] = useState<string[]>([]);
   const [suggestedDiseases, setSuggestedDiseases] = useState<string[]>([]);
   const [doctors, setDoctors] = useState<any[]>([])
-  const [currentWeek, setCurrentWeek] = useState(0);  
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [appointmentType, setAppointmentType] = useState('general');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const dateOptionsRef = useRef<HTMLDivElement>(null);
+
   //loading
   const [loadingDay, setLoadingDay] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,11 +67,11 @@ const BookingFlow = () => {
   const [formData, setFormData] = useState<BookingData>({
     patientId: user?._id || '',
     symptoms: [],
-    // suspectedDiseases: [],
     doctorId: null,
     slotId: null,
     description: '',
-    // appointmentType: 'general'
+    price: 0,
+    paymentMethod: ""
   });
   // Danh sách triệu chứng mẫu
   const symptomDatabase = [
@@ -202,7 +206,6 @@ const BookingFlow = () => {
     }));
   };
 
-
   // Chọn bác sĩ
   const selectDoctor = (doctor: Doctor) => {
     setFormData(prev => ({ ...prev, doctorId: doctor }));
@@ -216,7 +219,7 @@ const BookingFlow = () => {
     const days = [];
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1 + (currentWeek * 7)); // Start from Monday
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1 + 7); // Start from Monday
     
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
@@ -245,9 +248,22 @@ const BookingFlow = () => {
         setCurrentStep(currentStep + 1);
         window.scrollTo(0, 0);
       } else {
+        if (!formData.paymentMethod) {
+          setShowPaymentModal(true);
+          return;
+        }
+
         completeBooking();
       }
     }
+  };
+
+  const handleClosePayment = () => {
+    setShowPaymentModal(false);
+    setFormData(prev => ({
+      ...prev,
+      paymentMethod: ""
+    }));
   };
 
   // Quay lại bước trước
@@ -263,59 +279,72 @@ const BookingFlow = () => {
     switch (currentStep) {
       case 1:
         if (formData.symptoms.length === 0) {
-          alert('Vui lòng nhập ít nhất một triệu chứng');
+          notify.info('Vui lòng nhập ít nhất một triệu chứng', 'thông báo');
           return false;
         }
         return true;
         
       case 2:
         if (!formData.doctorId) {
-          alert('Vui lòng chọn bác sĩ');
+          notify.info('Vui lòng chọn bác sĩ', 'thông báo');
           return false;
         }
         return true;
         
       case 3:
         if (!formData.slotId) {
-          alert('Vui lòng chọn giờ khám');
+          notify.info('Vui lòng chọn giờ khám', 'thông báo');
           return false;
         }
         return true;
-        
+      
       case 4:
         return true;
-        
+
       default:
         return false;
     }
     return true;
   };
-
+  console.log(formData)
   // Hoàn tất đặt lịch
   const completeBooking = () => {
-    createAppoinmentApi(
-      formData.doctorId._id,
-      formData.patientId,
-      formData.doctorId.specialtyId._id,
-      formData.slotId,
-      formData.symptoms,
-      formData.description,
-      // formData.price,
-    )
-    
-    // Hiển thị thông báo thành công
-    notify.success(`✅ Đặt lịch thành công!\nMã đặt lịch: \nBác sĩ: ${formData.doctorId.userId.fullName}\nThời gian: ${selectedDate} ${selectedTime}`, "thông báo")
-    // Reset form
-    setFormData({
-    patientId: user?._id || '',
-    symptoms: [],
-    doctorId: null,
-    slotId: null,
-    description: ''
-    });
-    setCurrentStep(1);
-    setSymptom('');
+    if (!formData.paymentMethod) {
+      notify.warning("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
+    try {
+      createAppoinmentApi(
+        formData.doctorId._id,
+        formData.patientId,
+        formData.doctorId.specialtyId._id,
+        formData.slotId,
+        formData.symptoms,
+        formData.description,
+        formData.price = formData.doctorId.price,
+        // formData.price,
+      )
+      
+      // Hiển thị thông báo thành công
+      notify.success(`Đặt lịch thành công!\nMã đặt lịch: \nBác sĩ: ${formData.doctorId.userId.fullName}\nThời gian: ${selectedDate} ${selectedTime}`, "thông báo")
+      // Reset form
+      setFormData({
+      patientId: user?._id || '',
+      symptoms: [],
+      doctorId: null,
+      slotId: null,
+      description: '',
+      price: 0,
+      paymentMethod: ""
+      });
+      setCurrentStep(1);
+      setSymptom('');
+      setSelectedDate('');
+    } catch (e) {
+      console.log(e)
+    }
   };
+
   // Format giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ';
@@ -327,6 +356,19 @@ const BookingFlow = () => {
     const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
     return days[date.getDay()];
   };
+
+  //scroll trái phải 
+  const scrollDates = (direction: "left" | "right") => {
+    if (!dateOptionsRef.current) return;
+
+    const scrollAmount = 200;
+
+    dateOptionsRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth"
+    });
+  };
+
   // Render từng bước
   const renderStepContent = () => {
     switch (currentStep) {
@@ -444,60 +486,6 @@ const BookingFlow = () => {
           </div>
         )}
 
-        <div className="appointment-type">
-          <h4>
-            <i className="fas fa-calendar-alt"></i>
-            Loại cuộc hẹn
-          </h4>
-          <div className="type-options">
-            <button 
-              className={`type-option ${appointmentType === 'general' ? 'active' : ''}`}
-              onClick={() => {
-                setAppointmentType('general');
-                setFormData(prev => ({ ...prev, appointmentType: 'general' }));
-              }}
-            >
-              <div className="type-icon">
-                <i className="fas fa-user-md"></i>
-              </div>
-              <div className="type-info">
-                <h5>Khám tổng quát</h5>
-                <p>Kiểm tra sức khỏe định kỳ</p>
-              </div>
-            </button>
-            <button 
-              className={`type-option ${appointmentType === 'consultation' ? 'active' : ''}`}
-              onClick={() => {
-                setAppointmentType('consultation');
-                setFormData(prev => ({ ...prev, appointmentType: 'consultation' }));
-              }}
-            >
-              <div className="type-icon">
-                <i className="fas fa-video"></i>
-              </div>
-              <div className="type-info">
-                <h5>Tư vấn trực tuyến</h5>
-                <p>Gặp bác sĩ qua video call</p>
-              </div>
-            </button>
-            <button 
-              className={`type-option ${appointmentType === 'emergency' ? 'active' : ''}`}
-              onClick={() => {
-                setAppointmentType('emergency');
-                setFormData(prev => ({ ...prev, appointmentType: 'emergency' }));
-              }}
-            >
-              <div className="type-icon">
-                <i className="fas fa-ambulance"></i>
-              </div>
-              <div className="type-info">
-                <h5>Khám cấp cứu</h5>
-                <p>Ưu tiên khám ngay</p>
-              </div>
-            </button>
-          </div>
-        </div>
-
         <div className="notes-section">
           <h4>
             <i className="fas fa-edit"></i>
@@ -516,6 +504,7 @@ const BookingFlow = () => {
       </div>
     </div>
   );
+
   const renderDoctorsStep = () => (
     <div className="step-content doctors-step">
       <div className="step-header">
@@ -605,14 +594,14 @@ const BookingFlow = () => {
                       className="view-profile-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        alert(`Thông tin chi tiết về ${doctor.name}`);
+                        alert(`Thông tin chi tiết về ${doctor.userId.fullName}`);
                       }}
                     >
                       <i className="fas fa-eye"></i>
                       Xem hồ sơ
                     </button>
                     <button 
-                      className={`select-doctor-btn ${formData.doctorId?.id === doctor._id ? 'selected' : ''}`}
+                      className={`select-doctor-btn ${formData.doctorId?._id === doctor._id ? 'selected' : ''}`}
                     >
                       {formData.doctorId?._id === doctor._id ? (
                         <>
@@ -642,7 +631,6 @@ const BookingFlow = () => {
 
     </div>
   );
-
   const renderTimeStep = () => (
     <div className="step-content time-step">
       <div className="step-header">
@@ -672,7 +660,7 @@ const BookingFlow = () => {
           Chọn ngày khám
         </h4>
         <div className="date-picker">
-          <button className="nav-btn prev-date">
+          <button className="nav-btn prev-date" onClick={() => scrollDates("left")}>
             <i className="fas fa-chevron-left"></i>
           </button>
           
@@ -692,7 +680,7 @@ const BookingFlow = () => {
             ))}
           </div>
           
-          <button className="nav-btn next-date">
+          <button className="nav-btn next-date" onClick={() => scrollDates("right")}>
             <i className="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -708,37 +696,52 @@ const BookingFlow = () => {
           Mỗi khung giờ dài 30 phút. Giờ đã được đặt ký hiệu bằng
           <span className="booked-slot"></span>
         </p>
-          {loadingDay ? (
-            <div className="time-selection"><h4>Loaing...</h4></div>
-          ) : (
-            <div className="time-slots-grid">
-              {timeSlots.map((slot, index) => (
-                <button
-                  key={index}
-                  className={`time-slot ${slot.appointmentId ? 'booked' : ''} ${formData.slotId === slot._id ? 'selected' : ''}`}
-                  onClick={() => {!slot.appointmentId && 
-                      setFormData(prev => ({
-                        ...prev,
-                        slotId: slot._id,
-                      }))
-                      setSelectedTime(slot.startTime)
-                      setTimeSlots(prev =>
-                        prev.map(slot => ({
-                          ...slot,
-                          isSelected: slot.startTime === slot.startTime
+        {!selectedDate ? (
+          <>
+            <p className="time-info">
+            Hãy chọn một ngày.
+            </p>
+          </>
+        ) : (
+          <>
+            {loadingDay ? (
+              <div className="time-selection"><h4>Loaing...</h4></div>
+            ) : timeSlots.length === 0 ? (
+              <div className="no-slots">
+                <i className="fas fa-calendar-times"></i>
+                <p>Không có lịch khám cho ngày này</p>
+              </div>
+            ) : (
+              <div className="time-slots-grid">
+                {timeSlots.map((slot, index) => (
+                  <button
+                    key={index}
+                    className={`time-slot ${slot.appointmentId ? 'booked' : ''} ${formData.slotId === slot._id ? 'selected' : ''}`}
+                    onClick={() => {!slot.appointmentId && 
+                        setFormData(prev => ({
+                          ...prev,
+                          slotId: slot._id,
                         }))
-                      );
+                        setSelectedTime(slot.startTime)
+                        setTimeSlots(prev =>
+                          prev.map(slot => ({
+                            ...slot,
+                            isSelected: slot.startTime === slot.startTime
+                          }))
+                        );
+                      }
                     }
-                  }
-                  disabled={slot.appointmentId !== null}
-                >
-                  {slot.appointmentId && <i className="fas fa-ban"></i>}
-                  {slot.startTime}
-                  {selectedTime === slot.startTime && <i className="fas fa-check selection-check"></i>}
-                </button>
-              ))}
-            </div>
-          )}
+                    disabled={slot.appointmentId !== null}
+                  >
+                    {slot.appointmentId && <i className="fas fa-ban"></i>}
+                    {slot.startTime}
+                    {selectedTime === slot.startTime && <i className="fas fa-check selection-check"></i>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
       </div>
 
@@ -748,7 +751,7 @@ const BookingFlow = () => {
       </div>
     </div>
   );
-
+console.log(selectedTime)
   const renderConfirmationStep = () => (
     <div className="step-content confirmation-step">
       <div className="step-header">
@@ -759,133 +762,83 @@ const BookingFlow = () => {
         <p>Vui lòng kiểm tra thông tin đặt lịch trước khi xác nhận</p>
       </div>
 
-      <div className="confirmation-details">
-        <div className="detail-section">
-          <h4>
-            <i className="fas fa-info-circle"></i>
-            Thông tin đặt lịch
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Mã đặt lịch:</span>
-              <span className="detail-value">Sẽ tạo sau khi xác nhận</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Loại khám:</span>
-              <span className="detail-value">
-                {/* {formData.appointmentType === 'general' ? 'Khám tổng quát' : 
-                 formData.appointmentType === 'consultation' ? 'Tư vấn trực tuyến' : 'Khám cấp cứu'} */}
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Ngày giờ:</span>
-              <span className="detail-value">
-                {getDayName(selectedDate)} {selectedDate.split('-').reverse().join('/')} 
-                <strong> {selectedTime}</strong>
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className="detail-section appointment-info">
+        <h4>
+          <i className="fas fa-calendar-check"></i>
+          Thông tin lịch khám
+        </h4>
 
-        <div className="detail-section">
-          <h4>
-            <i className="fas fa-user-md"></i>
-            Thông tin bác sĩ
-          </h4>
-          <div className="doctor-confirmation">
-            <img src={formData.doctorId?.userId.image} alt={formData.doctorId?.userId.fullName} />
-            <div className="doctor-confirmation-info">
-              <h5>{formData.doctorId?.userId.fullName}</h5>
-              <div className="confirmation-specialty">{formData.doctorId?.specialty}</div>
-              <div className="confirmation-rating">
-                <i className="fas fa-star"></i>
-                <span>{formData.doctorId?.rating}</span>
-              </div>
-              <div className="confirmation-price">
-                Phí khám: <strong>{formatPrice(formData.doctorId?.price || 0)}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="detail-section">
-          <h4>
-            <i className="fas fa-clipboard-list"></i>
-            Triệu chứng & Ghi chú
-          </h4>
-          <div className="symptoms-confirmation">
-            <div className="symptoms-list">
-              {formData.symptoms.map((symptom, idx) => (
-                <span key={idx} className="symptom-badge">
-                  {symptom}
-                </span>
-              ))}
-            </div>
-            {formData.description && (
-              <div className="notes-confirmation">
-                <h6>Ghi chú của bạn:</h6>
-                <p>{formData.description}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="detail-section">
-          <h4>
-            <i className="fas fa-credit-card"></i>
-            Thông tin thanh toán
-          </h4>
-          <div className="payment-summary">
-            <div className="payment-row">
-              <span>Phí khám bệnh:</span>
-              <span>{formatPrice(formData.doctorId?.price || 0)}</span>
-            </div>
-            <div className="payment-row">
-              <span>Phí đặt lịch:</span>
-              <span>0 VNĐ</span>
-            </div>
-            <div className="payment-row total">
-              <span>Tổng cộng:</span>
-              <span className="total-price">{formatPrice(formData.doctorId?.price || 0)}</span>
-            </div>
+        <div className="appointment-summary">
+          <div className="summary-item">
+            <span>Bác sĩ</span>
+            <strong>{formData.doctorId?.userId.fullName}</strong>
           </div>
 
-          <div className="payment-methods">
-            <h6>Phương thức thanh toán:</h6>
-            <div className="method-options">
-              <label className="method-option">
-                <input type="radio" name="payment" defaultChecked />
-                <div className="method-content">
-                  <i className="fas fa-money-bill-wave"></i>
-                  <span>Thanh toán tại phòng khám</span>
-                </div>
-              </label>
-              <label className="method-option">
-                <input type="radio" name="payment" />
-                <div className="method-content">
-                  <i className="fas fa-credit-card"></i>
-                  <span>Thẻ tín dụng/ghi nợ</span>
-                </div>
-              </label>
-              <label className="method-option">
-                <input type="radio" name="payment" />
-                <div className="method-content">
-                  <i className="fas fa-mobile-alt"></i>
-                  <span>Ví điện tử</span>
-                </div>
-              </label>
-            </div>
+          <div className="summary-item">
+            <span>Chuyên khoa</span>
+            <strong>{formData.doctorId?.specialtyId?.name}</strong>
           </div>
-        </div>
 
-        <div className="terms-agreement">
-          <label className="terms-checkbox">
-            <input type="checkbox" />
-            Tôi đồng ý với <button type="button" className="terms-link">Điều khoản sử dụng</button> và 
-            <button type="button" className="terms-link"> Chính sách hủy lịch</button>
-          </label>
+          <div className="summary-item">
+            <span>Ngày khám</span>
+            <strong>
+              {getDayName(selectedDate)} {selectedDate.split('-').reverse().join('/')}
+            </strong>
+          </div>
+
+          <div className="summary-item">
+            <span>Giờ khám</span>
+            <strong>{selectedTime}</strong>
+          </div>
         </div>
       </div>
+
+      <div className="doctor-confirmation">
+        <img
+          src={formData.doctorId?.userId.image}
+          alt={formData.doctorId?.userId.fullName}
+        />
+
+        <div className="doctor-info">
+          <h3>{formData.doctorId?.userId.fullName}</h3>
+
+          <span className="doctor-specialty">
+            {formData.doctorId?.specialtyId?.name}
+          </span>
+
+          <div className="doctor-rating">
+            ⭐ {formData.doctorId?.rating}
+          </div>
+
+          <div className="doctor-specialty">
+            {formatPrice(formData.doctorId?.price)}
+          </div>
+        </div>
+      </div>
+
+      <div className="payment-summary">
+        <div className="payment-row">
+          <span>Phí khám: </span>
+          <span>{formatPrice(formData.doctorId?.price)}</span>
+        </div>
+
+        <div className="payment-row total">
+          <span>Tổng thanh toán: </span>
+          <strong>{formatPrice(formData.doctorId?.price)}</strong>
+        </div>
+      </div>
+
+        <div className="payment-method">
+          <span>Phương thức thanh toán: </span>
+          <strong>{formData.paymentMethod ? formData.paymentMethod : " Vui lòng chọn phương thức "}</strong>
+
+          {formData.paymentMethod ?
+           <button
+              onClick={() => setShowPaymentModal(true)}
+              className='change-btn'
+            > Thay đổi</button> 
+           : ""}
+        </div>
 
       <div className="confirmation-note">
         <div className="note-icon">
@@ -1010,6 +963,18 @@ const BookingFlow = () => {
                 </div>
               )}
 
+              {currentStep >= 1 && formData.description && (
+                <div className="summary-item">
+                  <div className="item-label">
+                    <i className="fas fa-stethoscope"></i>
+                    Ghi chú:
+                  </div>
+                  <div className="item-value">
+                    {formData.description}
+                  </div>
+                </div>
+              )}
+
               {formData.doctorId && (
                 <div className="summary-item total">
                   <div className="item-label">
@@ -1059,6 +1024,65 @@ const BookingFlow = () => {
             </ul>
           </div>
         </div>
+
+        {showPaymentModal && 
+          <div className="modal-overlay">
+          <div className="modal-content order-detail-modal" onClick={e => e.stopPropagation()}>
+            
+            <div className="payment-methods">
+            <div className="modal-header">
+              <h3 className="payment-title">Chọn phương thức thanh toán</h3>
+              <button className="close-btn" onClick={() => handleClosePayment()}>
+                <i className="fas fa-times"></i>
+              </button>
+          </div>
+
+              <div className="method-options">
+
+                <label className="payment-card">
+                  <input type="radio" name="payment" value="cash" defaultChecked />
+
+                  <div className="card-content" 
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, paymentMethod: "cash" }))
+                    setShowPaymentModal(false)
+                  }
+                    }>
+                    <i className="fas fa-money-bill-wave"></i>
+                    <span>Thanh toán tại phòng khám</span>
+                  </div>
+                </label>
+
+                <label className="payment-card">
+                  <input type="radio" name="payment" value="card" />
+
+                  <div className="card-content" 
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, paymentMethod: "card" }))
+                    setShowPaymentModal(false)
+                  }
+                  }>
+                    <i className="fas fa-credit-card"></i>
+                    <span>Thẻ tín dụng / ghi nợ</span>
+                  </div>
+                </label>
+
+              </div>
+            </div>
+
+            <div className="terms-agreement">
+              <label className="terms-checkbox">
+                <input type="checkbox" />
+                Tôi đồng ý với
+                <button type="button" className="terms-link"> Điều khoản sử dụng </button>
+                và
+                <button type="button" className="terms-link"> Chính sách hủy lịch </button>
+              </label>
+            </div>
+
+          </div>
+        </div>
+        }
       </div>
     </div>
   );

@@ -27,11 +27,6 @@ const productSchema = new mongoose.Schema({
 
   images: [String],
 
-  price: {
-    type: Number,
-    required: true
-  },
-
   discount: {
     type: Number,
     default: 0
@@ -40,13 +35,6 @@ const productSchema = new mongoose.Schema({
   stock: {
     type: Number,
     default: 0
-  },
-
-  rating: {
-    type: Number,
-    default: 0,
-    max: 5,
-    min: 0
   },
 
   reviewCount: {

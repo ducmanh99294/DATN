@@ -20,6 +20,13 @@ import Appoinments from "./components/Appointment";
 import Specialty from "./components/Specialty";
 import News from "./components/News";
 
+// ADMIN
+import Dashboard from "./components/dashboard/dashboard";
+import AdminOrders from "./components/dashboard/orderAdmin";
+import AdminProducts from "./components/dashboard/productAdmin";
+import AdminUsers from "./components/dashboard/userAdmin";
+import AdminDashboard from "./components/dashboard/home";
+
 function App() {
   // const location = useLocation();
   const noHeaderFooterPaths = ["/login", "/register", ];
@@ -52,7 +59,14 @@ function App() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/appoinments" element={<Appoinments />} />
         <Route path="/news" element={<News />} />
+        <Route path="/news/:slug" element={<News />} />
         <Route path="/specialty/:slug" element={<Specialty />} />
+
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/dashborads" element={<Dashboard />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/users" element={<AdminUsers/> } />
       </Routes>
         <Chat />
       {!hideHeaderFooter && <Footer />}

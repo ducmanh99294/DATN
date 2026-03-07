@@ -5,7 +5,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { getMe, logoutApi } from '../api/authApi';
 import { getDoctorById } from '../api/doctorApi';
 
@@ -16,6 +15,7 @@ export interface User {
   gender?: string;
   fullName: string;
   image?: string;
+  password: string;
   role?: 'patient' | 'doctor' | 'admin';
   createdAt: string;
   updatedAt: string;

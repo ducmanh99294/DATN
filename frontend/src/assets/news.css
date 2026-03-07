@@ -108,7 +108,7 @@
   border: 1px solid var(--border-color);
   border-radius: 50px;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: #1e293b;
   background: white;
   box-shadow: var(--shadow-md);
   transition: var(--transition);
@@ -278,7 +278,7 @@
   height: 100%;
   object-fit: cover;
   transition: var(--transition);
-&:hover .article-image img {
+&:hover {
   transform: scale(1.05);
 }
 }
@@ -313,6 +313,7 @@
 }
 
 .article-content {
+  color: #1e293b;
   padding: 20px;
 }
 
@@ -324,6 +325,8 @@
 }
 
 .article-category {
+  color: #ffffff;
+  background: #0f172a;
   padding: 4px 10px;
   border-radius: 50px;
   font-size: 0.8rem;
@@ -348,7 +351,7 @@
 .article-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #1e293b;
   margin-bottom: 10px;
   line-height: 1.4;
   display: -webkit-box;
@@ -587,7 +590,7 @@
 .doctor-feature-card {
   flex: 0 0 180px;
   padding: 20px;
-  background: white;
+  background: #ebebed;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   text-align: center;
@@ -608,13 +611,13 @@
 }
 
 .doctor-feature-card h4 {
-  color: var(--text-primary);
+  color: #1e293b;
   font-size: 1rem;
   margin-bottom: 5px;
 }
 
 .doctor-feature-card p {
-  color: var(--text-secondary);
+  color: #1e293b;
   font-size: 0.85rem;
 }
 
@@ -798,9 +801,37 @@
   padding: 40px;
 }
 
+.article-detail-content {
+  font-size: 17px;
+  line-height: 1.9;
+  color: #1e293b;
+}
+
+.article-detail-content p {
+  margin-bottom: 16px;
+}
+
+.article-heading {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 28px;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.article-list{
+  margin-left:20px;
+  list-style:disc;
+}
+
+.article-detail-content li {
+  margin-left: 20px;
+  margin-bottom: 6px;
+}
+
 .article-content {
   line-height: 1.8;
-  color: var(--text-primary);
+  color: #1e293b;
   margin-bottom: 30px;
 }
 
@@ -817,7 +848,14 @@
 }
 
 .article-content p {
-  margin-bottom: 15px;
+  line-height:1.8;
+  margin-bottom:10px;
+}
+
+.article-inline-image{
+  width:100%;
+  border-radius:10px;
+  margin:15px 0;
 }
 
 .article-content ul,
@@ -1093,8 +1131,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-&:hover,
-.comment-reply:hover {
+&:hover {
   color: var(--primary);
 }
 }

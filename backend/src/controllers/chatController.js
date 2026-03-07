@@ -120,6 +120,8 @@ async function processAIChat(userId, message) {
 }
 
 exports.chatConsult = async (req, res) => {
+  console.log("nhận chat")
+  console.log(req.body)
   try {
     const reply = await processAIChat(
       req.user.id,
@@ -127,6 +129,7 @@ exports.chatConsult = async (req, res) => {
     );
 
     res.json({ reply });
+    console.log(reply)
   } catch (error) {
     res.status(500).json({ message: "Chat lỗi" });
   }

@@ -1,45 +1,135 @@
 const Product = require("../models/Product");
+const Order = require("../models/Order");
+const Category = require("../models/Category");
 
-exports.getProducts = async (req, res) => {
-  try {
-    const { category, keyword, page = 1, limit = 10 } = req.query;
+  exports.getProducts = async (req, res) => {
+    try {
+      const { category, search, page = 1, limit = 10 } = req.query;
 
-    const filter = { isSelling: true }; 
+      const filter = { isSelling: true }; 
 
-    if (category && category !== "all") {
-      if (mongoose.Types.ObjectId.isValid(category)) {
+      if (category && category !== "all") {
         filter.category = category;
       }
+      
+      if (search && search.trim() !== "") {
+        const escapedKeyword = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        filter.name = { $regex: escapedKeyword, $options: "i" };
+      }
+
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const [products, total] = await Promise.all([
+        Product.find(filter)
+          .populate("category", "name _id") 
+          .select("-__v") // bỏ field không cần thiết
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(), // giảm RAM
+        Product.countDocuments(filter)
+      ]);
+
+      res.status(200).json({
+        success: true,
+        total,
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / limit),
+        products
+      });
+
+    } catch (error) {
+      console.error("Get Products Error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error"
+      });
     }
-    
-    if (keyword) {
-      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      filter.name = { $regex: escapedKeyword, $options: "i" };
+  };
+
+  exports.getProductById = async (req, res) => {
+    const product = await Product.findById(req.params.id);
+
+    if (!product || !product.isActive) {
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    res.json(product);
+  };
 
-    const [products, total] = await Promise.all([
-      Product.find(filter)
-        .populate("category", "name _id") 
-        .select("-__v") // bỏ field không cần thiết
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(), // giảm RAM
-      Product.countDocuments(filter)
-    ]);
+  exports.createProduct = async (req, res) => {
+    try {
+      let imageUrls = [];
+
+      // 🔥 Nếu có upload ảnh
+      if (req.files && req.files.length > 0) {
+        imageUrls = req.files.map(file => file.path);
+      }
+
+      // 🔥 Nếu frontend gửi images dạng JSON
+      if (!imageUrls.length && req.body?.images) {
+        imageUrls = Array.isArray(req.body.images)
+          ? req.body.images
+          : [req.body.images];
+      }
+
+      const product = await Product.create({ ...req.body, images: imageUrls });
+
+      res.status(201).json(product);
+
+    } catch (error) {
+      console.error("Create product error:");
+      console.error(error);
+      res.status(500).json({
+        message: error.message
+      });
+    }
+  };
+
+exports.updateProduct = async (req, res) => {
+  try {
+    console.log(req.body)
+    console.log(req.files)
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    let imageUrls = [...product.images]; 
+
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => file.path);
+      imageUrls = [...imageUrls, ...newImages];
+    }
+
+    if (!req.files?.length && req.body?.images) {
+      imageUrls = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+    }
+
+    const updateData = { ...req.body, images: imageUrls };
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,
-      total,
-      currentPage: Number(page),
-      totalPages: Math.ceil(total / limit),
-      products
+      message: "Product updated successfully",
+      product: updatedProduct
     });
 
   } catch (error) {
-    console.error("Get Products Error:", error);
+    console.error("Update product error:", error);
     res.status(500).json({
       success: false,
       message: "Server error"
@@ -47,49 +137,93 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+  exports.deleteProduct = async (req, res) => {
+    try {
+      const { id } = req.params;
 
-/**
- * 🔍 GET PRODUCT DETAIL
- */
-exports.getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id);
+      const product = await Product.findById(id);
 
-  if (!product || !product.isActive) {
-    return res.status(404).json({ message: "Product not found" });
-  }
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found"
+        });
+      }
 
-  res.json(product);
-};
+      // 🔥 Kiểm tra có order chưa hoàn thành chứa sản phẩm này không
+      const activeOrder = await Order.findOne({
+        status: { $in: ["pending", "confirmed"] },
+        "items.product": id
+      });
 
-/**
- * ➕ ADMIN CREATE PRODUCT
- */
-exports.createProduct = async (req, res) => {
-  const product = await Product.create(req.body);
-  res.status(201).json(product);
-};
+      // Nếu có order chưa hoàn thành
+      if (activeOrder) {
+        product.isSelling = false;
+        await product.save();
 
-/**
- * ✏️ ADMIN UPDATE PRODUCT
- */
-exports.updateProduct = async (req, res) => {
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
+        return res.status(400).json({
+          success: false,
+          message:
+            "Product is in active orders. Selling disabled instead of deleting."
+        });
+      }
 
-  res.json(product);
-};
+      if (product.isSelling) {
+        product.isSelling = false;
+        await product.save();
 
-/**
- * 🛑 ADMIN SOFT DELETE
- */
-exports.deleteProduct = async (req, res) => {
-  await Product.findByIdAndUpdate(
-    req.params.id,
-    { isActive: false }
-  );
+        return res.status(400).json({
+          success: false,
+          message:
+            "Product is currently selling. Selling disabled instead of deleting."
+        });
+      }
 
-  res.json({ message: "Product disabled" });
-};
+      await Product.findByIdAndDelete(id);
+
+      res.status(200).json({
+        success: true,
+        message: "Product permanently deleted"
+      });
+
+    } catch (error) {
+      console.error("Delete product error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error"
+      });
+    }
+  };
+
+  exports.updateStatus = async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const product = await Product.findById(id);
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found"
+        });
+      }
+
+      // 🔥 Đảo trạng thái
+      product.isSelling = !product.isSelling;
+
+      await product.save();
+
+      res.status(200).json({
+        success: true,
+        message: `Product is now ${product.isSelling ? "selling" : "stopped"}`,
+        isSelling: product.isSelling
+      });
+
+    } catch (error) {
+      console.error("Update status error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error"
+      });
+    }
+  };

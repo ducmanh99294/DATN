@@ -25,7 +25,7 @@ const timeSlotSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["available", "booked"],
+      enum: ["available", "booked", "cancelled"],
       default: "available",
     },
 

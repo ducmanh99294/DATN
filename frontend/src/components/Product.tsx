@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../assets/product.css';
-import { getProducts } from '../api/productApi';
+import { getAllProducts } from '../api/productApi';
 import { getCategories } from '../api/categoryApi';
 import { useCart } from '../context/CartContext';
 
@@ -31,7 +31,6 @@ export interface Product {
   updatedAt?: string;
 }
 
-
 interface FilterOptions {
   categories: string[];
   priceRange: [number, number];
@@ -47,7 +46,6 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Product[]>([]);
   const [keyword, setKeyword] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const [activeFilters, setActiveFilters] = useState<FilterOptions>({
     categories: [],
     priceRange: [0, 500000],
@@ -59,157 +57,57 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
+    const [filters, setFilters] = useState({
+      category: "all",
+      search: "",
+    });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const query = searchParams.get('q') || '';
-    setKeyword(query);
-    
-    // Apply search filter
-    if (query) {
-      handleSearch(query);
-    }
-  }, [location.search]);
-
-  // Apply filters whenever products or filters change
-  useEffect(() => {
-    applyFilters();
-  }, [products, activeFilters, selectedCategory]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   useEffect(() => {
   const fetchData = async () => {
-    const res = await getProducts({
-      keyword,
-      category: selectedCategory,
-      page,
-      limit
-    });
-
-    setProducts(res.products);
+    try{
+      setLoading(true);
+      const res = await getAllProducts(`?page=${currentPage}&category=${filters.category}&search=${filters.search}`);
+      setProducts(res.products);
+      setTotalPages(res.totalPages)
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   fetchData();
-}, [keyword, page, limit]);
+}, [currentPage, filters.category, filters.search]);
 
-useEffect(() => {
-  const fetchCategories = async () => {
-    const res = await getCategories();
-    setCategories(res);
-  };
-
-  fetchCategories();
-}, []);
+  useEffect(() => {
+    const fetchCategories = async () => {
+    try {
+      setCategoryLoading(true)
+        const res = await getCategories();
+        setCategories(res);
+    } catch (e) {
+        console.log(e)
+    } finally {
+      setCategoryLoading(false)
+    }
+  }
+    fetchCategories();
+  }, []);
 
   // Handle search from Home page
-  const handleSearch = (query: string) => {
-    setKeyword(query);
-    
-    if (query.trim() === '') {
-      setFilteredProducts(products);
-      return;
-    }
-
-    const searchTerms = query.toLowerCase().split(' ');
-    const results = products.filter(product => {
-      if(!product.uses) return;
-      if(!product.description) return;
-      const productText = `
-        ${product.name.toLowerCase()}
-        ${product.category.name.toLowerCase()}
-        ${product.description.toLowerCase()}
-        ${product.uses.split(",").join(' ').toLowerCase()}
-
-      `;
-      
-      return searchTerms.every(term => productText.includes(term));
-    });
-
-    setFilteredProducts(results);
-    setPage(1);
+   const handleSearch = (key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
   };
 
-  // Apply all active filters
-  const applyFilters = () => {
-    let result = [...products];
-    // Search filter
-    if (keyword.trim() !== '') {
-      const searchTerms = keyword.toLowerCase().split(' ');
-      result = result.filter(product => {
-      if(!product.uses) return;
-      if(!product.description) return;
-
-        const productText = `
-          ${product.name.toLowerCase()}
-          ${product.category.name.toLowerCase()}
-          ${product.description.toLowerCase()}
-          ${product.uses.split(",").join(' ').toLowerCase()}
-        `;
-        
-        return searchTerms.every(term => productText.includes(term));
-      });
-    }
-
-    // Category filter
-    if (selectedCategory !== 'all') {
-      result = result.filter(product => product.category.name === selectedCategory);
-    }
-
-    // Price range filter
-    result = result.filter(product => 
-      product.price >= activeFilters.priceRange[0] && 
-      product.price <= activeFilters.priceRange[1]
-    );
-
-    // Prescription only filter
-    if (activeFilters.prescriptionOnly) {
-      result = result.filter(product => product.prescriptionRequired);
-    }
-
-    // In stock filter
-    if (activeFilters.inStock) {
-      result = result.filter(product => product.stock > 0);
-    }
-
-    // Sort products
-    result.sort((a, b) => {
-      switch (activeFilters.sortBy) {
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        case 'price-asc':
-          return a.price - b.price;
-        case 'price-desc':
-          return b.price - a.price;
-        case 'rating':
-          return b.rating - a.rating;
-        default:
-          return 0;
-      }
-    });
-
-    setFilteredProducts(result);
-    setPage(1);
-  };
-
-  // Get unique categories
   const categoryOptions = [
     { _id: "all", name: "Tất cả" },
     ...categories
   ];
-
-  // Calculate pagination
-  const indexOfLastProduct = page * limit;
-  const indexOfFirstProduct = indexOfLastProduct - limit;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(filteredProducts.length / limit);
-
-  // Handle category change
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setPage(1);
-  };
 
   // Handle price range change
   const handlePriceRangeChange = (min: number, max: number) => {
@@ -267,7 +165,7 @@ useEffect(() => {
     // In real app, this would open a modal
     alert(`Xem nhanh: ${product.name}`);
   };
-
+console.log(selectedCategory)
   return (
     <div className="products-container">
       {/* Hero Section */}
@@ -285,14 +183,10 @@ useEffect(() => {
                   type="text"
                   placeholder="Tìm kiếm thuốc, thiết bị y tế, thương hiệu..."
                   value={keyword}
-                  onChange={(e) => {
-                    setKeyword(e.target.value);
-                    handleSearch(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => setKeyword(e.target.value)}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
-                      navigate(`/products?q=${encodeURIComponent(keyword)}`);
+                      handleSearch("search", keyword);
                     }
                   }}
                 />
@@ -310,7 +204,7 @@ useEffect(() => {
               </div>
               <button 
                 className="search-btn"
-                onClick={() => navigate(`/products?q=${encodeURIComponent(keyword)}`)}
+                onClick={() => handleSearch("search", keyword)}
               >
                 <i className="fas fa-search"></i>
                 Tìm kiếm
@@ -319,9 +213,13 @@ useEffect(() => {
 
             {/* Quick Categories */}
             <div className="quick-categories">
+            {categoryLoading ? (
+                <p>Đang tải danh mục...</p>
+            ) : (
+              <>
               <button 
                 className={`quick-category ${selectedCategory === 'all' ? 'active' : ''}`}
-                onClick={() => handleCategoryChange('all')}
+                onClick={() => handleSearch('category','all')}
               >
                 <i className="fas fa-th-large"></i>
                 Tất cả
@@ -330,12 +228,14 @@ useEffect(() => {
                 <button
                   key={category._id}
                   className={`quick-category ${selectedCategory === category.name ? 'active' : ''}`}
-                  onClick={() => handleCategoryChange(category.name)}
+                  onClick={() => handleSearch('category', category._id)}
                 >
                   <i className="fas fa-pills"></i>
                   {category.name}
                 </button>
               ))}
+              </>
+              )}
             </div>
           </div>
         </div>
@@ -364,12 +264,21 @@ useEffect(() => {
                 <i className="fas fa-tags"></i>
                 Danh mục
               </h4>
+            {categoryLoading ? (
+              <div className="loading-category-container">
+                <div className="spinner"></div>
+                <p>Đang tải danh mục...</p>
+              </div>
+            ) : (
               <div className="category-list">
                 {categories.map(category => (
                   <button
                     key={category._id}
                     className={`category-item ${selectedCategory === category.name ? 'active' : ''}`}
-                    onClick={() => handleCategoryChange(category.name)}
+                    onClick={() => {
+                      handleSearch('category', category._id);
+                      setSelectedCategory(category.name);
+                    }}
                   >
                     {category.name === 'all' ? (
                       <>
@@ -391,6 +300,7 @@ useEffect(() => {
                   </button>
                 ))}
               </div>
+              )}
             </div>
 
             {/* Price Filter */}
@@ -499,266 +409,268 @@ useEffect(() => {
 
           {/* Main Content */}
           <div className="products-main">
-            {/* Header with Sort and View Toggle */}
-            <div className="products-header">
-              <div className="results-info">
-                <h2>Tất cả sản phẩm</h2>
-                <p>
-                  Hiển thị {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} 
-                  trong {filteredProducts.length} sản phẩm
-                  {keyword && ` cho "${keyword}"`}
-                </p>
+            {loading ? (
+              <div className="loading-container">
+                <div className="spinner"></div>
+                <p>Đang tải sản phẩm...</p>
               </div>
-              
-              <div className="header-controls">
-                <button 
-                  className="mobile-filter-btn"
-                  onClick={() => setShowFilters(true)}
-                >
-                  <i className="fas fa-filter"></i>
-                  Bộ lọc
-                </button>
+            ) : (
+            <>
+              <div className="products-header">
+                <div className="results-info">
+                  <h2>Tất cả sản phẩm</h2>
+                </div>
                 
-                <div className="sort-controls">
-                  <span className="sort-label">
-                    <i className="fas fa-sort-amount-down"></i>
-                    Sắp xếp:
-                  </span>
-                  <select
-                    value={activeFilters.sortBy}
-                    onChange={(e) => handleSortChange(e.target.value as FilterOptions['sortBy'])}
-                    className="sort-select"
+                <div className="header-controls">
+                  <button 
+                    className="mobile-filter-btn"
+                    onClick={() => setShowFilters(true)}
                   >
-                    <option value="name-asc">Tên A-Z</option>
-                    <option value="name-desc">Tên Z-A</option>
-                    <option value="price-asc">Giá thấp đến cao</option>
-                    <option value="price-desc">Giá cao đến thấp</option>
-                    <option value="rating">Đánh giá cao nhất</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Filters Display */}
-            {selectedCategory !== 'all' && (
-              <div className="active-filters">
-                <div className="active-filter">
-                  <span>Danh mục: {selectedCategory}</span>
-                  <button onClick={() => setSelectedCategory('all')}>
-                    <i className="fas fa-times"></i>
+                    <i className="fas fa-filter"></i>
+                    Bộ lọc
                   </button>
+                  
+                  <div className="sort-controls">
+                    <span className="sort-label">
+                      <i className="fas fa-sort-amount-down"></i>
+                      Sắp xếp:
+                    </span>
+                    <select
+                      value={activeFilters.sortBy}
+                      onChange={(e) => handleSortChange(e.target.value as FilterOptions['sortBy'])}
+                      className="sort-select"
+                    >
+                      <option value="name-asc">Tên A-Z</option>
+                      <option value="name-desc">Tên Z-A</option>
+                      <option value="price-asc">Giá thấp đến cao</option>
+                      <option value="price-desc">Giá cao đến thấp</option>
+                      <option value="rating">Đánh giá cao nhất</option>
+                    </select>
+                  </div>
                 </div>
-                {activeFilters.prescriptionOnly && (
+              </div> 
+
+              {/* Active Filters Display */}
+              {selectedCategory !== 'all' && (
+                <div className="active-filters">
                   <div className="active-filter">
-                    <span>Chỉ thuốc kê đơn</span>
-                    <button onClick={() => setActiveFilters(prev => ({ ...prev, prescriptionOnly: false }))}>
+                    <span>Danh mục: {selectedCategory}</span>
+                    <button onClick={() => setSelectedCategory('all')}>
                       <i className="fas fa-times"></i>
                     </button>
                   </div>
-                )}
-                {activeFilters.inStock && (
-                  <div className="active-filter">
-                    <span>Chỉ còn hàng</span>
-                    <button onClick={() => setActiveFilters(prev => ({ ...prev, inStock: false }))}>
-                      <i className="fas fa-times"></i>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Products Grid */}
-            {currentProducts.length > 0 ? (
-              <>
-                <div className="products-grid">
-                  {currentProducts.map(product => (
-                    <div key={product._id} className="product-card">
-                      {/* Product Image */}
-                      <div className="product-image">
-                        <img src={product.images[0]} alt={product.name} />
-                        {product.discount && (
-                          <div className="discount-badge">
-                            -{product.discount}%
-                          </div>
-                        )}
-                        {product.prescriptionRequired && (
-                          <div className="prescription-badge">
-                            <i className="fas fa-prescription"></i>
-                            Kê đơn
-                          </div>
-                        )}
-                        {product.stock === 0 && (
-                          <div className="out-of-stock">
-                            <i className="fas fa-times-circle"></i>
-                            Hết hàng
-                          </div>
-                        )}
-                        <div className="image-overlay">
-                          <button 
-                            className="quick-view-btn"
-                            onClick={() => handleQuickView(product)}
-                          >
-                            <i className="fas fa-eye"></i>
-                            Xem nhanh
-                          </button>
-                          <button 
-                            className="add-to-cart-btn"
-                            onClick={() => addToCart(product._id)}
-                            disabled={product.stock === 0}
-                          >
-                            <i className="fas fa-cart-plus"></i>
-                            Thêm vào giỏ
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Product Info */}
-                      <div className="product-info">
-                        <div className="product-category">
-                          <i className="fas fa-tag"></i>
-                          {product.category.name}
-                        </div>
-                        
-                        <h3 className="product-name">{product.name}</h3>
-                        
-                        <div className="product-manufacturer">
-                          <i className="fas fa-industry"></i>
-                          {/* {product.manufacturer} */}test
-                        </div>
-                        
-                        {renderRating(product.rating)}
-                        
-                        <div className="product-description">
-                          {product.description}
-                        </div>
-                        
-                      <div className="product-uses">
-                      <strong>Công dụng:</strong>
-                      <div className="uses-tags">
-                        {product?.uses
-                          ?.split(",")
-                          .map((item) => item.trim())
-                          .slice(0, 3)
-                          .map((use, idx) => (
-                            <span key={idx} className="use-tag">
-                              {use}
-                            </span>
-                          ))}
-
-                        {product.uses && product.uses.split(",").length > 3 && (
-                          <span className="use-tag more">
-                            +{product.uses.split(",").length - 3}
-                          </span>
-                        )}
-                      </div>
+                  {activeFilters.prescriptionOnly && (
+                    <div className="active-filter">
+                      <span>Chỉ thuốc kê đơn</span>
+                      <button onClick={() => setActiveFilters(prev => ({ ...prev, prescriptionOnly: false }))}>
+                        <i className="fas fa-times"></i>
+                      </button>
                     </div>
-                      </div>
+                  )}
+                  {activeFilters.inStock && (
+                    <div className="active-filter">
+                      <span>Chỉ còn hàng</span>
+                      <button onClick={() => setActiveFilters(prev => ({ ...prev, inStock: false }))}>
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                      {/* Product Price & Actions */}
-                      <div className="product-footer">
-                        <div className="product-price">
-                          {product.discount ? (
-                            <div className="product-price">
-                              <div className="current-price">
-                                {formatPrice(product.price * (100 - product.discount)/100)}
-                              </div>
-                              <div className="original-price">
-                                {formatPrice(product.price)}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="current-price">
-                              {formatPrice(product.price)}
+              {/* Products Grid */}
+              {products.length > 0 ? (
+                <>
+                  <div className="products-grid">
+                    {products.map(product => (
+                      <div key={product._id} className="product-card">
+                        {/* Product Image */}
+                        <div className="product-image">
+                          <img src={product.images[0]} alt={product.name} />
+                          {product.discount && (
+                            <div className="discount-badge">
+                              -{product.discount}%
                             </div>
                           )}
+                          {product.prescriptionRequired && (
+                            <div className="prescription-badge">
+                              <i className="fas fa-prescription"></i>
+                              Kê đơn
+                            </div>
+                          )}
+                          {product.stock === 0 && (
+                            <div className="out-of-stock">
+                              <i className="fas fa-times-circle"></i>
+                              Hết hàng
+                            </div>
+                          )}
+                          <div className="image-overlay">
+                            <button 
+                              className="quick-view-btn"
+                              onClick={() => handleQuickView(product)}
+                            >
+                              <i className="fas fa-eye"></i>
+                              Xem nhanh
+                            </button>
+                            <button 
+                              className="add-to-cart-btn"
+                              onClick={() => addToCart(product._id)}
+                              disabled={product.stock === 0}
+                            >
+                              <i className="fas fa-cart-plus"></i>
+                              Thêm vào giỏ
+                            </button>
+                          </div>
                         </div>
-                        
-                        <div className="product-stock">
-                          <i className={`fas ${product.stock > 0 ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
-                          {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : 'Hết hàng'}
-                        </div>
-                        
-                        <div className="product-actions">
-                          <button 
-                            className="buy-now-btn"
-                            onClick={() => addToCart(product._id)}
-                            disabled={product.stock === 0}
-                          >
-                            <i className="fas fa-shopping-cart"></i>
-                            Mua ngay
-                          </button>
-                          <button 
-                            className="details-btn"
-                            onClick={() => navigate(`/product/${product._id}`)}
-                          >
-                            <i className="fas fa-info-circle"></i>
-                            Chi tiết
-                          </button>
+
+                        {/* Product Info */}
+                        <div className="product-info">
+                          <div className="product-category">
+                            <i className="fas fa-tag"></i>
+                            {product.category.name}
+                          </div>
+                          
+                          <h3 className="product-name">{product.name}</h3>
+                          
+                          <div className="product-manufacturer">
+                            <i className="fas fa-industry"></i>
+                            {/* {product.manufacturer} */}test
+                          </div>
+                          
+                          {renderRating(product.rating)}
+                          
+                          <div className="product-description">
+                            {product.description}
+                          </div>
+                          
+                        <div className="product-uses">
+                        <strong>Công dụng:</strong>
+                        <div className="uses-tags">
+                          {product?.uses
+                            ?.split(",")
+                            .map((item) => item.trim())
+                            .slice(0, 3)
+                            .map((use, idx) => (
+                              <span key={idx} className="use-tag">
+                                {use}
+                              </span>
+                            ))}
+
+                          {product.uses && product.uses.split(",").length > 3 && (
+                            <span className="use-tag more">
+                              +{product.uses.split(",").length - 3}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                        </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="pagination">
-                    <button 
-                      className={`page-btn ${page === 1 ? 'disabled' : ''}`}
-                      onClick={() => setPage(prev => prev - 1)} disabled={page === 1}
-                    >
-                      <i className="fas fa-chevron-left"></i>
-                      Trước
-                    </button>
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (page <= 3) {
-                        pageNum = i + 1;
-                      } else if (page >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = page - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          className={`page-btn ${page === pageNum ? 'active' : ''}`}
-                          onClick={() => setPage(pageNum)}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    
-                    <button 
-                      className={`page-btn ${page === totalPages ? 'disabled' : ''}`}
-                      onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={page === totalPages}
-                    >
-                      Sau
-                      <i className="fas fa-chevron-right"></i>
-                    </button>
+                        {/* Product Price & Actions */}
+                        <div className="product-footer">
+                          <div className="product-price">
+                            {product.discount ? (
+                              <div className="product-price">
+                                <div className="current-price">
+                                  {formatPrice(product.price * (100 - product.discount)/100)}
+                                </div>
+                                <div className="original-price">
+                                  {formatPrice(product.price)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="current-price">
+                                {formatPrice(product.price)}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="product-stock">
+                            <i className={`fas ${product.stock > 0 ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
+                            {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : 'Hết hàng'}
+                          </div>
+                          
+                          <div className="product-actions">
+                            <button 
+                              className="buy-now-btn"
+                              onClick={() => addToCart(product._id)}
+                              disabled={product.stock === 0}
+                            >
+                              <i className="fas fa-shopping-cart"></i>
+                              Mua ngay
+                            </button>
+                            <button 
+                              className="details-btn"
+                              onClick={() => navigate(`/product/${product._id}`)}
+                            >
+                              <i className="fas fa-info-circle"></i>
+                              Chi tiết
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="no-results">
-                <div className="no-results-icon">
-                  <i className="fas fa-search"></i>
-                </div>
-                <h3>Không tìm thấy sản phẩm</h3>
-                <p>Không có sản phẩm nào phù hợp với tiêu chí tìm kiếm của bạn.</p>
-                <button className="reset-search-btn" onClick={handleResetFilters}>
-                  <i className="fas fa-redo"></i>
-                  Xóa tìm kiếm & bộ lọc
-                </button>
-              </div>
-            )}
 
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      <button 
+                        className={`page-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                        onClick={() => setCurrentPage(prev => prev - 1)} disabled={currentPage === 1}
+                      >
+                        <i className="fas fa-chevron-left"></i>
+                        Trước
+                      </button>
+                      
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (page <= 3) {
+                          pageNum = i + 1;
+                        } else if (page >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = page - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            className={`page-btn ${page === pageNum ? 'active' : ''}`}
+                            onClick={() => setPage(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      
+                      <button 
+                        className={`page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, currentPage))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Sau
+                        <i className="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="no-results">
+                  <div className="no-results-icon">
+                    <i className="fas fa-search"></i>
+                  </div>
+                  <h3>Không tìm thấy sản phẩm</h3>
+                  <p>Không có sản phẩm nào phù hợp với tiêu chí tìm kiếm của bạn.</p>
+                  <button className="reset-search-btn" onClick={handleResetFilters}>
+                    <i className="fas fa-redo"></i>
+                    Xóa tìm kiếm & bộ lọc
+                  </button>
+                </div>
+              )}
+            </>
+            )}
             {/* Category Banner */}
             <div className="category-banner">
               <div className="banner-content">

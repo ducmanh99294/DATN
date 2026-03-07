@@ -6,7 +6,8 @@ const {
   generateDoctorSlots,
   createTimeSlot,
   getSlotsByDoctorAndWeek,
-  deleteTimeSlot
+  deleteTimeSlot,
+  updateStatusTimeSlot
 } = require("../controllers/timeSlotController");
 
 const auth = require("../middlewares/authMiddleware");
@@ -22,5 +23,6 @@ router.get("/", auth, getSlotsByDoctorAndDate);
 router.post("/generate", auth, doctor, generateDoctorSlots);
 router.post("/",  auth, doctor, createTimeSlot);
 router.get("/week", auth, getSlotsByDoctorAndWeek);
+router.put("/:id",  auth, doctor, updateStatusTimeSlot);
 router.delete("/:id", auth, deleteTimeSlot);
 module.exports = router;

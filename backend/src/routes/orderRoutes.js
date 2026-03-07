@@ -10,5 +10,7 @@ router.get("/:id", auth, orderCtrl.getOrderDetail);
 
 // admin
 router.put("/:id/status", auth, admin, orderCtrl.updateOrderStatus);
+router.put("/:id/cancel", auth, admin, orderCtrl.cancelOrder);
+router.get("/", auth, admin, orderCtrl.getAllOrders);
 
 module.exports = router;

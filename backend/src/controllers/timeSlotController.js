@@ -162,42 +162,70 @@ const TimeSlot = require("../models/TimeSlot");
     }
   };
 
-
 /**
  * Đánh dấu slot đã được đặt
  */
-exports.bookTimeSlot = async (req, res) => {
-  try {
-    const { slotId, appointmentId } = req.body;
+  exports.bookTimeSlot = async (req, res) => {
+    try {
+      const { slotId, appointmentId } = req.body;
 
-    const slot = await TimeSlot.findOneAndUpdate(
-      {
-        _id: slotId,
-        status: "available",
-      },
-      {
-        status: "booked",
-        appointmentId,
-      },
-      { new: true }
-    );
+      const slot = await TimeSlot.findOneAndUpdate(
+        {
+          _id: slotId,
+          status: "available",
+        },
+        {
+          status: "booked",
+          appointmentId,
+        },
+        { new: true }
+      );
 
-    if (!slot) {
-      return res.status(400).json({
-        message: "Slot không khả dụng",
+      if (!slot) {
+        return res.status(400).json({
+          message: "Slot không khả dụng",
+        });
+      }
+
+      res.json({
+        message: "Đặt lịch thành công",
+        data: slot,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Đặt slot thất bại",
       });
     }
+  };
 
-    res.json({
-      message: "Đặt lịch thành công",
-      data: slot,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Đặt slot thất bại",
-    });
-  }
-};
+  exports.updateStatusTimeSlot = async (req, res) => {
+    try {
+      const { slotId, status } = req.body;
+
+      const slot = await TimeSlot.findOneAndUpdate(
+        {
+          _id: slotId,
+          status: status,
+        },
+        { new: true }
+      );
+
+      if (!slot) {
+        return res.status(400).json({
+          message: "Slot không khả dụng",
+        });
+      }
+
+      res.json({
+        message: "Đặt lịch thành công",
+        data: slot,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Đặt slot thất bại",
+      });
+    }
+  };
 
   exports.deleteTimeSlot = async (req, res) => {
     try {

@@ -3,6 +3,7 @@ const router = express.Router()
 const userCtrl = require("../controllers/userController");
 const auth = require("../middlewares/authMiddleware");
 const admin = require("../middlewares/adminMiddleware");
+const upload = require("../middlewares/upload");
 const passport = require("../controllers/passport");
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 
@@ -49,17 +50,19 @@ router.get(
   }
 );
 
-router.post("/guest", userCtrl.createGuest);
+router.post("/", userCtrl.createGuest);
 router.post("/register", userCtrl.register);
 router.post("/login", userCtrl.login);
 router.post("/refresh-token", userCtrl.refreshToken);
 router.post("/logout", userCtrl.logout);
 router.get("/me", auth, userCtrl.getMe);
-router.put("/avatar", auth, userCtrl.updateAvatar);
+router.put("/avatar", auth, upload.single("image"), userCtrl.updateAvatar);
 router.put("/profile", auth, userCtrl.updateProfile);
 router.put("/change-password", auth, userCtrl.changePassword);
+router.delete("/users/:id", auth, admin, userCtrl.deleteUser);
 //admin
-router.post("/ban", auth, admin, userCtrl.banUser);
-router.post("/unban", auth, admin, userCtrl.unbanUser);
+router.put("/:id/ban", auth, admin, userCtrl.banUser);
+router.put("/:id/unban", auth, admin, userCtrl.unbanUser);
+router.get("/", auth, admin, userCtrl.getAllUsers);
 
 module.exports = router

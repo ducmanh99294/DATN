@@ -137,40 +137,19 @@ const Account = () => {
   };
 
   // Handle avatar change
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        notify.warning('Kích thước ảnh không được vượt quá 5MB');
-        return;
-      }
-      
-      if (!file.type.startsWith('image/')) {
-        notify.warning('Vui lòng chọn file hình ảnh');
-        return;
-      }
+    if (!file) return;
 
-      setAvatarFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) {
+      notify.warning("Ảnh không được vượt quá 5MB", "Thông báo");
+      return;
     }
-  };
 
-  // Simulate upload progress
-  const simulateUpload = () => {
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 100);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
   // Save profile changes
@@ -205,7 +184,9 @@ const Account = () => {
 
       // nếu có avatar thì update tiếp
       if (avatarFile) {
-        await updateAvatar(avatarFile);
+        const formData = new FormData();
+        formData.append("image", avatarFile);
+        const data = await updateAvatar(formData);
       }
 
       notify.success("Cập nhật thành công", "Thông báo");
@@ -215,7 +196,8 @@ const Account = () => {
         fullName: profileForm.name,
         phone: profileForm.phone,
         email: profileForm.email,
-        gender: profileForm.gender
+        gender: profileForm.gender,
+        image: avatarPreview,
       }));
     } catch (error) {
       console.error(error);

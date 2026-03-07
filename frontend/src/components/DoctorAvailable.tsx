@@ -9,7 +9,6 @@ const DoctorSchedule = () => {
   const { doctor } = useAuthContext();
   const [selectedDate, setSelectedDate] = useState('');
   const [timeSlots, setTimeSlots] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [currentWeek, setCurrentWeek] = useState(0);
   const [week ,setWeek] = useState<any>();
   //loading
@@ -379,15 +378,21 @@ const DoctorSchedule = () => {
 
   // Toggle slot status
     const toggleSlotStatus = async (slot: any) => {
-      const newStatus = slot.status === 'available' ? 'cancelled' : 'available';
+      try{
+        const newStatus = slot.status === 'available' ? 'cancelled' : 'available';
 
-      await updateTimeSlotApi(slot._id, newStatus);
+        await updateTimeSlotApi(slot._id, newStatus);
 
-      setTimeSlots(prev =>
-        prev.map(s =>
-          s._id === slot._id ? { ...s, status: newStatus } : s
-        )
-      );
+        setTimeSlots(prev =>
+          prev.map(s =>
+            s._id === slot._id ? { ...s, status: newStatus } : s
+          )
+        );
+        notify.success("Đã thay đổi trạng thái thành công", 'thông báo')
+      } catch (e) {
+        notify.error("Có lỗi xảy ra, vui lòng thử lại sau", 'thông báo')
+        console.log(e)
+      }
     };
 
   // Tính tổng số slot

@@ -7,8 +7,9 @@ const {
 } = require("../utils/jwt");
 
 exports.createGuest = async (req, res) => {
-  const guest = await User.create({ role: "guest" });
-
+  const user = req.body;
+  const guest = await User.create(user);
+  console.log("Guest created:", guest);
   const accessToken = generateAccessToken(guest);
   const refreshToken = generateRefreshToken(guest);
 
@@ -53,7 +54,8 @@ exports.login = async (req, res) => {
   if (!user) return res.status(401).json({ message: "Invalid email" });
   
   if (user.isBanned) {
-    return res.status(403).json({
+    return res.json({
+      isBanned: user.isBanned,
       message: "Your account has been banned",
       reason: user.banReason
     });
@@ -66,11 +68,13 @@ exports.login = async (req, res) => {
   const refreshToken = generateRefreshToken(user);
 
   user.refreshToken = refreshToken;
+  user.lastLogin = new Date();
   await user.save();
 
   res.cookie("accessToken", accessToken, { httpOnly: true ,sameSite: 'lax'});
   res.cookie("refreshToken", refreshToken, { httpOnly: true ,sameSite: 'lax'});
 
+  
   res.json({
     message: "Login success",
     role: user.role
@@ -126,12 +130,29 @@ exports.updateProfile = async (req, res) => {
 };
 
 exports.updateAvatar = async (req, res) => {
-  const user = await User.findById(req.user.id);
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Không có file upload",
+      });
+    }
 
-  user.avatar = req.file.path; // hoặc cloudinary url
-  await user.save();
+    const user = await User.findById(req.user.id);
 
-  res.json(user);
+    user.image = req.file.path; 
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
 
 exports.changePassword = async (req, res) => {
@@ -160,15 +181,54 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.banUser = async (req, res) => {
-  const { userId, reason } = req.body;
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
 
-  await User.findByIdAndUpdate(userId, {
-    isBanned: true,
-    bannedAt: new Date(),
-    banReason: reason || "Vi phạm điều khoản"
-  });
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User không tồn tại" });
+    }
 
-  res.json({ message: "User banned" });
+    // Không cho admin tự ban chính mình
+    if (req.user.id === id) {
+      return res.status(400).json({ message: "Không thể tự ban chính mình" });
+    }
+
+    user.isBanned = true;
+    user.bannedAt = new Date();
+    user.banReason = reason || "Vi phạm điều khoản";
+    user.refreshToken = null; // ép logout
+    await user.save();
+
+    res.json({ message: "User đã bị ban thành công" });
+
+  } catch (err) {
+    console.error("Ban user error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User không tồn tại" });
+    }
+
+    user.isBanned = false;
+    user.bannedAt = null;
+    user.banReason = null;
+    await user.save();
+
+    res.json({ message: "User đã được gỡ ban" });
+
+  } catch (err) {
+    console.error("Unban user error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };
 
 exports.getMe = async (req, res) => {
@@ -185,19 +245,74 @@ exports.getMe = async (req, res) => {
       reason: user.banReason
     });
   }
-
+  
   res.json(user);
 };
 
-exports.unbanUser = async (req, res) => {
-  const { userId } = req.body;
+exports.getAllUsers = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      role
+    } = req.query;
 
-  await User.findByIdAndUpdate(userId, {
-    isBanned: false,
-    bannedAt: null,
-    banReason: null,
-    refreshToken: null // buộc login lại
-  });
+    const query = {};
 
-  res.json({ message: "User unbanned" });
+    // 🔎 Search theo tên hoặc email
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // 🎭 Filter theo role
+    if (role && role !== "all") {
+      query.role = role;
+    }
+
+    const users = await User.find(query)
+      .select("-password -refreshToken")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+      users,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
+      totalUsers: total
+    });
+
+  } catch (error) {
+    console.error("Get all users error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    // Không cho admin tự xoá chính mình
+    if (req.user.id === id) {
+      return res.status(400).json({ message: "Không thể xoá chính mình" });
+    }
+
+    await User.findByIdAndDelete(id);
+
+    res.json({ message: "Xoá người dùng thành công" });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };

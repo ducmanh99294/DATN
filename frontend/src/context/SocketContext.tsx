@@ -13,10 +13,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    const newSocket = io("http://localhost:5173", {
-      auth: { token }
+    const newSocket = io("http://localhost:3000", {
+      withCredentials: true
     });
 
     setSocket(newSocket);

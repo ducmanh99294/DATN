@@ -1,19 +1,30 @@
 const express = require("express");
 const router = express.Router();
-const newsController = require("../controllers/news.controller");
+const newsController = require("../controllers/newController");
 
-const auth = require("../middlewares/auth");
-const admin = require("../middlewares/admin");
+const auth = require("../middlewares/authMiddleware");
+const admin = require("../middlewares/adminMiddleware");
 const upload = require("../middlewares/upload");
 
 // public
 router.get("/", newsController.getAllNews);
-router.get("/:slug", newsController.getNewsBySlug);
+router.get("/:id", newsController.getAllNewsById);
+router.get("/slug/:slug", newsController.getNewsBySlug);
 router.post("/:id/like", newsController.likeNews);
 
 // admin
-router.post("/", auth, admin, upload.single("thumbnail"), newsController.createNews);
-router.put("/:id", auth, admin, upload.single("thumbnail"), newsController.updateNews);
+router.post("/", auth, admin,   
+  upload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]), newsController.createNews);
+
+router.put("/:id", auth, admin, 
+  upload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]), newsController.updateNews);
+  
 router.delete("/:id", auth, admin, newsController.deleteNews);
 
 module.exports = router;

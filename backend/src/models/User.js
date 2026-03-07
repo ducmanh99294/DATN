@@ -17,8 +17,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?semt=ais_hybrid&w=740&q=80'
   },
+  dateOfBirth: Date,
   password: {
     type: String,
+    default: '$2b$10$B7YsNyJD5RNz9v/rZUSuO.ezgzYZRzvj/bDwY.EG.ejSrQlrdz2rm'
   },
   andress:{
     type: String,
@@ -32,6 +34,7 @@ const userSchema = new mongoose.Schema({
     enum: ["patient", "doctor", 'admin'],
     default: 'patient'
   },
+  
   refreshToken: {
     type: String
   },
@@ -39,10 +42,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  image: String,
   
   bannedAt: Date,
-  banReason: String
+  banReason: String,
+
+  lastLogin: {
+    type: Date,
+    default: null
+  }
 }, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema)
