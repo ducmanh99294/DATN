@@ -28,4 +28,5 @@ export const deleteNews = async (id: string) => {
 
 export const importNews = async (news: { title: string; summary?: string; content?: string; category: string }[]) => {
   return await apiPost("/api/news/import", { news });
+
 };

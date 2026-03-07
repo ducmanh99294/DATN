@@ -14,6 +14,7 @@ router.post("/:id/like", newsController.likeNews);
 
 // admin
 router.post("/import", auth, admin, newsController.importNews);
+
 router.post("/", auth, admin,   
   upload.fields([
     { name: "thumbnail", maxCount: 1 },

@@ -5,6 +5,8 @@ const OrderItem = require("../models/OrderItem");
 const User = require("../models/User");
 const Product = require("../models/Product");
 const { sendNotification } = require("../sockets");
+=======
+const {sendNotification} = require("../sockets");
 
 //create
 exports.createOrder = async (req, res) => {
@@ -233,7 +235,8 @@ exports.updateOrderStatus = async (req, res) => {
 
 //cancel order
 exports.cancelOrder = async (req, res) => {
-  const { reason } = req.body;
+  const { reason } = req.body; 
+  
   const order = await Order.findByIdAndUpdate(
     req.params.id,
     { status: "cancelled", reason },

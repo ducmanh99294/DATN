@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/appoinment.css';
-import { getDoctorAppointments, getMyAppointment } from '../api/appointmentApi';
+import { getDoctorAppointments, getMyAppointment, cancelAppointment } from '../api/appointmentApi';
 import { useAuthContext, type User } from '../context/AuthContext';
 import type { Doctor, TimeSlot } from './BookingFlow';
 
@@ -54,7 +54,6 @@ interface AppointmentFilter {
 const Appointments = () => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  // const [user?.role, setUserRole] = useState<'patient' | 'doctor'>('patient'); // Giả lập role
   const [activeTab, setActiveTab] = useState<string>('upcoming');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
@@ -122,201 +121,6 @@ useEffect(() => {
     filterAppointments();
     calculateStats();
   }, [appointments, activeTab, filter]);
-
-  // const loadMockAppointments = () => {
-  //   const mockAppointments: Appointment[] = [
-  //     // Lịch hẹn sắp tới
-  //     {
-  //       id: 'APT001',
-  //       appointmentNumber: 'MED-20241225-001',
-  //       doctorId: 'DOC001',
-  //       doctorName: 'TS.BS. Nguyễn Văn An',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Tim mạch',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-25',
-  //       time: '09:00',
-  //       duration: 30,
-  //       type: 'offline',
-  //       status: 'confirmed',
-  //       symptoms: ['Đau ngực', 'Khó thở', 'Mệt mỏi'],
-  //       suspectedDiseases: ['Thiếu máu cơ tim'],
-  //       price: 500000,
-  //       paymentStatus: 'paid',
-  //       createdAt: '2024-12-20T10:30:00',
-  //       updatedAt: '2024-12-20T10:30:00'
-  //     },
-  //     {
-  //       id: 'APT002',
-  //       appointmentNumber: 'MED-20241226-002',
-  //       doctorId: 'DOC002',
-  //       doctorName: 'ThS.BS. Trần Thị Bình',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1594824434340-7e7dfc37cabb?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Nhi khoa',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-26',
-  //       time: '14:30',
-  //       duration: 45,
-  //       type: 'online',
-  //       status: 'confirmed',
-  //       symptoms: ['Sốt cao', 'Ho khan', 'Chán ăn'],
-  //       price: 450000,
-  //       paymentStatus: 'pending',
-  //       createdAt: '2024-12-21T15:45:00',
-  //       updatedAt: '2024-12-21T15:45:00'
-  //     },
-  //     {
-  //       id: 'APT003',
-  //       appointmentNumber: 'MED-20241224-003',
-  //       doctorId: 'DOC003',
-  //       doctorName: 'BS. Lê Minh Châu',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Tâm lý',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-24',
-  //       time: '10:00',
-  //       duration: 60,
-  //       type: 'offline',
-  //       status: 'pending',
-  //       symptoms: ['Mất ngủ', 'Lo âu', 'Stress'],
-  //       price: 400000,
-  //       paymentStatus: 'pending',
-  //       createdAt: '2024-12-22T09:15:00',
-  //       updatedAt: '2024-12-22T09:15:00'
-  //     },
-  //     // Lịch hẹn đã hoàn thành
-  //     {
-  //       id: 'APT004',
-  //       appointmentNumber: 'MED-20241220-004',
-  //       doctorId: 'DOC001',
-  //       doctorName: 'TS.BS. Nguyễn Văn An',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Tim mạch',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-20',
-  //       time: '08:30',
-  //       duration: 30,
-  //       type: 'offline',
-  //       status: 'completed',
-  //       symptoms: ['Đau đầu', 'Chóng mặt'],
-  //       prescription: 'Paracetamol 500mg x 10 viên, uống khi đau đầu',
-  //       price: 500000,
-  //       paymentStatus: 'paid',
-  //       rating: 5,
-  //       review: 'Bác sĩ rất tận tình, chu đáo',
-  //       createdAt: '2024-12-15T14:20:00',
-  //       updatedAt: '2024-12-20T09:15:00'
-  //     },
-  //     {
-  //       id: 'APT005',
-  //       appointmentNumber: 'MED-20241218-005',
-  //       doctorId: 'DOC002',
-  //       doctorName: 'ThS.BS. Trần Thị Bình',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1594824434340-7e7dfc37cabb?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Nhi khoa',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-18',
-  //       time: '15:00',
-  //       duration: 30,
-  //       type: 'online',
-  //       status: 'completed',
-  //       symptoms: ['Sốt', 'Ho', 'Sổ mũi'],
-  //       prescription: 'Thuốc ho Prospan, Hapacol 250mg',
-  //       price: 450000,
-  //       paymentStatus: 'paid',
-  //       rating: 4,
-  //       review: 'Tư vấn nhiệt tình, hiệu quả',
-  //       createdAt: '2024-12-16T11:30:00',
-  //       updatedAt: '2024-12-18T15:45:00'
-  //     },
-  //     // Lịch hẹn đã hủy
-  //     {
-  //       id: 'APT006',
-  //       appointmentNumber: 'MED-20241215-006',
-  //       doctorId: 'DOC003',
-  //       doctorName: 'BS. Lê Minh Châu',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Tâm lý',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-15',
-  //       time: '09:30',
-  //       duration: 60,
-  //       type: 'offline',
-  //       status: 'cancelled',
-  //       symptoms: ['Stress', 'Mất ngủ'],
-  //       price: 400000,
-  //       paymentStatus: 'refunded',
-  //       createdAt: '2024-12-10T08:45:00',
-  //       updatedAt: '2024-12-14T16:20:00'
-  //     },
-  //     // Lịch hẹn khẩn cấp
-  //     {
-  //       id: 'APT007',
-  //       appointmentNumber: 'MED-20241227-007',
-  //       doctorId: 'DOC001',
-  //       doctorName: 'TS.BS. Nguyễn Văn An',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Tim mạch',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-27',
-  //       time: '11:00',
-  //       duration: 30,
-  //       type: 'emergency',
-  //       status: 'confirmed',
-  //       symptoms: ['Đau ngực dữ dội', 'Khó thở'],
-  //       price: 800000,
-  //       paymentStatus: 'pending',
-  //       createdAt: '2024-12-23T07:30:00',
-  //       updatedAt: '2024-12-23T07:30:00'
-  //     },
-  //     // Lịch hẹn bỏ lỡ
-  //     {
-  //       id: 'APT008',
-  //       appointmentNumber: 'MED-20241210-008',
-  //       doctorId: 'DOC004',
-  //       doctorName: 'PGS.TS. Phạm Đức Dũng',
-  //       doctorAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop',
-  //       doctorSpecialty: 'Thần kinh',
-  //       patientId: 'PAT001',
-  //       patientName: 'Nguyễn Văn A',
-  //       patientAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-  //       patientPhone: '0987 654 321',
-  //       date: '2024-12-10',
-  //       time: '13:30',
-  //       duration: 45,
-  //       type: 'offline',
-  //       status: 'no-show',
-  //       symptoms: ['Đau đầu', 'Chóng mặt', 'Mất thăng bằng'],
-  //       price: 600000,
-  //       paymentStatus: 'pending',
-  //       createdAt: '2024-12-05T10:15:00',
-  //       updatedAt: '2024-12-10T14:00:00'
-  //     }
-  //   ];
-
-  //   setAppointments(mockAppointments);
-  // };
 
   const filterAppointments = () => {
     let filtered = [...appointments];
@@ -459,11 +263,17 @@ useEffect(() => {
     setShowCancelModal(true);
   };
 
-  const submitCancellation = () => {
+  const submitCancellation = async () => {
     if (!cancellationReason) {
       alert('Vui lòng chọn lý do hủy lịch');
       return;
     }
+
+    if (!selectedAppointment) {
+      return;
+    }
+
+    const data = await cancelAppointment(selectedAppointment._id, "")
 
     setAppointments(prevAppointments =>
       prevAppointments.map(a =>

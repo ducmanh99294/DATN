@@ -8,6 +8,7 @@ import { getCategories } from "../../api/categoryApi";
 import { exportToExcel, parseExcelFile } from "../../utils/excelUtils";
 
 
+
 const AdminNews = () => {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [selectedNews, setSelectedNews] = useState<any | null>(null);
@@ -29,6 +30,7 @@ const AdminNews = () => {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const { user } = useAuthContext();
   const notify = useNotify();
@@ -343,7 +345,6 @@ const openDetailModal = (news: any, active: any) => {
       e.target.value = "";
     }
   };
-
   // console.log(newsDetail);
   return (
     <div className="admin-products">
@@ -362,6 +363,7 @@ const openDetailModal = (news: any, active: any) => {
                   {importing ? "⏳ Đang nhập..." : "📂 Nhập Excel"}
                 </button>
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} style={{ display: "none" }} />
+
                 <button className="add-product-btn" onClick={() => openDetailModal(null, "create")}>
                   ➕ Thêm Tin Tức
                 </button>

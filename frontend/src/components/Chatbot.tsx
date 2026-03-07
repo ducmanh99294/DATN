@@ -56,7 +56,7 @@ const Chat: React.FC = () => {
 
     setInput("");
   };
-
+console.log(messages)
 
   return (
     <>

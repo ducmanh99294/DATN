@@ -16,6 +16,7 @@ const DEFAULT_FAQS: FaqItem[] = [
   { _id: '5', question: 'Tư vấn từ xa (video/chat) có được hỗ trợ không?', answer: 'Một số bác sĩ hỗ trợ tư vấn từ xa. Khi đặt lịch bạn có thể chọn hình thức khám trực tiếp hoặc trực tuyến tùy từng bác sĩ.' },
 ];
 
+
 const News = () => {
   
   const [news, setNews] = useState<any[]>([]);

@@ -185,7 +185,6 @@ exports.updateProduct = async (req, res) => {
         success: true,
         message: "Product permanently deleted"
       });
-
     } catch (error) {
       console.error("Delete product error:", error);
       res.status(500).json({

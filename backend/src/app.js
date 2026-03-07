@@ -17,6 +17,7 @@ const doctorRoutes = require('./routes/doctorRoutes')
 const speciallyRoutes = require('./routes/speciallyRoutes')
 const newsRoutes = require('./routes/newsRoutes')
 const faqRoutes = require('./routes/faqRoutes')
+
 const categoryRoutes =  require("./routes/categoryRoutes");
 const chatRoutes =  require("./routes/chatRoutes");
 const app = express()

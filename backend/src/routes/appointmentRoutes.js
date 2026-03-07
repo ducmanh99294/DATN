@@ -27,4 +27,5 @@ router.put("/:id/cancel", auth, cancelAppointment);
 //Hoàn thành lịch (admin / bác sĩ)
 router.put("/:id/confirm", auth, confirmedAppointment);
 
+
 module.exports = router;

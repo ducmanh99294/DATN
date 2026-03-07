@@ -260,10 +260,10 @@ const Header: React.FC = () => {
         {/* Header Actions */}
         <div className="header-actions">
           {/* Nút Chat AI */}
-          <button className="action-btn ai-btn" onClick={handleOpenChatAI} title="Chat với AI">
+          {/* <button className="action-btn ai-btn" onClick={handleOpenChatAI} title="Chat với AI">
             <FaRobot className="action-icon" />
             <span className="action-label">Chat AI</span>
-          </button>
+          </button> */}
 
           {/* Nút Đặt lịch (CTA chính) */}
           {(() => {

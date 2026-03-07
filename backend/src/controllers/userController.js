@@ -54,7 +54,8 @@ exports.login = async (req, res) => {
   if (!user) return res.status(401).json({ message: "Invalid email" });
   
   if (user.isBanned) {
-    return res.status(403).json({
+    return res.json({
+      isBanned: user.isBanned,
       message: "Your account has been banned",
       reason: user.banReason
     });

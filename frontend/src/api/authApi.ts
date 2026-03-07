@@ -34,7 +34,6 @@ export const logoutApi = async () => {
     return await apiPost("/api/auth/logout",{});
 };
 
-
 export const updateProfile = async (fullName: string, phone: string, email: string, gender: string) => {
     return await apiPut("/api/auth/profile",{
       fullName,phone,email,gender

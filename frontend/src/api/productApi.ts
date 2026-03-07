@@ -7,7 +7,6 @@ export const getAllProducts = async (params: string) => {
 export const getProductsById = async (id: string) => {
   return await apiGet(`/api/products/${id}`);
 };
-
 export const createProducts = async (data: any) => {
 
   return await apiPost(`/api/products/create`, data);
@@ -39,4 +38,3 @@ export interface ImportProductPayload {
 
 export const importProducts = async (products: ImportProductPayload[]) => {
   return await apiPost("/api/products/import", { products });
-};
