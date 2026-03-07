@@ -3,6 +3,9 @@ const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
 const OrderItem = require("../models/OrderItem");
 const User = require("../models/User");
+const Product = require("../models/Product");
+const { sendNotification } = require("../sockets");
+=======
 const {sendNotification} = require("../sockets");
 
 //create
@@ -239,6 +242,56 @@ exports.cancelOrder = async (req, res) => {
     { status: "cancelled", reason },
     { new: true }
   );
-
   res.json(order);
+};
+
+// import orders from Excel (admin)
+exports.importOrders = async (req, res) => {
+  try {
+    const { orders: ordersPayload } = req.body;
+    if (!Array.isArray(ordersPayload) || ordersPayload.length === 0) {
+      return res.status(400).json({ message: "Dữ liệu đơn hàng không hợp lệ" });
+    }
+    const created = [];
+    for (const row of ordersPayload) {
+      const { userEmail, shippingAddress, note, items } = row;
+          if (!userEmail || !shippingAddress?.fullName || !shippingAddress?.phone || !Array.isArray(items) || items.length === 0) {
+            continue;
+          }
+      const user = await User.findOne({ email: userEmail.trim() });
+      if (!user) continue;
+      const order = await Order.create({
+        user: user._id,
+        shippingAddress: {
+          fullName: shippingAddress.fullName,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address || "",
+          ward: shippingAddress.ward || "",
+          district: shippingAddress.district || "",
+        },
+        note: note || "",
+      });
+      let totalPrice = 0;
+      for (const it of items) {
+        const product = await Product.findById(it.productId);
+        if (!product) continue;
+        const price = product.price || 0;
+        const qty = Math.max(1, Number(it.quantity) || 1);
+        totalPrice += price * qty;
+        await OrderItem.create({
+          order: order._id,
+          product: product._id,
+          quantity: qty,
+          price,
+        });
+      }
+      order.totalPrice = totalPrice;
+      await order.save();
+      created.push(order._id);
+    }
+    res.status(201).json({ message: `Đã tạo ${created.length} đơn hàng`, count: created.length, ids: created });
+  } catch (err) {
+    console.error("Import orders error:", err);
+    res.status(500).json({ message: err.message || "Lỗi nhập đơn hàng" });
+  }
 };

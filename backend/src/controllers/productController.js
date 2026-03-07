@@ -185,7 +185,6 @@ exports.updateProduct = async (req, res) => {
         success: true,
         message: "Product permanently deleted"
       });
-
     } catch (error) {
       console.error("Delete product error:", error);
       res.status(500).json({
@@ -225,5 +224,38 @@ exports.updateProduct = async (req, res) => {
         success: false,
         message: "Server error"
       });
+    }
+  };
+
+  exports.importProducts = async (req, res) => {
+    try {
+      const { products: productsPayload } = req.body;
+      if (!Array.isArray(productsPayload) || productsPayload.length === 0) {
+        return res.status(400).json({ message: "Dữ liệu sản phẩm không hợp lệ" });
+      }
+      const created = [];
+      for (const row of productsPayload) {
+        const { name, category, description, price, discount, stock, useFors, uses, sideEffects } = row;
+        if (!name || !category) continue;
+        const cat = await Category.findById(category);
+        if (!cat) continue;
+        const product = await Product.create({
+          name: String(name).trim(),
+          category: cat._id,
+          description: description ? String(description) : "",
+          price: Number(price) || 0,
+          discount: Number(discount) || 0,
+          stock: Number(stock) || 0,
+          useFors: useFors ? String(useFors) : "",
+          uses: uses ? String(uses) : "",
+          sideEffects: sideEffects ? String(sideEffects) : "",
+          images: [],
+        });
+        created.push(product._id);
+      }
+      res.status(201).json({ message: `Đã thêm ${created.length} sản phẩm`, count: created.length, ids: created });
+    } catch (error) {
+      console.error("Import products error:", error);
+      res.status(500).json({ message: error.message || "Lỗi nhập sản phẩm" });
     }
   };

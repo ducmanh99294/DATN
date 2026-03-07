@@ -25,3 +25,8 @@ export const updateNews = async (id: string, data: any) => {
 export const deleteNews = async (id: string) => {
   return await apiDelete(`/api/news/${id}`);
 };
+
+export const importNews = async (news: { title: string; summary?: string; content?: string; category: string }[]) => {
+  return await apiPost("/api/news/import", { news });
+
+};

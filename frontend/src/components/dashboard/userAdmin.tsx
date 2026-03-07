@@ -1,10 +1,11 @@
 // AdminUsers.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/user.css';
 import { useAuthContext, type User } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
 import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom';
+import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
 
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<any>([]);
@@ -23,6 +24,9 @@ const AdminUsers: React.FC = () => {
     status: 'all',
     search: ''
   });
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profileForm, setProfileForm] = useState({
     fullName: '',
@@ -84,6 +88,58 @@ const AdminUsers: React.FC = () => {
       ...prev,
       [key]: value
     }));
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      const data = await getAllUsers(`?role=all&status=all&search=${searchTerm}`);
+      const list = (data as any).users || [];
+      const rows = list.map((u: any) => ({
+        "Họ tên": u.fullName,
+        "Email": u.email,
+        "SĐT": u.phone ?? "",
+        "Giới tính": u.gender === "male" ? "Nam" : u.gender === "female" ? "Nữ" : "Khác",
+        "Ngày sinh": u.dateOfBirth ? new Date(u.dateOfBirth).toLocaleDateString("vi-VN") : "",
+        "Vai trò": u.role,
+        "Ngày tạo": u.createdAt ? new Date(u.createdAt).toLocaleString("vi-VN") : "",
+      }));
+      exportToExcel(rows, `nguoi-dung-${new Date().toISOString().slice(0, 10)}`, "Người dùng");
+      notify.success("Xuất Excel thành công!");
+    } catch (err) {
+      console.error(err);
+      notify.error("Xuất Excel thất bại!");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadTemplateUser = () => {
+    const template = [
+      { email: "email@example.com", fullName: "Họ tên", password: "Mật khẩu", role: "patient" },
+    ];
+    exportToExcel(template, "mau-nhap-nguoi-dung", "Mẫu");
+    notify.success("Đã tải mẫu Excel!");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImporting(true);
+      const rows = await parseExcelFile(file);
+      if (rows.length === 0) {
+        notify.error("File không có dữ liệu.");
+        e.target.value = "";
+        return;
+      }
+      notify.info("Chức năng nhập user từ Excel: dùng mẫu với cột email, fullName, password, role. Backend import có thể bổ sung sau.");
+    } catch (err: any) {
+      notify.error(err?.message || "Đọc file thất bại!");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
   };
 
   const handleSetAddUser = () => {
@@ -250,9 +306,16 @@ const AdminUsers: React.FC = () => {
             <div className="users-header">
               <h2 className="users-title">Quản Lý Người Dùng</h2>
               <div className="users-actions">
-                <button className="export-btn">
-                  📤 Xuất Excel
+                <button type="button" className="export-btn" onClick={handleExportExcel} disabled={exporting}>
+                  {exporting ? "⏳ Đang xuất..." : "📤 Xuất Excel"}
                 </button>
+                <button type="button" className="filter-btn" onClick={handleDownloadTemplateUser} style={{ marginRight: 8 }}>
+                  📥 Tải mẫu
+                </button>
+                <button type="button" className="filter-btn" onClick={() => fileInputRef.current?.click()} disabled={importing} style={{ marginRight: 8 }}>
+                  {importing ? "⏳ Đang nhập..." : "📂 Nhập Excel"}
+                </button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} style={{ display: "none" }} />
                 <button className="add-user-btn" onClick={handleSetAddUser}>
                   ➕ Thêm Người Dùng
                 </button>

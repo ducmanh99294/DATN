@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../../assets/admin/product.css";
-import { createNews, deleteNews, getAllNews, getNewsBySlug, updateNews } from "../../api/newsApi";
+import { createNews, deleteNews, getAllNews, getNewsBySlug, updateNews, importNews } from "../../api/newsApi";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
 import { useNotify } from "../../hooks/useNotification";
 import { getCategories } from "../../api/categoryApi";
+import { exportToExcel, parseExcelFile } from "../../utils/excelUtils";
+
 
 
 const AdminNews = () => {
@@ -25,6 +27,10 @@ const AdminNews = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const { user } = useAuthContext();
   const notify = useNotify();
@@ -272,7 +278,73 @@ const openDetailModal = (news: any, active: any) => {
       style: 'currency',
       currency: 'VND',
     }).format(price);
-  }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      const data = await getAllNews(`?page=1&limit=5000&date=${filters.date}&category=${filters.category}&status=${filters.status}&search=${filters.search}`);
+      const list = (data as any).news || [];
+      const rows = list.map((n: any) => ({
+        "Tiêu đề": n.title,
+        "Danh mục": n.category?.name ?? "",
+        "Tóm tắt": n.summary ?? "",
+        "Nội dung": (n.content ?? "").slice(0, 200),
+        "Lượt xem": n.views ?? 0,
+        "Lượt thích": n.like ?? 0,
+        "Xuất bản": n.isPublished ? "Có" : "Không",
+        "Ngày tạo": n.createdAt ? new Date(n.createdAt).toLocaleString("vi-VN") : "",
+      }));
+      exportToExcel(rows, `tin-tuc-${new Date().toISOString().slice(0, 10)}`, "Tin tức");
+      notify.success("Xuất Excel thành công!");
+    } catch (err) {
+      console.error(err);
+      notify.error("Xuất Excel thất bại!");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadTemplateNews = () => {
+    const template = [
+      { title: "Tiêu đề bài viết", summary: "Tóm tắt", content: "Nội dung", category: "ID_DANH_MỤC" },
+    ];
+    exportToExcel(template, "mau-nhap-tin-tuc", "Mẫu");
+    notify.success("Đã tải mẫu Excel!");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImporting(true);
+      const rows = await parseExcelFile(file);
+      if (rows.length === 0) {
+        notify.error("File không có dữ liệu.");
+        return;
+      }
+      const newsPayload = rows.map((row: any) => {
+        const title = row.title ?? row["title"] ?? row["Tiêu đề"] ?? "";
+        const summary = row.summary ?? row["summary"] ?? row["Tóm tắt"] ?? "";
+        const content = row.content ?? row["content"] ?? row["Nội dung"] ?? "";
+        const category = row.category ?? row["category"] ?? row["Danh mục"] ?? "";
+        const catId = typeof category === "string" && category.length === 24 ? category : (categories.find((c: any) => c.name === category || c._id === category)?._id ?? category);
+        return { title: String(title).trim(), summary: String(summary), content: String(content), category: catId };
+      }).filter((n: any) => n.title && n.category);
+      if (newsPayload.length === 0) {
+        notify.error("Không có dòng hợp lệ. Cần cột: title, category (ID hoặc tên danh mục).");
+        return;
+      }
+      await importNews(newsPayload);
+      notify.success(`Đã nhập ${newsPayload.length} tin tức!`);
+      fetchNews();
+    } catch (err: any) {
+      notify.error(err?.message || "Nhập Excel thất bại!");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
   // console.log(newsDetail);
   return (
     <div className="admin-products">
@@ -281,6 +353,17 @@ const openDetailModal = (news: any, active: any) => {
             <div className="products-header">
               <h2 className="products-title">Quản Lý Tin Tức</h2>
               <div className="products-actions">
+                <button type="button" className="export-btn" onClick={handleExportExcel} disabled={exporting} style={{ marginRight: 8 }}>
+                  {exporting ? "⏳ Đang xuất..." : "📤 Xuất Excel"}
+                </button>
+                <button type="button" className="filter-btn" onClick={handleDownloadTemplateNews} style={{ marginRight: 8 }}>
+                  📥 Tải mẫu
+                </button>
+                <button type="button" className="filter-btn" onClick={() => fileInputRef.current?.click()} disabled={importing} style={{ marginRight: 8 }}>
+                  {importing ? "⏳ Đang nhập..." : "📂 Nhập Excel"}
+                </button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} style={{ display: "none" }} />
+
                 <button className="add-product-btn" onClick={() => openDetailModal(null, "create")}>
                   ➕ Thêm Tin Tức
                 </button>

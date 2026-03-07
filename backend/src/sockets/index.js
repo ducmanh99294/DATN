@@ -99,6 +99,7 @@ const sendNotification = (userId, data) => {
     console.log("Socket chưa được init");
     return;
   }
+
   console.log("Emit to:", `user_${userId}`);
   io.to(`user_${userId}`).emit("notification", data);
 };

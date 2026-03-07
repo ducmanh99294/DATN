@@ -1,10 +1,11 @@
 // AdminOrders.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/order.css';
-import { cancelOrder, getAllOrders, getOrderById, updateOrderStatus } from '../../api/orderApi';
+import { cancelOrder, getAllOrders, getOrderById, updateOrderStatus, importOrders } from '../../api/orderApi';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
+import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
 import type { Order } from '../Order';
 
 const AdminOrders = () => {
@@ -22,6 +23,10 @@ const AdminOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const { user } = useAuthContext();
   const notify = useNotify()
@@ -158,6 +163,86 @@ const AdminOrders = () => {
     return statusMap[status] || status;
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      const data = await getAllOrders(`?page=1&limit=5000&date=${filters.date}&status=${filters.status}&search=${filters.search}`);
+      const rows = (data.orders || []).map((o: any) => ({
+        "Mã đơn": o._id?.slice(0, 8)?.toUpperCase() || "",
+        "Khách hàng": o.user?.fullName || "",
+        "Email": o.user?.email || "",
+        "SĐT": o.userPhone || o.shippingAddress?.phone || "",
+        "Tổng tiền": o.totalPrice ?? 0,
+        "Ghi chú": o.note || "",
+        "Địa chỉ": [o.shippingAddress?.address, o.shippingAddress?.ward, o.shippingAddress?.district].filter(Boolean).join(", ") || "",
+        "Trạng thái": getStatusText(o.status),
+        "Ngày tạo": o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : "",
+      }));
+      exportToExcel(rows, `don-hang-${new Date().toISOString().slice(0, 10)}`, "Đơn hàng");
+      notify.success("Xuất Excel thành công!");
+    } catch (err) {
+      console.error(err);
+      notify.error("Xuất Excel thất bại!");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadTemplateOrder = () => {
+    const template = [
+      { userEmail: "email@example.com", "fullName": "Nguyễn Văn A", "phone": "0901234567", "address": "123 Đường X", "ward": "Phường 1", "district": "Quận 1", note: "", productId: "ID_SẢN_PHẨM", quantity: 1 },
+    ];
+    exportToExcel(template, "mau-nhap-don-hang", "Mẫu");
+    notify.success("Đã tải mẫu Excel!");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImporting(true);
+      const rows = await parseExcelFile(file);
+      if (rows.length === 0) {
+        notify.error("File không có dữ liệu.");
+        return;
+      }
+      const ordersPayload = rows.map((row: any) => {
+        const userEmail = row.userEmail ?? row["userEmail"] ?? "";
+        const fullName = row.fullName ?? row["fullName"] ?? "";
+        const phone = row.phone ?? row["phone"] ?? "";
+        const address = row.address ?? row["address"] ?? "";
+        const ward = row.ward ?? row["ward"] ?? "";
+        const district = row.district ?? row["district"] ?? "";
+        const note = row.note ?? row["note"] ?? "";
+        const productId = row.productId ?? row["productId"] ?? "";
+        const quantity = Number(row.quantity ?? row["quantity"]) || 1;
+        return {
+          userEmail: String(userEmail).trim(),
+          shippingAddress: { fullName: String(fullName), phone: String(phone), address: String(address), ward: String(ward), district: String(district) },
+          note: String(note),
+          items: [{ productId: String(productId).trim(), quantity }],
+        };
+      }).filter((o: any) => o.userEmail && o.shippingAddress.fullName && o.shippingAddress.phone && o.items?.length > 0);
+      if (ordersPayload.length === 0) {
+        notify.error("Không có dòng nào hợp lệ. Kiểm tra cột: userEmail, fullName, phone, productId, quantity.");
+        return;
+      }
+      await importOrders(ordersPayload);
+      notify.success(`Đã nhập ${ordersPayload.length} đơn hàng!`);
+      const data = await getAllOrders(`?page=${currentPage}&date=${filters.date}&status=${filters.status}&search=${filters.search}`);
+      if (data) {
+        setOrders(data.orders);
+        setTotalPages(data.totalPages);
+        setTotalOrders(data.total);
+      }
+    } catch (err: any) {
+      notify.error(err?.message || "Nhập Excel thất bại!");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
+
   // console.log(ordersDetail)
   return (
     <div className="admin-orders">
@@ -166,8 +251,16 @@ const AdminOrders = () => {
             <div className="orders-header">
               <h2 className="orders-title">Quản Lý Đơn Hàng</h2>
               <div className="orders-actions">
-                <button className="filter-btn">🔧 Bộ lọc nâng cao</button>
-                <button className="export-btn">📤 Xuất Excel</button>
+                <button type="button" className="export-btn" onClick={handleExportExcel} disabled={exporting}>
+                  {exporting ? "⏳ Đang xuất..." : "📤 Xuất Excel"}
+                </button>
+                <button type="button" className="filter-btn" onClick={handleDownloadTemplateOrder}>
+                  📥 Tải mẫu Excel
+                </button>
+                <button type="button" className="filter-btn" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                  {importing ? "⏳ Đang nhập..." : "📂 Nhập Excel"}
+                </button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} style={{ display: "none" }} />
               </div>
             </div>
 

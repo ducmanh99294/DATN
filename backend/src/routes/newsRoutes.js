@@ -8,11 +8,13 @@ const upload = require("../middlewares/upload");
 
 // public
 router.get("/", newsController.getAllNews);
-router.get("/:id", newsController.getAllNewsById);
 router.get("/slug/:slug", newsController.getNewsBySlug);
+router.get("/:id", newsController.getAllNewsById);
 router.post("/:id/like", newsController.likeNews);
 
 // admin
+router.post("/import", auth, admin, newsController.importNews);
+
 router.post("/", auth, admin,   
   upload.fields([
     { name: "thumbnail", maxCount: 1 },

@@ -1,12 +1,15 @@
 // AdminProducts.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
 import '../../assets/admin/product.css';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
 import { useNavigate } from 'react-router-dom';
-import { createProducts, deleteProduct, getAllProducts, updateProduct, updateStatusProduct } from '../../api/productApi';
+import { createProducts, deleteProduct, getAllProducts, updateProduct, updateStatusProduct, importProducts } from '../../api/productApi';
 import type { Product } from '../Product';
 import { getCategories } from '../../api/categoryApi';
+import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
+
 
 const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,6 +40,10 @@ const AdminProducts: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { user } = useAuthContext();
   const notify = useNotify()
   const navigate = useNavigate();
@@ -290,6 +297,86 @@ const AdminProducts: React.FC = () => {
       currency: 'VND',
     }).format(price);
 
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      const data = await getAllProducts(`?page=1&limit=5000&category=${filters.category}&search=${filters.search}`);
+      const list = (data as any).products || [];
+      const rows = list.map((p: any) => ({
+        "Tên": p.name,
+        "Danh mục": p.category?.name ?? p.category ?? "",
+        "Mô tả": p.description ?? "",
+        "Giá": p.price ?? 0,
+        "Giảm giá (%)": p.discount ?? 0,
+        "Tồn kho": p.stock ?? 0,
+        "Công dụng": p.uses ?? "",
+        "Hướng dẫn": p.useFors ?? "",
+        "Tác dụng phụ": p.sideEffects ?? "",
+        "Đang bán": p.isSelling ? "Có" : "Không",
+      }));
+      exportToExcel(rows, `san-pham-${new Date().toISOString().slice(0, 10)}`, "Sản phẩm");
+      notify.success("Xuất Excel thành công!");
+    } catch (err) {
+      console.error(err);
+      notify.error("Xuất Excel thất bại!");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadTemplateProduct = () => {
+    const template = [
+      { name: "Tên SP", category: "ID_DANH_MỤC", description: "", price: 0, discount: 0, stock: 0, useFors: "", uses: "", sideEffects: "" },
+    ];
+    exportToExcel(template, "mau-nhap-san-pham", "Mẫu");
+    notify.success("Đã tải mẫu Excel!");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImporting(true);
+      const rows = await parseExcelFile(file);
+      if (rows.length === 0) {
+        notify.error("File không có dữ liệu.");
+        return;
+      }
+      const productsPayload = rows.map((row: any) => {
+        const name = row.name ?? row["name"] ?? row["Tên"] ?? "";
+        const category = row.category ?? row["category"] ?? row["Danh mục"] ?? "";
+        const catId = typeof category === "string" && category.length === 24 ? category : (categories.find((c: any) => c.name === category || c._id === category)?._id ?? category);
+        return {
+          name: String(name).trim(),
+          category: catId,
+          description: String(row.description ?? row["description"] ?? row["Mô tả"] ?? ""),
+          price: Number(row.price ?? row["price"] ?? row["Giá"]) || 0,
+          discount: Number(row.discount ?? row["discount"] ?? row["Giảm giá (%)"]) || 0,
+          stock: Number(row.stock ?? row["stock"] ?? row["Tồn kho"]) || 0,
+          useFors: String(row.useFors ?? row["useFors"] ?? row["Hướng dẫn"] ?? ""),
+          uses: String(row.uses ?? row["uses"] ?? row["Công dụng"] ?? ""),
+          sideEffects: String(row.sideEffects ?? row["sideEffects"] ?? row["Tác dụng phụ"] ?? ""),
+        };
+      }).filter((p: any) => p.name);
+      if (productsPayload.length === 0) {
+        notify.error("Không có dòng nào hợp lệ. Cần ít nhất cột: name, category (ID hoặc tên danh mục).");
+        return;
+      }
+      await importProducts(productsPayload);
+      notify.success(`Đã nhập ${productsPayload.length} sản phẩm!`);
+      const data = await getAllProducts(`?page=${currentPage}&category=${filters.category}&search=${filters.search}`);
+      if (data) {
+        setProducts((data as any).products ?? []);
+        setTotalPages((data as any).totalPages ?? 1);
+      }
+    } catch (err: any) {
+      notify.error(err?.message || "Nhập Excel thất bại!");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
+
   // console.log(formData)
   return (
     <div className="admin-products">
@@ -298,6 +385,16 @@ const AdminProducts: React.FC = () => {
             <div className="products-header">
               <h2 className="products-title">Quản Lý Sản Phẩm</h2>
               <div className="products-actions">
+                <button type="button" className="export-btn" onClick={handleExportExcel} disabled={exporting} style={{ marginRight: 8 }}>
+                  {exporting ? "⏳ Đang xuất..." : "📤 Xuất Excel"}
+                </button>
+                <button type="button" className="filter-btn" onClick={handleDownloadTemplateProduct} style={{ marginRight: 8 }}>
+                  📥 Tải mẫu
+                </button>
+                <button type="button" className="filter-btn" onClick={() => fileInputRef.current?.click()} disabled={importing} style={{ marginRight: 8 }}>
+                  {importing ? "⏳ Đang nhập..." : "📂 Nhập Excel"}
+                </button>
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} style={{ display: "none" }} />
                 <button className="add-product-btn" onClick={handleSetAddProduct}>
                   ➕ Thêm Sản Phẩm
                 </button>

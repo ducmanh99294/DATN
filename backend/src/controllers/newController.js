@@ -251,3 +251,36 @@ exports.likeNews = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Import tin tức từ Excel (admin)
+exports.importNews = async (req, res) => {
+  try {
+    const { news: newsPayload } = req.body;
+    if (!Array.isArray(newsPayload) || newsPayload.length === 0) {
+      return res.status(400).json({ message: "Dữ liệu tin tức không hợp lệ" });
+    }
+    const created = [];
+    for (const row of newsPayload) {
+      const { title, summary, content, category } = row;
+      if (!title || !category) continue;
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) continue;
+      const slug = slugify(String(title), { lower: true, strict: true });
+      const news = await News.create({
+        title: String(title).trim(),
+        slug,
+        summary: summary ? String(summary) : "",
+        content: content ? String(content) : "",
+        category: categoryExists._id,
+        author: req.user?.id,
+        thumbnail: "",
+        images: [],
+      });
+      created.push(news._id);
+    }
+    res.status(201).json({ message: `Đã thêm ${created.length} tin tức`, count: created.length, ids: created });
+  } catch (error) {
+    console.error("Import news error:", error);
+    res.status(500).json({ message: error.message || "Lỗi nhập tin tức" });
+  }
+};

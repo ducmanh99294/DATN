@@ -11,6 +11,8 @@ router.get("/:id", productCtrl.getProductById);
 
 // Admin
 router.post("/create", auth, admin, upload.array("images", 5), productCtrl.createProduct);
+router.post("/import", auth, admin, productCtrl.importProducts);
+
 router.put("/:id",  auth, admin, upload.array("images", 5), productCtrl.updateProduct);
 router.put("/:id/status",  auth, admin, productCtrl.updateStatus);
 router.delete("/:id", auth, admin, productCtrl.deleteProduct);

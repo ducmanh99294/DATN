@@ -6,18 +6,31 @@ import { useNotify } from '../hooks/useNotification';
 import { getAllNews, getNewsBySlug } from '../api/newsApi';
 import { getCategories } from '../api/categoryApi';
 import { getDoctor } from '../api/doctorApi';
+import { getAllFaqs, FaqItem } from '../api/faqApi';
+
+const DEFAULT_FAQS: FaqItem[] = [
+  { _id: '1', question: 'Làm thế nào để đặt lịch khám với bác sĩ?', answer: 'Bạn có thể đặt lịch trực tuyến qua trang Đặt lịch: chọn chuyên khoa, bác sĩ, ngày giờ phù hợp và điền thông tin. Hệ thống sẽ gửi xác nhận qua email/SMS.' },
+  { _id: '2', question: 'Tôi có thể hủy hoặc đổi lịch khám không?', answer: 'Có. Bạn vào mục Lịch hẹn của tôi, chọn lịch cần hủy/đổi và thao tác. Nên hủy hoặc đổi trước ít nhất 24 giờ để người khác có thể đặt lịch.' },
+  { _id: '3', question: 'Chi phí khám và thanh toán như thế nào?', answer: 'Mức phí tùy từng chuyên khoa và bác sĩ, hiển thị khi bạn chọn bác sĩ. Bạn có thể thanh toán trực tuyến (chuyển khoản, ví điện tử) hoặc thanh toán tại phòng khám.' },
+  { _id: '4', question: 'Kết quả khám và đơn thuốc có được gửi online không?', answer: 'Sau khám, bác sĩ có thể gửi đơn thuốc và tóm tắt kết quả qua ứng dụng/email. Bạn có thể xem lại trong mục Hồ sơ khám bệnh.' },
+  { _id: '5', question: 'Tư vấn từ xa (video/chat) có được hỗ trợ không?', answer: 'Một số bác sĩ hỗ trợ tư vấn từ xa. Khi đặt lịch bạn có thể chọn hình thức khám trực tiếp hoặc trực tuyến tùy từng bác sĩ.' },
+];
+
 
 const News = () => {
   
   const [news, setNews] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
+  const [faqs, setFaqs] = useState<FaqItem[]>(DEFAULT_FAQS);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [doctorLoading, setDoctorLoading] = useState(false);
+  const [faqLoading, setFaqLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'trending'>('latest');
 
   const [filters, setFilters] = useState({
@@ -59,6 +72,25 @@ const News = () => {
 
     fetchDoctor();
 
+  }, []);
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        setFaqLoading(true);
+        const data = await getAllFaqs();
+        if (data && data.length > 0) {
+          setFaqs(data);
+        } else {
+          setFaqs(DEFAULT_FAQS);
+        }
+      } catch {
+        setFaqs(DEFAULT_FAQS);
+      } finally {
+        setFaqLoading(false);
+      }
+    };
+    fetchFaqs();
   }, []);
 
   useEffect(() => {
@@ -542,6 +574,41 @@ const News = () => {
             )
           }
         </div>
+
+        {/* Câu hỏi thường gặp */}
+        <section id="cau-hoi-thuong-gap" className="news-faq-section" aria-label="Câu hỏi thường gặp">
+          <h2>
+            <i className="fas fa-question-circle"></i>
+            Câu hỏi thường gặp
+          </h2>
+          {faqLoading ? (
+            <div className="loading-state">
+              <i className="fas fa-spinner fa-spin"></i>
+              <p>Đang tải...</p>
+            </div>
+          ) : (
+            <div className="faq-list">
+              {faqs.map((faq) => (
+                <div
+                  key={faq._id}
+                  className={`faq-item ${openFaqId === faq._id ? 'open' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="faq-question"
+                    onClick={() => setOpenFaqId(openFaqId === faq._id ? null : faq._id)}
+                  >
+                    <span>{faq.question}</span>
+                    <i className={`fas fa-chevron-${openFaqId === faq._id ? 'up' : 'down'}`}></i>
+                  </button>
+                  <div className="faq-answer">
+                    <p>{faq.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Article Detail Modal */}

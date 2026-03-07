@@ -26,6 +26,16 @@ exports.createAppointment = async (req, res) => {
       doctorId,
       specialtyId,
       slotId,
+      symptoms, 
+      description, 
+      price: doctorId.price, 
+    })
+    .populate("patientId")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId" }
+    })
+    .populate("slotId");
       symptoms,
       description,
       price

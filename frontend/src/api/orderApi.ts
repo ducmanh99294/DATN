@@ -24,3 +24,15 @@ export const updateOrderStatus = async (id: string, status: string) => {
 export const cancelOrder = async (id: string, reason: string) => {
   return await apiPut(`/api/orders/${id}/cancel`,{reason});
 };
+
+export const importOrders = async (orders: ImportOrderPayload[]) => {
+  return await apiPost("/api/orders/import", { orders });
+};
+
+export interface ImportOrderPayload {
+  userEmail: string;
+  shippingAddress: { fullName: string; phone: string; address?: string; ward?: string; district?: string };
+  note?: string;
+  items: { productId: string; quantity: number }[];
+}
+
