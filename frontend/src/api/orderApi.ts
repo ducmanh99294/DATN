@@ -9,8 +9,8 @@ export const getAllOrders = async (params: string) => {
   return await apiGet(`/api/orders${params}`);
 };
 
-export const createOrder = async (shippingAddress: any,note: string) => {
-  return await apiPost("/api/orders",{shippingAddress, note});
+export const createOrder = async (shippingAddress: any, note: string, paymentMethod: string) => {
+  return await apiPost("/api/orders", { shippingAddress, note, paymentMethod });
 };
 
 export const getOrderById = async (id: string) => {
@@ -35,4 +35,8 @@ export interface ImportOrderPayload {
   note?: string;
   items: { productId: string; quantity: number }[];
 }
+
+export const updateOrderPaymentStatus = async (id: string, paymentStatus: string) => {
+  return await apiPut(`/api/orders/${id}/payment-status`, { paymentStatus });
+};
 

@@ -38,3 +38,4 @@ export interface ImportProductPayload {
 
 export const importProducts = async (products: ImportProductPayload[]) => {
   return await apiPost("/api/products/import", { products });
+};

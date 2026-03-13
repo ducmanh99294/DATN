@@ -29,7 +29,8 @@ exports.confirmPayment = async (req, res) => {
 
   // Update order status
   await Order.findByIdAndUpdate(payment.order, {
-    status: "confirmed"
+    status: "confirmed",
+    paymentStatus: "paid"
   });
 
   res.json({

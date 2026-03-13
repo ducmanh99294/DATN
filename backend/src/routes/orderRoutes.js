@@ -11,6 +11,7 @@ router.get("/:id", auth, orderCtrl.getOrderDetail);
 // admin
 router.put("/:id/status", auth, admin, orderCtrl.updateOrderStatus);
 router.put("/:id/cancel", auth, admin, orderCtrl.cancelOrder);
+router.put("/:id/payment-status", auth, admin, orderCtrl.updatePaymentStatus);
 router.get("/", auth, admin, orderCtrl.getAllOrders);
 router.post("/import", auth, admin, orderCtrl.importOrders);
 
