@@ -62,16 +62,25 @@ const initSocket = (server) => {
       }
     });
     // chat AI
-    socket.on("send_message", async (message) => {
+    socket.on("send_message", async (data) => {
+      console.log("AI request:", data);
       try {
-        const reply = await chatController.processChatMessage(
+        const reply = await chatController.processAIChat(
           socket.userId,
-          message
+          data.message
         );
 
-        socket.emit("ai_reply", reply);
-      } catch {
-        socket.emit("ai_reply", "AI đang gặp lỗi.");
+        socket.emit("ai_reply", {
+          role: "assistant",
+          message: reply
+        });
+
+      } catch (error) {
+    console.error("AI ERROR:", error);
+        socket.emit("ai_reply", {
+          role: "assistant",
+          message: "AI đang gặp lỗi."
+        });
       }
     });
 

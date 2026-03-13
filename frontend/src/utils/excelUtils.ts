@@ -1,6 +1,3 @@
-/**
- * Excel export/import utilities using xlsx (SheetJS)
- */
 import * as XLSX from "xlsx";
 
 /** Xuất mảng đối tượng hoặc mảng 2 chiều ra file Excel */

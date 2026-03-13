@@ -3,7 +3,7 @@ import { useSocket } from "../context/SocketContext";
 import { ChatAi } from "../api/chatApi";
 import { useAuthContext } from "../context/AuthContext";
 import { useNotify } from "../hooks/useNotification";
-
+import "../assets/chatbot.css"
 interface Message {
   role: "user" | "assistant";
   message: string;
@@ -14,6 +14,7 @@ const Chat: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { socket } = useSocket();
   const notify = useNotify();
@@ -21,12 +22,24 @@ const Chat: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("receive_message", (data) => {
-      setMessages(prev => [...prev, data]);
-    });
+socket.on("ai_reply", (data) => {
 
+  const sentences = data.message
+    .split(/(?<=[.!?])\s+/) // tách sau . ? !
+    .filter((s: string) => s.trim() !== "");
+
+  setMessages(prev => [
+    ...prev,
+    ...sentences.map((s: string) => ({
+      role: "assistant",
+      message: s
+    }))
+  ]);
+
+  setIsTyping(false);
+});
     return () => {
-      socket.off("receive_message");
+      socket.off("ai_reply");
     };
   }, [socket]);
 
@@ -44,6 +57,8 @@ const Chat: React.FC = () => {
     const newMessage = { role: "user", message: input };
     setMessages((prev:any) => [...prev, newMessage]);
 
+    setIsTyping(true);
+    
     if (socket?.connected) {
       socket.emit("send_message", { message: input });
     } else {
@@ -52,131 +67,75 @@ const Chat: React.FC = () => {
         ...prev,
         { role: "assistant", message: res.reply }
       ]);
+      setIsTyping(false);
     }
 
     setInput("");
   };
-console.log(messages)
+
+const formatParagraph = (text: string) => {
+  return text
+    .replace(/([.!?])\s+/g, "$1\n")
+    .replace(/\n{2,}/g, "\n\n");
+};
+  console.log(messages)
 
   return (
-    <>
+    <div className="chat-container">
       {/* Nút mở chat */}
-      <div style={styles.chatIcon} onClick={() => setOpen(!open)}>
+      <div className="chatIcon" onClick={() => setOpen(!open)}>
         💬
       </div>
 
       {open && (
-        <div style={styles.chatContainer}>
-          <div style={styles.header}>
-            Tư vấn bác sĩ
+        <div className="chatContainer">
+          <div className="header">
+            Chat
             <span style={{ cursor: "pointer" }} onClick={() => setOpen(false)}>
               ✖
             </span>
           </div>
 
-          <div style={styles.chatArea}>
+          <div className="chatArea">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{
-                  ...styles.message,
-                  alignSelf:
-                    msg.role === "user" ? "flex-end" : "flex-start",
-                  background:
-                    msg.role === "user" ? "#0084ff" : "#f1f0f0",
-                  color: msg.role === "user" ? "white" : "black"
-                }}
+                className={`message ${
+                  msg.role === "user" ? "userMessage" : "aiMessage"
+                }`}
               >
                 {msg.message}
               </div>
             ))}
+
+            {/* AI typing */}
+            {isTyping && (
+              <div className="message aiMessage typing">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          <div style={styles.inputArea}>
+          <div className="inputArea">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               placeholder="Nhập triệu chứng..."
-              style={styles.input}
+              className="input"
             />
-            <button onClick={sendMessage} style={styles.button}>
+            <button onClick={sendMessage} className="button">
               Gửi
             </button>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
-};
-
-const styles: any = {
-  chatIcon: {
-    position: "fixed",
-    bottom: "20px",
-    right: "20px",
-    backgroundColor: "#0084ff",
-    color: "white",
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "24px",
-    cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-  },
-  chatContainer: {
-    position: "fixed",
-    bottom: "90px",
-    right: "20px",
-    width: "350px",
-    height: "500px",
-    backgroundColor: "white",
-    borderRadius: "10px",
-    display: "flex",
-    flexDirection: "column",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
-  },
-  header: {
-    padding: "12px",
-    backgroundColor: "#0084ff",
-    color: "white",
-    display: "flex",
-    justifyContent: "space-between"
-  },
-  chatArea: {
-    flex: 1,
-    padding: "10px",
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px"
-  },
-  message: {
-    padding: "8px 12px",
-    borderRadius: "18px",
-    maxWidth: "70%"
-  },
-  inputArea: {
-    display: "flex",
-    borderTop: "1px solid #ddd"
-  },
-  input: {
-    flex: 1,
-    padding: "10px",
-    border: "none",
-    outline: "none"
-  },
-  button: {
-    padding: "10px",
-    backgroundColor: "#0084ff",
-    color: "white",
-    border: "none",
-    cursor: "pointer"
-  }
-};
+}
 
 export default Chat;

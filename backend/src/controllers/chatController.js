@@ -19,27 +19,26 @@ function extractKeywords(text) {
   );
 }
 
-async function rewriteWithAI(rawText) {
-  const apiKey = process.env.GEMINI_API_KEY;
-
+async function rewriteWithAI(rawText, retry = 0) {
+  const apiKey = process.env.GROQ_API_KEY;
+  console.log(apiKey)
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://api.groq.com/openai/v1/chat/completions`,
       {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
+          model: "llama-3.3-70b-versatile",
+          messages: [
             {
-              parts: [
-                {
-                  text: `Hãy viết lại nội dung sau thành lời tư vấn y tế nhẹ nhàng, chuyên nghiệp, dễ hiểu:\n\n${rawText}`
-                }
-              ]
+              role: "user",
+              content: `Hãy viết lại nội dung sau thành lời tư vấn y tế nhẹ nhàng, chuyên nghiệp, dễ hiểu:\n\n${rawText}`
             }
-          ]
+          ]        
         })
       }
     );
@@ -47,21 +46,24 @@ async function rewriteWithAI(rawText) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Gemini error:", data);
+      console.error("Groq error:", data);
       return "AI đang tạm thời lỗi.";
     }
 
-    return data.candidates[0].content.parts[0].text;
+    return data.choices[0].message.content;
 
   } catch (error) {
-    console.error("Lỗi khi gọi Gemini:", error);
-    return "Có lỗi xảy ra khi xử lý văn bản.";
+    console.error("Lỗi khi gọi AI:", error);
+    if (retry > 0) {
+      console.log("Retry AI...");
+      return rewriteWithAI(rawText, retry - 1);
+    }
+
+    return "AI đang bận, vui lòng thử lại sau.";
   }
 }
 
-
-
-async function processAIChat(userId, message) {
+exports.processAIChat = async (userId, message) => {
   await Chat.create({
     userId,
     role: "user",
