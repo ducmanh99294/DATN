@@ -40,9 +40,9 @@ const AdminOrders = () => {
       navigate("/");
       return;
     }
-
     const fetchOrders = async () => {
       try {
+        setLoading(true)
         const data = await getAllOrders(
           `?page=${currentPage}&date=${filters.date}&status=${filters.status}&search=${filters.search}`
         );
@@ -56,6 +56,8 @@ const AdminOrders = () => {
       } catch (err) {
         console.error("Lỗi load orders:", err);
         notify.error("Không thể tải danh sách đơn hàng");
+      } finally {
+        setLoading(false)
       }
     };
 
@@ -350,6 +352,17 @@ const AdminOrders = () => {
             </div>
 
             {/* Orders Table */}
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">📦</div>
+              <h3 className="empty-title">Đang tải sản phẩm...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
+                {orders && orders.length > 0 ? (            
             <div className="orders-table-container">
               <table className="orders-table">
                 <thead>
@@ -462,6 +475,17 @@ const AdminOrders = () => {
                 </tbody>
               </table>
             </div>
+            ) : (
+            <div className="empty-products">
+              <div className="empty-icon">📦</div>
+              <h3 className="empty-title">Không tìm thấy đơn hàng...</h3>
+              <p className="empty-description">            
+                Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
+              </p>
+            </div>
+            )}
+              </>
+            )}
 
             {/* Pagination */}
             <div className="pagination">
@@ -513,7 +537,7 @@ const AdminOrders = () => {
             <div style={{ display: 'grid', gap: '25px' }}>
                 {/* --- Thông tin khách hàng --- */}
                 <div>
-                <h3 style={{ color: '#4B3B2B', marginBottom: '15px', fontSize: '1.2rem' }}>Thông tin khách hàng</h3>
+                <h3 style={{ color: '#ffffff', marginBottom: '15px', fontSize: '1.2rem' }}>Thông tin khách hàng</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                     <div><strong>Họ tên:</strong> {orderDetail.order?.user?.fullName}</div>
                     <div><strong>SĐT:</strong> {orderDetail.order?.user?.phone}</div>

@@ -24,6 +24,7 @@ const AdminUsers: React.FC = () => {
     status: 'all',
     search: ''
   });
+  const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,9 +60,9 @@ const AdminUsers: React.FC = () => {
       navigate("/");
       return;
     }
-
     const fetchUsers = async () => {
       try {
+        setLoading(true)
         const data = await getAllUsers(
           `?role=all&status=all&search=${searchTerm}`
         );
@@ -72,6 +73,9 @@ const AdminUsers: React.FC = () => {
       } catch (err) {
         console.error("Lỗi load user:", err);
         notify.error("Không thể tải danh sách người dùng");
+      } finally {
+        setLoading(false)
+
       }
     };
 
@@ -370,6 +374,16 @@ const AdminUsers: React.FC = () => {
             </div>
 
             {/* Users Table */}
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">👥</div>
+              <h3 className="empty-title">Đang tải Người dùng...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
             {filteredUsers.length > 0 ? (
               <div className="users-table-container">
                 <table className="users-table">
@@ -469,11 +483,11 @@ const AdminUsers: React.FC = () => {
                     : 'Hãy thêm người dùng đầu tiên vào hệ thống'
                   }
                 </p>
-                <button className="add-user-btn" onClick={handleSetAddUser}>
-                  ➕ Thêm Người Dùng Đầu Tiên
-                </button>
               </div>
             )}
+              </>
+            )}
+
           </div>
         </main>
      
@@ -484,7 +498,7 @@ const AdminUsers: React.FC = () => {
             <h2 className="modal-title">
               {editingUser ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng Mới'}
             </h2>
-            <button className="close-btn" onClick={handleClose}>×</button>
+            <button className="close-btn" onClick={()=>setShowModal(false)}>×</button>
           </div>
 
           <form className="product-form" onSubmit={editingUser ? (handleUpdateUser) : (handleAddUser)}>
@@ -570,7 +584,7 @@ const AdminUsers: React.FC = () => {
 
 
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={handleClose}>
+              <button type="button" className="cancel-btn" onClick={()=>setShowModal(false)}>
                 Hủy
               </button>
               <button type="submit" className="save-btn">

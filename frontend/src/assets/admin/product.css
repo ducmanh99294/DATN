@@ -38,9 +38,9 @@
 }
 
 .add-product-btn {
-  background: #A0522D; /* Nâu đỏ */
+  background: transparent;
+  border: 1px solid rgba(253,253,253,0.3);
   color: white;
-  border: none;
   padding: 12px 25px;
   border-radius: 8px;
   cursor: pointer;
@@ -73,6 +73,35 @@
 }
 }
 
+.export-btn{
+  background: transparent;
+  border: 1px solid rgba(253, 253, 253, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #f9f9f9;
+  font-weight: 500;
+  transition: all 0.3s ease;
+&:hover {
+  background: #F97316;
+  color: white;
+}
+}
+
+.filter-btn {
+  background: transparent;
+  border: 1px solid rgba(253, 253, 253, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #f9f9f9;
+  font-weight: 500;
+  transition: all 0.3s ease;
+&:hover {
+  background: #F97316;
+  color: white;
+}
+}
 /* Products Filter */
 .products-filter {
   display: flex;
@@ -236,7 +265,7 @@
 }
 
 .original-price {
-  color: rgba(75, 59, 43, 0.5);
+  color: rgba(247, 247, 247, 0.5);
   text-decoration: line-through;
   font-size: 1rem;
 }
@@ -606,16 +635,17 @@
 .empty-icon {
   font-size: 4rem;
   margin-bottom: 20px;
-  opacity: 0.5;
+  opacity: 0.9;
 }
 
 .empty-title {
   font-size: 1.5rem;
   margin-bottom: 10px;
-  color: #4B3B2B; /* Nâu đậm */
+  color: #f8f8f8; /* Nâu đậm */
 }
 
 .empty-description {
+  color: #f8f8f8;
   font-size: 1rem;
   margin-bottom: 25px;
 }
