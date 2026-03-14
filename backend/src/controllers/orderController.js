@@ -4,12 +4,13 @@ const Order = require("../models/Order");
 const OrderItem = require("../models/OrderItem");
 const User = require("../models/User");
 const Product = require("../models/Product");
-const {sendNotification} = require("../sockets");
+const Payment = require("../models/Payment");
+const { sendNotification } = require("../sockets");
 
 //create
 exports.createOrder = async (req, res) => {
   try {
-    const { shippingAddress, note } = req.body;
+    const { shippingAddress, note, paymentMethod = "cod" } = req.body;
 
     const cart = await Cart.findOne({ user: req.user.id });
     if (!cart) {
@@ -27,7 +28,9 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       user: req.user.id,
       shippingAddress,
-      note
+      note,
+      paymentMethod,
+      paymentStatus: "pending"
     });
 
     let totalPrice = 0;
@@ -48,6 +51,15 @@ exports.createOrder = async (req, res) => {
     // Update total
     order.totalPrice = totalPrice;
     await order.save();
+
+    // Create payment record (để theo dõi thanh toán, đặc biệt cho bank)
+    await Payment.create({
+      order: order._id,
+      user: req.user.id,
+      amount: totalPrice,
+      method: paymentMethod,
+      status: "pending"
+    });
 
     // Clear cart
     await CartItem.deleteMany({ cart: cart._id });
@@ -241,6 +253,35 @@ exports.cancelOrder = async (req, res) => {
     { new: true }
   );
   res.json(order);
+};
+
+// cập nhật trạng thái thanh toán (admin xác nhận đã nhận tiền)
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { paymentStatus } = req.body;
+    const { id } = req.params;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: "Đơn hàng không tồn tại" });
+    }
+
+    order.paymentStatus = paymentStatus;
+
+    if (paymentStatus === "paid" && order.status === "pending") {
+      order.status = "confirmed";
+      if (!order.dateConfirmed) {
+        order.dateConfirmed = new Date();
+      }
+    }
+
+    await order.save();
+
+    res.json(order);
+  } catch (err) {
+    console.error("Update payment status error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
 };
 
 // import orders from Excel (admin)

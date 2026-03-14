@@ -96,7 +96,7 @@ const initSocket = (server) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Disconnected:", socket.userId);
+      // Giữ kết nối đóng yên lặng, tránh spam log terminal
     });
 
     
@@ -109,7 +109,6 @@ const sendNotification = (userId, data) => {
     return;
   }
 
-  console.log("Emit to:", `user_${userId}`);
   io.to(`user_${userId}`).emit("notification", data);
 };
 

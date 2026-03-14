@@ -14,7 +14,6 @@ export const getStats = async () => {
 };
 export const createOrder = async (shippingAddress: any,note: string) => {
   return await apiPost("/api/orders",{shippingAddress, note});
-};
 
 export const getOrderById = async (id: string) => {
   return await apiGet(`/api/orders/${id}`);
@@ -40,4 +39,8 @@ export interface ImportOrderPayload {
   note?: string;
   items: { productId: string; quantity: number }[];
 }
+
+export const updateOrderPaymentStatus = async (id: string, paymentStatus: string) => {
+  return await apiPut(`/api/orders/${id}/payment-status`, { paymentStatus });
+};
 

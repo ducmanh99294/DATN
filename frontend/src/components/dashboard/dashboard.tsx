@@ -46,25 +46,25 @@ const AdminDashboard = () => {
     const year = date.getFullYear();
     const month = date.getMonth() + 1
     try {
-      const res = await apiFetch(`/api/report/admin/${year}/${month}`)
-      if(res.ok) {
-        const data = await res.json()
-        setMonthReports(data)
-      }
+      const data = await apiGet<any[]>(`/api/report/admin/${year}/${month}`);
+      setMonthReports(data || []);
     } catch (err) {
-      console.log(err)
+      console.log(err);
+      setMonthReports([]);
     } 
   }
 
   const fetchTopSellProduct = async () => {
     try {
-      const res = await apiFetch(`/api/products/sellCount`)
-      if(res.ok) {
-        const data = await res.json()
-        setProductReport(data)      
-      }
+      const data = await getAllProducts(`?page=1&category=all&search=`);
+      const list = (data as any).products || [];
+      const sorted = [...list].sort(
+        (a: any, b: any) => (b.sellCount || 0) - (a.sellCount || 0)
+      );
+      setProductReport(sorted.slice(0, 5));
     } catch (err) {
-      console.log(err)
+      console.log(err);
+      setProductReport([]);
     }
   }
 
@@ -75,6 +75,7 @@ const AdminDashboard = () => {
       setTotalOrders(data.totalOrders)
     } catch (err) {
       console.error("Lỗi khi lấy đơn hàng:", err);
+      setOrders([]);
     }
   };
 
@@ -134,24 +135,29 @@ const AdminDashboard = () => {
                 <Link to="/admin/activities" className="view-all">Xem tất cả</Link>
               </div>
               <div className="activity-list">
-                {newestOrder.map((order) => (
-                  <div key={order.id} className="activity-item">
-                    <div className="activity-avatar">
-                      {order?.user?.name.slice(0, 2)}
-                    </div>
-                    <div className="activity-content">
-                      <div className="activity-text">
-                        <strong>{order?.user?.name}</strong> đã 
-                          {order.status === 'pending' && ' yêu cầu xử lí '}
-                          {order.status === 'processing' && ' yêu cầu hoàn tất '}
-                          {order.status === 'completed' && ' hoàn thành '}
-                          {order.status === 'cancelled' && ' hủy '}
-                        đơn hàng <strong>{order.id.slice(7, 10)}</strong>
+                {newestOrder.map((order: any) => {
+                  const code = order._id ? String(order._id).slice(-4) : "";
+                  const customerName = order.user?.fullName || order.username || "Khách hàng";
+                  const avatarText = customerName.slice(0, 2).toUpperCase();
+                  return (
+                    <div key={order._id} className="activity-item">
+                      <div className="activity-avatar">
+                        {avatarText}
                       </div>
-                      <div className="activity-time">{formatDate(order.createdAt)}</div>
+                      <div className="activity-content">
+                        <div className="activity-text">
+                          <strong>{customerName}</strong> đã 
+                            {order.status === 'pending' && ' tạo đơn hàng '}
+                            {order.status === 'processing' && ' đang được xử lý '}
+                            {order.status === 'completed' && ' hoàn thành '}
+                            {order.status === 'cancelled' && ' hủy '}
+                          đơn hàng <strong>{code}</strong>
+                        </div>
+                        <div className="activity-time">{formatDate(order.createdAt)}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -174,27 +180,31 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {newestOrder.map(order => (
-                    <tr key={order.id}>
-                      <td className="order-id">{order?.id.slice(7,10)}</td>
-                      <td>
-                        <div className="customer-info">
-                          <div className="customer-name">{order?.username}</div>
-                          <div className="customer-contact">{order?.userPhone}</div>
-                        </div>
-                      </td>
-                      <td className="order-amount">{formatPrice(order.totalPrice)}</td>
-                      <td>
-                        <span className={`order-status ${order.status}`}>
-                          {order.status === 'pending' && 'Chờ xác nhận'}
-                          {order.status === 'processing' && 'Đang xử lí'}
-                          {order.status === 'completed' && 'Hoàn thành'}
-                          {order.status === 'cancelled' && 'Đã hủy'}
-                        </span>
-                      </td>
-                      <td>{formatDate(order.createdAt)}</td>
-                    </tr>
-                  ))}
+                  {newestOrder.map((order: any) => {
+                    const code = order._id ? String(order._id).slice(-4) : "";
+                    const customerName = order.user?.fullName || order.username || "Khách hàng";
+                    return (
+                      <tr key={order._id}>
+                        <td className="order-id">{code}</td>
+                        <td>
+                          <div className="customer-info">
+                            <div className="customer-name">{customerName}</div>
+                            <div className="customer-contact">{order?.userPhone || order.user?.phone}</div>
+                          </div>
+                        </td>
+                        <td className="order-amount">{formatPrice(order.totalPrice)}</td>
+                        <td>
+                          <span className={`order-status ${order.status}`}>
+                            {order.status === 'pending' && 'Chờ xác nhận'}
+                            {order.status === 'processing' && 'Đang xử lí'}
+                            {order.status === 'completed' && 'Hoàn thành'}
+                            {order.status === 'cancelled' && 'Đã hủy'}
+                          </span>
+                        </td>
+                        <td>{formatDate(order.createdAt)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
