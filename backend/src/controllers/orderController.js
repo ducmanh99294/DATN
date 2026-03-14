@@ -293,3 +293,40 @@ exports.importOrders = async (req, res) => {
     res.status(500).json({ message: err.message || "Lỗi nhập đơn hàng" });
   }
 };
+
+exports.getMonthlyStats = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const stats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfMonth,
+            $lt: endOfMonth
+          },
+          status: { $in: ["completed"] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" },
+          totalOrders: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      totalRevenue: stats[0]?.totalRevenue || 0,
+      totalOrders: stats[0]?.totalOrders || 0
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};

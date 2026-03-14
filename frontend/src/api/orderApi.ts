@@ -9,6 +9,9 @@ export const getAllOrders = async (params: string) => {
   return await apiGet(`/api/orders${params}`);
 };
 
+export const getStats = async () => {
+  return await apiGet(`/api/orders/stats/month`);
+};
 export const createOrder = async (shippingAddress: any,note: string) => {
   return await apiPost("/api/orders",{shippingAddress, note});
 };
@@ -28,6 +31,8 @@ export const cancelOrder = async (id: string, reason: string) => {
 export const importOrders = async (orders: ImportOrderPayload[]) => {
   return await apiPost("/api/orders/import", { orders });
 };
+
+
 
 export interface ImportOrderPayload {
   userEmail: string;

@@ -87,6 +87,7 @@ const AdminNews = () => {
 
   const fetchNews = async () => {
     try {
+      setLoading(true)
       const data = await getAllNews(
         `?page=${currentPage}&date=${filters.date}&category=${filters.category}&status=${filters.status}&search=${filters.search}`
       );
@@ -94,6 +95,8 @@ const AdminNews = () => {
       setNewsList(data.news);
     } catch (err) {
       notify.error("Không thể tải danh sách tin tức");
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -415,7 +418,17 @@ const openDetailModal = (news: any, active: any) => {
             </div>
 
             {/* Products Grid */}
-            {newsList && newsList.length > 0 ? (
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">📰</div>
+              <h3 className="empty-title">Đang tải tin tức...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
+              {newsList && newsList.length > 0 ? (
               <div className="products-grid">
                 {newsList.map((news: any) => (
                   <div key={news._id} className="product-card">
@@ -466,11 +479,11 @@ const openDetailModal = (news: any, active: any) => {
                 <p className="empty-description">            
                     Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
                 </p>
-                <button className="add-product-btn" onClick={handleCreateNews}>
-                  ➕ Thêm Tin Tức Đầu Tiên
-                </button>
               </div>
             )}
+              </>
+            )}
+
           </div>
         </main>
 

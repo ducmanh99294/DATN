@@ -38,9 +38,9 @@
 }
 
 .add-user-btn {
-  background: #A0522D; /* Nâu đỏ */
+  background: transparent;
+  border: 1px solid rgba(253, 253, 253, 0.3);
   color: white;
-  border: none;
   padding: 12px 25px;
   border-radius: 8px;
   cursor: pointer;
@@ -74,6 +74,20 @@
 }
 }
 
+.filter-btn {
+  background: transparent;
+  border: 1px solid rgba(253, 253, 253, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #f9f9f9;
+  font-weight: 500;
+  transition: all 0.3s ease;
+&:hover {
+  background: #F97316;
+  color: white;
+}
+}
 /* Users Filter */
 .users-filter {
   display: flex;
@@ -127,6 +141,30 @@
   top: 50%;
   transform: translateY(-50%);
   color: rgba(75, 59, 43, 0.5);
+}
+
+.empty-products {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(75, 59, 43, 0.7);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #f8f8f8; /* Nâu đậm */
+}
+
+.empty-description {
+  color: #f8f8f8;
+  font-size: 1rem;
+  margin-bottom: 25px;
 }
 
 /* Users Table */
@@ -605,7 +643,7 @@ text-overflow: ellipsis;
 .empty-title {
   font-size: 1.5rem;
   margin-bottom: 10px;
-  color: #4B3B2B; /* Nâu đậm */
+  color: #ffffff; /* Nâu đậm */
 }
 
 .empty-description {

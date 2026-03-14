@@ -1,22 +1,39 @@
 // AdminDashboard.js
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../../assets/admin/dashboard.css';
+import { getStats } from '../../api/orderApi';
+import { useAuthContext } from '../../context/AuthContext';
+import { useNotify } from '../../hooks/useNotification';
 
 const AdminDashboard = () => {
   const [monthReports, setMonthReports] = useState<any>([]);
   const [productReport, setProductReport] = useState<any>([]);
   const [orders, setOrders] = useState<any[]>([]);
   
-  const totalMonthlyRevenue = monthReports.reduce((sum: any, day: any) => sum + day.totalRevenue, 0);
+  const [totalRevenue, setTotalRevenue] = useState<any>([]);
+  const [totalOrders, setTotalOrders] = useState<any>([]);
+
+  const { user } = useAuthContext();
+  const notify = useNotify();
+  const navigate = useNavigate();
+
   const newestOrder = orders.slice(-5).reverse();
 
   useEffect(() => {
+    if (!user) return;
+    
+    if (user.role !== "admin") {
+      notify.warning("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+      return;
+    }
+
     fetchReportByMonth();
     fetchTopSellProduct();
-    fetchOrders();
+    fetchStatsOrders();
   }, []);
-
+  console.log(totalOrders, totalRevenue)
   const formatPrice = (price: any) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -51,12 +68,11 @@ const AdminDashboard = () => {
     }
   }
 
-  const fetchOrders = async () => {
+  const fetchStatsOrders = async () => {
     try {
-      const res = await apiFetch(`/api/orders/admin`);
-      if (!res.ok) throw new Error("Không thể tải danh sách đơn hàng");
-      const data = await res.json();
-      setOrders(data);
+      const data = await getStats();
+      setTotalRevenue(data.totalRevenue)
+      setTotalOrders(data.totalOrders)
     } catch (err) {
       console.error("Lỗi khi lấy đơn hàng:", err);
     }
@@ -79,13 +95,13 @@ const AdminDashboard = () => {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-card-icon primary">💰</div>
-                <div className="stat-card-value">{formatPrice(totalMonthlyRevenue)}</div>
+                <div className="stat-card-value">{formatPrice(totalRevenue)}</div>
                 <div className="stat-card-label">Tổng Doanh Thu Tháng Này</div>
               </div>
               <div className="stat-card">
                 <div className="stat-card-icon success">📦</div>
-                <div className="stat-card-value">{formatNumber(orders.filter(order => order.status === 'completed').length)}</div>
-                <div className="stat-card-label">Tổng Đơn Hàng Từ Trước Đến Nay</div>
+                <div className="stat-card-value">{formatNumber(totalOrders)}</div>
+                <div className="stat-card-label">Tổng Đơn Hàng Tháng này</div>
               </div>
             </div>
           </section>
@@ -104,9 +120,9 @@ const AdminDashboard = () => {
               <div className="chart-container">
                 <div className="placeholder-chart">
                   <div className="icon">📈</div>
-                  <div>Biểu đồ doanh thu sẽ được hiển thị ở đây</div>
+                  {/* <div>Biểu đồ doanh thu</div> */}
                   <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'rgba(75, 59, 43, 0.5)' }}>
-                    (Trong thực tế sẽ tích hợp với Chart.js hoặc D3.js)
+                    {/* (Trong thực tế sẽ tích hợp với Chart.js hoặc D3.js) */}
                   </div>
                 </div>
               </div>
