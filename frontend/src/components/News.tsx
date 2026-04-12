@@ -6,7 +6,7 @@ import { useNotify } from '../hooks/useNotification';
 import { getAllNews, getNewsBySlug } from '../api/newsApi';
 import { getCategories } from '../api/categoryApi';
 import { getDoctor } from '../api/doctorApi';
-import { getAllFaqs, FaqItem } from '../api/faqApi';
+import { getAllFaqs, type FaqItem } from '../api/faqApi';
 
 const DEFAULT_FAQS: FaqItem[] = [
   { _id: '1', question: 'Làm thế nào để đặt lịch khám với bác sĩ?', answer: 'Bạn có thể đặt lịch trực tuyến qua trang Đặt lịch: chọn chuyên khoa, bác sĩ, ngày giờ phù hợp và điền thông tin. Hệ thống sẽ gửi xác nhận qua email/SMS.' },

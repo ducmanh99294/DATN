@@ -108,6 +108,8 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
+    console.log(orders)
+
   useEffect(() => {
     filterOrders();
     calculateStats();
@@ -287,7 +289,6 @@ const Orders = () => {
   const renderOrderCard = (order: Order) => {
     const statusBadge = getStatusBadge(order.status);
     const paymentBadge = getPaymentStatusBadge(order.paymentStatus);
-
     return (
       <div key={order._id} className="order-card">
         <div className="order-header">
@@ -317,7 +318,7 @@ const Orders = () => {
           {order.items.slice(0, 3).map(item => (
             <div key={item.id} className="order-item">
               <div className="item-image">
-                <img src={item.product.images[0]} alt={item.name} />
+                <img src={item?.product?.images[0]} alt={item.name} />
                 {item.prescriptionRequired && (
                   <span className="prescription-icon" title="Thuốc kê đơn">
                     <i className="fas fa-prescription"></i>

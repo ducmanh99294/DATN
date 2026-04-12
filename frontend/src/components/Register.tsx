@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import '../assets/register.css';
 import { useNavigate } from 'react-router-dom';
-import { registerApi } from '../api/authApi';
+import { loginWithFacebookApi, registerApi } from '../api/authApi';
+import { useNotify } from '../hooks/useNotification';
 
 interface RegisterProps {
   onRegisterSuccess?: (userData: any) => void;
@@ -22,6 +23,7 @@ const Register: React.FC<RegisterProps> = ({
     agreeTerms: false,
     receiveNewsletter: true
   });
+  const notify = useNotify()
   const navigate = useNavigate();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -181,8 +183,25 @@ const Register: React.FC<RegisterProps> = ({
 
   // Đăng ký bằng mạng xã hội
   const handleSocialRegister = (provider: string) => {
-    alert(`Đang đăng ký với ${provider}`);
-    // Ở đây sẽ tích hợp với API đăng ký mạng xã hội
+    try {
+      if (provider === "Google") {
+        window.location.href =
+          "http://localhost:3000/api/auth/google";
+      }
+
+      if (provider === "Facebook") {
+        loginWithFacebookApi()
+          .then(() => {
+            notify.success("Đăng nhập thành công", "Thông báo");
+          })
+          .catch(() => {
+            notify.error("Đăng nhập thất bại", "Thông báo");
+          });
+      }
+    } catch (e) {
+      notify.error("Đăng nhập thất bại", "Thông báo");
+      console.log(e);
+    }
   };
 
   // Render progress steps
@@ -659,14 +678,6 @@ const Register: React.FC<RegisterProps> = ({
                 >
                   <i className="fab fa-google"></i>
                   <span>Tiếp tục với Google</span>
-                </button>
-                <button 
-                  type="button" 
-                  className="social-btn facebook"
-                  onClick={() => handleSocialRegister('Facebook')}
-                >
-                  <i className="fab fa-facebook-f"></i>
-                  <span>Tiếp tục với Facebook</span>
                 </button>
               </div>
 

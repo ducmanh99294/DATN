@@ -1105,10 +1105,17 @@ body {
   transform: translateY(-2px);
 }
 
-.booking-flow-container .time-slot.booking-flow-container .booked {
+.booking-flow-container .time-slot.booked {
   background: var(--bg-main);
   border-color: var(--border-color);
   color: var(--text-light);
+  cursor: not-allowed;
+}
+
+
+.booking-flow-container .time-slot.pending {
+  background: #f59e0b;
+  color: white;
   cursor: not-allowed;
 }
 

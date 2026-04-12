@@ -273,10 +273,15 @@
 }
 
 .chart-card {
-  background: white;
+  background: #6084b344;
   border-radius: 15px;
   padding: 25px;
   box-shadow: 0 4px 20px rgba(75, 59, 43, 0.08);
+  text-align: center;
+  transition: all 0.3s ease;
+  /* border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(75, 59, 43, 0.08); */
 }
 
 .chart-header {
@@ -304,7 +309,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
-  color: #4B3B2B;
+  color: #ffffff;
   transition: all 0.3s ease;
 &:hover {
   background: #4B3B2B; /* Nâu đậm */
@@ -396,10 +401,12 @@
 }
 
 .table-card {
-  background: white;
+  background: #6084b344;
   border-radius: 15px;
   padding: 25px;
   box-shadow: 0 4px 20px rgba(75, 59, 43, 0.08);
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
 .table-header {
@@ -416,7 +423,7 @@
 }
 
 .view-all {
-  color: #A0522D; /* Nâu đỏ */
+  color: #f4f4f4; /* Nâu đỏ */
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
@@ -433,7 +440,7 @@
 .orders-table th, .products-table th {
   text-align: left;
   padding: 12px 8px;
-  color: #4B3B2B; /* Nâu đậm */
+  color: #f4f4f4; /* Nâu đậm */
   font-weight: 600;
   border-bottom: 2px solid #F5F0E6;
   font-size: 0.9rem;

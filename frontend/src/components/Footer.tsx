@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import '../assets/footer.css';
 
 // Import các icon (sử dụng react-icons)
@@ -23,8 +23,17 @@ import {
   FaHospital
 } from 'react-icons/fa';
 import { MdHealthAndSafety, MdLocalHospital } from 'react-icons/md';
+import { getAllSpecially } from '../api/specialyApi';
+import { useNavigate } from 'react-router-dom';
 
 const Footer = () => {
+  const [speciallyLoading, setSpeciallyLoading] = useState(false);
+  const [specially, setSpecially] = useState<any[]>([])
+  const navigate = useNavigate()
+  useEffect(()=>{
+      fetchSpeciatly();
+      }
+    ,[])
   // Current year for copyright
   const currentYear = new Date().getFullYear();
 
@@ -41,8 +50,8 @@ const Footer = () => {
   };
 
   // Xử lý click các liên kết nhanh
-  const handleQuickLinkClick = (linkName: string) => {
-    console.log(`Điều hướng đến: ${linkName}`);
+  const handleQuickLinkClick = (slug: string) => {
+    navigate(`/specialty/${slug}`)
     // Ở đây bạn sẽ thêm logic điều hướng thực tế
   };
 
@@ -51,7 +60,18 @@ const Footer = () => {
     console.log(`Mở ${platform}`);
     // Ở đây bạn sẽ mở liên kết mạng xã hội
   };
-
+  
+  const fetchSpeciatly = async () => {
+    try {
+      setSpeciallyLoading(false)
+      const data = await getAllSpecially()
+      setSpecially(data)
+    } catch (e) {
+      console.log(e)
+    } finally {
+      setSpeciallyLoading(false)
+    }
+  }
   // Dữ liệu các khoa/phòng
   const departments = [
     { name: 'Khoa Nội tổng quát', link: '#', icon: <FaUserMd /> },
@@ -170,19 +190,28 @@ const Footer = () => {
             {/* Cột 2: Khoa & Dịch vụ */}
             <div className="footer-col">
               <h4 className="footer-title">Khoa & Dịch vụ</h4>
+              {speciallyLoading ? (
+                  <div className="loading-state">
+                    <i className="fas fa-spinner fa-spin"></i>
+                  </div>
+              ) : (
               <ul className="footer-links">
-                {departments.map((dept, index) => (
+                {specially && specially.length > 0 ? specially.map((dept, index) => (
                   <li key={index}>
                     <button 
                       className="footer-link"
-                      onClick={() => handleQuickLinkClick(dept.name)}
+                      onClick={() => handleQuickLinkClick(dept.slug)}
                     >
                       <span className="link-icon">{dept.icon}</span>
                       {dept.name}
                     </button>
                   </li>
-                ))}
+                )) : 
+                  "Không tìm thấy chuyên khoa"
+                }
               </ul>
+              )}
+
               
               <div className="services-list">
                 <h5>Dịch vụ nổi bật</h5>

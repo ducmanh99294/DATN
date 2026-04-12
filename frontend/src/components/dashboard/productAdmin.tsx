@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createProducts, deleteProduct, getAllProducts, updateProduct, updateStatusProduct, importProducts } from '../../api/productApi';
 import type { Product } from '../Product';
 import { getCategories } from '../../api/categoryApi';
-import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
+import { exportToExcel, exportToExcelWithDropdown, parseExcelFile } from '../../utils/excelUtils';
 
 
 const AdminProducts: React.FC = () => {
@@ -327,11 +327,19 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleDownloadTemplateProduct = () => {
+  const handleDownloadTemplateProduct = async () => {
     const template = [
       { name: "Tên SP", category: "ID_DANH_MỤC", description: "", price: 0, discount: 0, stock: 0, useFors: "", uses: "", sideEffects: "" },
     ];
-    exportToExcel(template, "mau-nhap-san-pham", "Mẫu");
+    await exportToExcelWithDropdown(
+        template,
+        "mau-nhap-san-pham",
+        "Mẫu",
+        {
+          columnKey: "category",
+          values: categories.map(c => c.name),
+        }
+        );
     notify.success("Đã tải mẫu Excel!");
   };
 
@@ -348,7 +356,24 @@ const AdminProducts: React.FC = () => {
       const productsPayload = rows.map((row: any) => {
         const name = row.name ?? row["name"] ?? row["Tên"] ?? "";
         const category = row.category ?? row["category"] ?? row["Danh mục"] ?? "";
-        const catId = typeof category === "string" && category.length === 24 ? category : (categories.find((c: any) => c.name === category || c._id === category)?._id ?? category);
+        const image = row.image ?? row["image"] ?? row["Ảnh"] ?? "";
+        const normalize = (str: string) =>
+          str.toLowerCase().trim();
+
+        const catId =
+          typeof category === "string" && category.length === 24
+            ? category
+            : (
+                categories.find(
+                  (c: any) =>
+                    normalize(c.name) === normalize(category) ||
+                    c._id === category
+                )?._id
+              );
+
+        if (!catId) {
+          notify.error(`Không tìm thấy danh mục: ${category}`);
+        }
         return {
           name: String(name).trim(),
           category: catId,
@@ -359,6 +384,7 @@ const AdminProducts: React.FC = () => {
           useFors: String(row.useFors ?? row["useFors"] ?? row["Hướng dẫn"] ?? ""),
           uses: String(row.uses ?? row["uses"] ?? row["Công dụng"] ?? ""),
           sideEffects: String(row.sideEffects ?? row["sideEffects"] ?? row["Tác dụng phụ"] ?? ""),
+          images: image ? [String(image)] : [],
         };
       }).filter((p: any) => p.name);
       if (productsPayload.length === 0) {

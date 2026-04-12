@@ -351,7 +351,7 @@ useEffect(() => {
     setShowReviewModal(false);
     setSelectedAppointment(null);
   };
-
+  console.log(appointments[0].patientId.image)
   // Render appointment card
   const renderAppointmentCard = (appointment: Appointment) => {
     const statusBadge = getStatusBadge(appointment.status);
@@ -390,7 +390,7 @@ useEffect(() => {
           <div className="person-info">
             <div className="person-avatar">
               <img 
-                src={user?.role === 'patient' ? appointment.doctorId.image : appointment.patientId.image} 
+                src={appointment.doctorId.userId.image} 
                 alt={user?.role === 'patient' ? appointment.doctorId.userId.fullName : appointment.patientId.fullName}
               />
             </div>

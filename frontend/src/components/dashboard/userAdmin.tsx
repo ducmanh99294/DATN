@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/user.css';
 import { useAuthContext, type User } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile } from '../../api/authApi';
+import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile, updateUser } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
 
@@ -159,6 +159,7 @@ const AdminUsers: React.FC = () => {
     setShowModal(true);
   };
 
+  // console.log(profileForm)
   const handleAddEditUser = (user: any) => {
     setEditingUser(user);
       setProfileForm({
@@ -188,10 +189,12 @@ const AdminUsers: React.FC = () => {
     e.preventDefault();
     try {
       setShowModal(true);
-      const data = await updateProfile(profileForm.fullName, profileForm.phone, profileForm.email, profileForm.gender);
-      setUsers((pre: any) => 
-        pre.map((e: any) => e.id === editingUser.id ? {...e, ...data} : e)
-        );
+      const data = await updateUser(editingUser._id, profileForm.fullName, profileForm.phone, profileForm.email, profileForm.gender, profileForm.role);
+      setUsers((prev: any) =>
+        prev.map((order: any) =>
+          order._id === editingUser._id  ? { ...order, ...data } : editingUser
+      ))
+
       setShowModal(false);
       notify.success("Cập nhật thông tin người dùng thành công");
     } catch (err) {

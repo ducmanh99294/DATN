@@ -24,3 +24,11 @@ export const updateTimeSlotApi = async (id: string, status: string) => {
 export const deleteTimeSlotApi = async (id: string) => {
     return await apiDelete(`/api/timeSlot/${id}`);
 };
+
+export const holdSlot = async (id: string) => {
+    return await apiPut(`/api/timeSlot/hold/${id}`,{});
+};
+
+export const releaseSlot = async (id: string) => {
+    return await apiPut(`/api/timeSlot/release/${id}`,{});
+};

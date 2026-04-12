@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom"; // Đảm bảo đã import
 import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import Home from "./components/Home";
@@ -26,16 +26,20 @@ import AdminOrders from "./components/dashboard/orderAdmin";
 import AdminProducts from "./components/dashboard/productAdmin";
 import AdminUsers from "./components/dashboard/userAdmin";
 import AdminDashboard from "./components/dashboard/home";
+import Test from "./components/Notfound";
 
 function App() {
-  // const location = useLocation();
-  const noHeaderFooterPaths = ["/login", "/register", ];
+  // 1. MỞ COMMENT DÒNG NÀY ĐỂ REACT ĐƯỢC LẮNG NGHE URL THAY ĐỔI
+  const location = useLocation(); 
+  
+  const noHeaderFooterPaths = ["/login", "/register", '/notFound'];
   const hideHeaderFooter = noHeaderFooterPaths.includes(location.pathname);
+  
   const { fetchMe, fetchDoctor } = useAuth();
-  const user = useAuthContext()
+  const user = useAuthContext();
 
   useEffect(() => {
-      fetchMe(); // gọi /auth/me → đọc cookie
+      fetchMe(); 
   }, []);
 
   useEffect(() => {
@@ -43,9 +47,11 @@ function App() {
       fetchDoctor(user.user._id);
     }
   }, [user.user?._id, user.user?.role]);
+
   return (
     <div className="App">
       {!hideHeaderFooter && <Header />}
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -61,6 +67,7 @@ function App() {
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<News />} />
         <Route path="/specialty/:slug" element={<Specialty />} />
+        {/* <Route path="/notFound" element={<Test/>} /> */}
 
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/dashborads" element={<Dashboard />} />
@@ -68,9 +75,11 @@ function App() {
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/users" element={<AdminUsers/> } />
       </Routes>
-        <Chat />
-      {!hideHeaderFooter && <Footer />}
       
+      {/* 2. THÊM ĐIỀU KIỆN CHO CHATBOT */}
+      {!hideHeaderFooter && <Chat />}
+      
+      {!hideHeaderFooter && <Footer />}
     </div>
   );
 }

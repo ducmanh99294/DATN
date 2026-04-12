@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../assets/bookingFlow.css';
 import { useAuthContext, type User } from '../context/AuthContext';
 import { getDoctor } from '../api/doctorApi';
-import { getSlotsByDoctorAndDateApi } from '../api/timeSlotApi';
+import { getSlotsByDoctorAndDateApi, holdSlot, releaseSlot } from '../api/timeSlotApi';
 import { createAppoinmentApi } from '../api/appointmentApi';
 import { useNotify } from '../hooks/useNotification';
 import { useRef } from "react";
@@ -58,6 +58,8 @@ const BookingFlow = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const dateOptionsRef = useRef<HTMLDivElement>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
 
   //loading
   const [loadingDay, setLoadingDay] = useState(false);
@@ -124,6 +126,24 @@ const BookingFlow = () => {
   }
 ,[])
 
+useEffect(() => {
+  const interval = setInterval(() => {
+    const savedEnd = localStorage.getItem("slotCooldownEnd");
+
+    if (!savedEnd) return;
+
+    const remaining = Math.max(0, Math.floor((+savedEnd - Date.now()) / 1000));
+
+    setCooldown(remaining);
+
+    if (remaining <= 0) {
+      localStorage.removeItem("slotCooldownEnd");
+    }
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
   // Các bước trong flow
   const steps = [
     { number: 1, title: 'Triệu chứng', icon: 'fas fa-stethoscope' },
@@ -153,6 +173,23 @@ const BookingFlow = () => {
 
     fetchSlots();
   }, [formData.doctorId?._id, selectedDate]);
+
+  useEffect(() => {
+  const handleLeave = () => {
+    if (formData.slotId) {
+      navigator.sendBeacon(
+        "/api/timeSlot/release",
+        JSON.stringify({ slotId: formData.slotId })
+      );
+    }
+  };
+
+  window.addEventListener("beforeunload", handleLeave);
+
+  return () => {
+    window.removeEventListener("beforeunload", handleLeave);
+  };
+}, [formData.slotId]);
 
   // Tìm triệu chứng gợi ý khi nhập
   useEffect(() => {
@@ -306,7 +343,64 @@ const BookingFlow = () => {
     }
     return true;
   };
-  console.log(formData)
+
+const handleProcessTimeSlot = async (slot: TimeSlot) => {
+  console.log(cooldown)
+  if (cooldown > 0) {
+    notify.warning(`Vui lòng đợi ${cooldown}s trước khi đổi khung giờ`);
+    return;
+  }
+
+  if (slot.status !== "available") {
+    notify.error("thông báo", "Khung giờ đang được đặt hoặc đang xử lí, vui lòng chọn khung giờ khác hoặc thử lại sau 5p");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // 🔴 release slot cũ
+    if (formData.slotId) {
+      await releaseSlot(formData.slotId);
+
+      setTimeSlots(prev =>
+        prev.map(s =>
+          s._id === formData.slotId
+            ? { ...s, status: "available" }
+            : s
+        )
+      );
+    }
+
+    // 🟢 giữ slot mới
+    const res = await holdSlot(slot._id);
+
+    if (!res.success) {
+      notify.error("thông báo","Khung giờ đang được người khác chọn");
+      return;
+    }
+
+    // ✅ set state
+    setFormData(prev => ({
+      ...prev,
+      slotId: slot._id,
+    }));
+
+    setSelectedTime(slot.startTime);
+
+    // 🔥 set cooldown SAU KHI thành công
+    const end = Date.now() + 30000;
+    setCooldownEnd(end);
+    localStorage.setItem("slotCooldownEnd", end.toString());
+
+  } catch (err) {
+    notify.error("Có lỗi xảy ra");
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
   // Hoàn tất đặt lịch
   const completeBooking = () => {
     if (!formData.paymentMethod) {
@@ -328,23 +422,23 @@ const BookingFlow = () => {
       // Hiển thị thông báo thành công
       notify.success(`Đặt lịch thành công!\nMã đặt lịch: \nBác sĩ: ${formData.doctorId.userId.fullName}\nThời gian: ${selectedDate} ${selectedTime}`, "thông báo")
       // Reset form
-      setFormData({
-      patientId: user?._id || '',
-      symptoms: [],
-      doctorId: null,
-      slotId: null,
-      description: '',
-      price: 0,
-      paymentMethod: ""
-      });
-      setCurrentStep(1);
-      setSymptom('');
-      setSelectedDate('');
+      // setFormData({
+      // patientId: user?._id || '',
+      // symptoms: [],
+      // doctorId: null,
+      // slotId: null,
+      // description: '',
+      // price: 0,
+      // paymentMethod: ""
+      // });
+      // setCurrentStep(1);
+      // setSymptom('');
+      // setSelectedDate('');
     } catch (e) {
       console.log(e)
     }
   };
-
+console.log(cooldown)
   // Format giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ';
@@ -716,26 +810,30 @@ const BookingFlow = () => {
                 {timeSlots.map((slot, index) => (
                   <button
                     key={index}
-                    className={`time-slot ${slot.appointmentId ? 'booked' : ''} ${formData.slotId === slot._id ? 'selected' : ''}`}
-                    onClick={() => {!slot.appointmentId && 
-                        setFormData(prev => ({
-                          ...prev,
-                          slotId: slot._id,
-                        }))
-                        setSelectedTime(slot.startTime)
-                        setTimeSlots(prev =>
-                          prev.map(slot => ({
-                            ...slot,
-                            isSelected: slot.startTime === slot.startTime
-                          }))
-                        );
-                      }
-                    }
-                    disabled={slot.appointmentId !== null}
+                className={`time-slot 
+                  ${slot.status === 'booked' ? 'booked' : ''}
+                  ${slot.status === 'pending' ? 'pending' : ''}
+                  ${formData.slotId === slot._id ? 'selected' : ''}
+                `}
+                    // onClick={() => {!slot.appointmentId && 
+                    //     setFormData(prev => ({
+                    //       ...prev,
+                    //       slotId: slot._id,
+                    //     }))
+                    //     setSelectedTime(slot.startTime)
+                    //     setTimeSlots(prev =>
+                    //       prev.map(slot => ({
+                    //         ...slot,
+                    //         isSelected: slot.startTime === slot.startTime
+                    //       }))
+                    //     );
+                    //   }
+                    // }
+                    onClick={() => handleProcessTimeSlot(slot)}
+                    disabled={!!slot.appointmentId}
                   >
                     {slot.appointmentId && <i className="fas fa-ban"></i>}
                     {slot.startTime}
-                    {selectedTime === slot.startTime && <i className="fas fa-check selection-check"></i>}
                   </button>
                 ))}
               </div>
@@ -751,7 +849,7 @@ const BookingFlow = () => {
       </div>
     </div>
   );
-console.log(selectedTime)
+
   const renderConfirmationStep = () => (
     <div className="step-content confirmation-step">
       <div className="step-header">

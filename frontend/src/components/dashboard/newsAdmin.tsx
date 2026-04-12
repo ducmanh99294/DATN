@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
 import { useNotify } from "../../hooks/useNotification";
 import { getCategories } from "../../api/categoryApi";
-import { exportToExcel, parseExcelFile } from "../../utils/excelUtils";
+import { exportToExcel, exportToExcelWithDropdown, parseExcelFile } from "../../utils/excelUtils";
 
 
 
@@ -308,11 +308,19 @@ const openDetailModal = (news: any, active: any) => {
     }
   };
 
-  const handleDownloadTemplateNews = () => {
+  const handleDownloadTemplateNews = async () => {
     const template = [
       { title: "Tiêu đề bài viết", summary: "Tóm tắt", content: "Nội dung", category: "ID_DANH_MỤC" },
     ];
-    exportToExcel(template, "mau-nhap-tin-tuc", "Mẫu");
+    await exportToExcelWithDropdown(
+      template,
+      "mau-nhap-tin-tuc",
+      "Mẫu",
+      {
+        columnKey: "category",
+        values: categories.map(c => c.name),
+      }
+    );
     notify.success("Đã tải mẫu Excel!");
   };
 

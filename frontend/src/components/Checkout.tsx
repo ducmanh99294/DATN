@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../assets/checkout.css';
 import { useCart } from '../context/CartContext';
 import { createOrder } from '../api/orderApi';
+import { useNotify } from '../hooks/useNotification';
 
 export interface Address {
   _id: string;
@@ -64,7 +65,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
-
+  const notify = useNotify();
   // Cart items
   // const [state, setCartItems] = useState<CartItem[]>([
   //   {
@@ -401,7 +402,7 @@ const Checkout = () => {
       setOrderSuccess(true);
       setCurrentStep(4);
 
-      alert(`Đặt hàng thành công! Mã đơn hàng: ${newOrder.orderCode || newOrder._id}.
+      notify.success(`Đặt hàng thành công! Mã đơn hàng: ${newOrder.orderCode || newOrder._id}.
 Phương thức thanh toán: ${
         selectedPayment === 'bank'
           ? 'Chuyển khoản ngân hàng'

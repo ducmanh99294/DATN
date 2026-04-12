@@ -56,11 +56,10 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(6);
-    const [filters, setFilters] = useState({
-      category: "all",
-      search: "",
-    });
+  const [filters, setFilters] = useState({
+    category: "all",
+    search: "",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -128,7 +127,8 @@ const Products = () => {
   // Handle filter reset
   const handleResetFilters = () => {
     setKeyword('');
-    setSelectedCategory('all');
+    setSelectedCategory('all')
+    setFilters(prev => ({ ...prev, category: 'all', search: '' }));
     setActiveFilters({
       categories: [],
       priceRange: [0, 500000],
@@ -165,7 +165,6 @@ const Products = () => {
     // In real app, this would open a modal
     alert(`Xem nhanh: ${product.name}`);
   };
-console.log(selectedCategory)
   return (
     <div className="products-container">
       {/* Hero Section */}

@@ -393,7 +393,7 @@ body {
 
 .register-container .social-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 15px;
   margin-bottom: 20px;
 }

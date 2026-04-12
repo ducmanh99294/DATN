@@ -5,6 +5,8 @@ import '../../assets/admin/dashboard.css';
 import { getStats } from '../../api/orderApi';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
+import { apiGet } from '../../api/api';
+import { getAllProducts } from '../../api/productApi';
 
 const AdminDashboard = () => {
   const [monthReports, setMonthReports] = useState<any>([]);
