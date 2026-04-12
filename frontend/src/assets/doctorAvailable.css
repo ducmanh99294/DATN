@@ -797,7 +797,7 @@ body {
 
 .doctor-schedule-container .time-slot-card.booked {
   border-left: 4px solid var(--info);
-  background: rgba(59, 130, 246, 0.03);
+  background: rgb(255, 255, 255);
 }
 
 .doctor-schedule-container .time-slot-card.cancelled {

@@ -103,23 +103,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Quick login với tài khoản demo
-  const handleQuickLogin = (type: 'patient' | 'doctor' | 'admin') => {
-    const demoAccounts = {
-      patient: { email: 'benhnhan@demo.com', password: '123456' },
-      doctor: { email: 'bacsi@demo.com', password: '123456' },
-      admin: { email: 'admin@demo.com', password: '123456' }
-    };
-
-    const account = demoAccounts[type];
-    setFormData(prev => ({
-      ...prev,
-      email: account.email,
-      password: account.password,
-      rememberMe: false
-    }));
-  };
-
   return (
     <div className="login-container">
       <div className="login-wrapper">
@@ -200,38 +183,10 @@ const Login: React.FC = () => {
               </p>
             </div>
 
-            {/* Quick Login Buttons */}
-            <div className="quick-login">
-              <p>Đăng nhập nhanh:</p>
-              <div className="quick-buttons">
-                <button 
-                  type="button" 
-                  className="quick-btn patient"
-                  onClick={() => handleQuickLogin('patient')}
-                >
-                  <i className="fas fa-user"></i> Bệnh nhân
-                </button>
-                <button 
-                  type="button" 
-                  className="quick-btn doctor"
-                  onClick={() => handleQuickLogin('doctor')}
-                >
-                  <i className="fas fa-user-md"></i> Bác sĩ
-                </button>
-                <button 
-                  type="button" 
-                  className="quick-btn admin"
-                  onClick={() => handleQuickLogin('admin')}
-                >
-                  <i className="fas fa-cog"></i> Quản trị
-                </button>
-              </div>
-            </div>
-
             {/* Social Login */}
             <div className="social-login">
               <div className="divider">
-                <span>Hoặc</span>
+                <span>Đăng nhập nhanh bằng</span>
               </div>
               
               <div className="social-buttons">
@@ -242,14 +197,6 @@ const Login: React.FC = () => {
                 >
                   <i className="fab fa-google"></i>
                   <span>Google</span>
-                </button>
-                <button 
-                  type="button" 
-                  className="social-btn facebook"
-                  onClick={() => handleSocialLogin('Facebook')}
-                >
-                  <i className="fab fa-facebook-f"></i>
-                  <span>Facebook</span>
                 </button>
               </div>
             </div>

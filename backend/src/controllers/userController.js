@@ -118,11 +118,11 @@ exports.logout = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const { fullName, phone, email } = req.body;
+  const { fullName, phone, email, gender } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.user.id,
-    { fullName, phone, email },
+    { fullName, phone, email, gender },
     { new: true }
   );
 
@@ -316,3 +316,19 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+  exports.updateUser = async (req, res) => {
+    const { userId } = req.params;
+    const { fullName, phone, email, role, gender } = req.body;
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { fullName, phone, email, role, gender },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  };

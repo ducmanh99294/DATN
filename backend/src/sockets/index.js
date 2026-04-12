@@ -61,25 +61,30 @@ const initSocket = (server) => {
         });
       }
     });
-    // chat AI
+  // chat AI
     socket.on("send_message", async (data) => {
       console.log("AI request:", data);
       try {
-        const reply = await chatController.processAIChat(
+        // Gọi hàm từ controller vừa tạo
+        const reply = await chatController.handleSocketChat(
           socket.userId,
-          data.message
+          data
         );
-
+        
+        // 🔥 CHỈ EMIT 1 LẦN DUY NHẤT
+        // Frontend của bạn đang đọc data.message.type, nên gửi object bọc ngoài chữ message
         socket.emit("ai_reply", {
-          role: "assistant",
-          message: reply
+          message: reply 
         });
 
       } catch (error) {
-    console.error("AI ERROR:", error);
+        console.error("AI ERROR:", error);
+        // Trả về đúng format để Frontend không bị văng lỗi undefined
         socket.emit("ai_reply", {
-          role: "assistant",
-          message: "AI đang gặp lỗi."
+          message: { 
+            type: "text", 
+            message: "AI đang bận hoặc gặp lỗi, vui lòng thử lại sau." 
+          }
         });
       }
     });
@@ -96,7 +101,7 @@ const initSocket = (server) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Disconnected:", socket.userId);
+      // Giữ kết nối đóng yên lặng, tránh spam log terminal
     });
 
     
@@ -109,7 +114,6 @@ const sendNotification = (userId, data) => {
     return;
   }
 
-  console.log("Emit to:", `user_${userId}`);
   io.to(`user_${userId}`).emit("notification", data);
 };
 

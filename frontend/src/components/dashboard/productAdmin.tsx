@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createProducts, deleteProduct, getAllProducts, updateProduct, updateStatusProduct, importProducts } from '../../api/productApi';
 import type { Product } from '../Product';
 import { getCategories } from '../../api/categoryApi';
-import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
+import { exportToExcel, exportToExcelWithDropdown, parseExcelFile } from '../../utils/excelUtils';
 
 
 const AdminProducts: React.FC = () => {
@@ -85,6 +85,7 @@ const AdminProducts: React.FC = () => {
 
     const fetchOrders = async () => {
       try {
+        setLoading(true)
         const data = await getAllProducts(
           `?page=${currentPage}&category=${filters.category}&search=${filters.search}`
         );
@@ -97,6 +98,8 @@ const AdminProducts: React.FC = () => {
       } catch (err) {
         console.error("Lỗi load products:", err);
         notify.error("Không thể tải danh sách sản phẩm");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -324,11 +327,19 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleDownloadTemplateProduct = () => {
+  const handleDownloadTemplateProduct = async () => {
     const template = [
       { name: "Tên SP", category: "ID_DANH_MỤC", description: "", price: 0, discount: 0, stock: 0, useFors: "", uses: "", sideEffects: "" },
     ];
-    exportToExcel(template, "mau-nhap-san-pham", "Mẫu");
+    await exportToExcelWithDropdown(
+        template,
+        "mau-nhap-san-pham",
+        "Mẫu",
+        {
+          columnKey: "category",
+          values: categories.map(c => c.name),
+        }
+        );
     notify.success("Đã tải mẫu Excel!");
   };
 
@@ -345,7 +356,24 @@ const AdminProducts: React.FC = () => {
       const productsPayload = rows.map((row: any) => {
         const name = row.name ?? row["name"] ?? row["Tên"] ?? "";
         const category = row.category ?? row["category"] ?? row["Danh mục"] ?? "";
-        const catId = typeof category === "string" && category.length === 24 ? category : (categories.find((c: any) => c.name === category || c._id === category)?._id ?? category);
+        const image = row.image ?? row["image"] ?? row["Ảnh"] ?? "";
+        const normalize = (str: string) =>
+          str.toLowerCase().trim();
+
+        const catId =
+          typeof category === "string" && category.length === 24
+            ? category
+            : (
+                categories.find(
+                  (c: any) =>
+                    normalize(c.name) === normalize(category) ||
+                    c._id === category
+                )?._id
+              );
+
+        if (!catId) {
+          notify.error(`Không tìm thấy danh mục: ${category}`);
+        }
         return {
           name: String(name).trim(),
           category: catId,
@@ -356,6 +384,7 @@ const AdminProducts: React.FC = () => {
           useFors: String(row.useFors ?? row["useFors"] ?? row["Hướng dẫn"] ?? ""),
           uses: String(row.uses ?? row["uses"] ?? row["Công dụng"] ?? ""),
           sideEffects: String(row.sideEffects ?? row["sideEffects"] ?? row["Tác dụng phụ"] ?? ""),
+          images: image ? [String(image)] : [],
         };
       }).filter((p: any) => p.name);
       if (productsPayload.length === 0) {
@@ -447,79 +476,88 @@ const AdminProducts: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            {products && products.length > 0 ? (
-              <div className="products-grid">
-                {products.map((product) => (
-                  <div key={product._id} className="product-card">
-                    <div 
-                      className="product-image"
-                      style={{
-                        backgroundImage: product.images?.[0]
-                          ? `url(${product.images[0]})`
-                          : product.name
-                      }}
-                    >
-                        <span className={`product-status ${product.isSelling ? 'status-active' : 'status-inactive'}`}>
-                          {product.isSelling ? 'Đang bán' : 'Ngừng bán'}
-                        </span>
-                    </div>
-                    <div className="product-content">
-                      <div className="product-category">
-                        {product.category.name}
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">☕</div>
+              <h3 className="empty-title">Đang tải sản phẩm...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
+              {products && products.length > 0 ? (
+                <div className="products-grid">
+                  {products.map((product) => (
+                    <div key={product._id} className="product-card">
+                      <div 
+                        className="product-image"
+                        style={{
+                          backgroundImage: product.images?.[0]
+                            ? `url(${product.images[0]})`
+                            : product.name
+                        }}
+                      >
+                          <span className={`product-status ${product.isSelling ? 'status-active' : 'status-inactive'}`}>
+                            {product.isSelling ? 'Đang bán' : 'Ngừng bán'}
+                          </span>
                       </div>
-                      <h3 className="product-name">{product.name}</h3>
-                      <p className="product-description">{product.description}</p>
-                      <div className="product-details">
-                        <div className="product-price">
-                          {product.discount ? (
-                            <div>
-                            <span className="current-price">{formatPrice(product.price * (100 - product.discount) / 100)} </span>
-                            <span className="original-price">{formatPrice(product.price)}</span>
-                            </div>
-                          ) : (
-                            <span className="current-price">{formatPrice(product.price)}</span>
-                          )}
+                      <div className="product-content">
+                        <div className="product-category">
+                          {product.category.name}
+                        </div>
+                        <h3 className="product-name">{product.name}</h3>
+                        <p className="product-description">{product.description}</p>
+                        <div className="product-details">
+                          <div className="product-price">
+                            {product.discount ? (
+                              <div>
+                              <span className="current-price">{formatPrice(product.price * (100 - product.discount) / 100)} </span>
+                              <span className="original-price">{formatPrice(product.price)}</span>
+                              </div>
+                            ) : (
+                              <span className="current-price">{formatPrice(product.price)}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="product-actions">
+                          <button 
+                            className="action-btn edit-btn"
+                            onClick={() => handleSetEditProduct(product)}
+                          >
+                            Sửa
+                          </button>
+                          <button 
+                            className="action-btn delete-btn"
+                            onClick={() => handleShowDelete(product)}
+                          >
+                            Xóa
+                          </button>
+                          <button 
+                            className={`action-btn toggle-btn ${product.isSelling ? 'inactive' : ''}`}
+                            onClick={() => handleUpdateProductStatus(product)}
+                          >
+                            {product.isSelling ? 'Tắt' : 'Bật'}
+                          </button>
                         </div>
                       </div>
-                      <div className="product-actions">
-                        <button 
-                          className="action-btn edit-btn"
-                          onClick={() => handleSetEditProduct(product)}
-                        >
-                          Sửa
-                        </button>
-                        <button 
-                          className="action-btn delete-btn"
-                          onClick={() => handleShowDelete(product)}
-                        >
-                          Xóa
-                        </button>
-                        <button 
-                          className={`action-btn toggle-btn ${product.isSelling ? 'inactive' : ''}`}
-                          onClick={() => handleUpdateProductStatus(product)}
-                        >
-                          {product.isSelling ? 'Tắt' : 'Bật'}
-                        </button>
-                      </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                  <div className="empty-products">
+                    <div className="empty-icon">☕</div>
+                    <h3 className="empty-title">Không tìm thấy sản phẩm</h3>
+                    <p className="empty-description">            
+                        Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-products">
-                <div className="empty-icon">☕</div>
-                <h3 className="empty-title">Không tìm thấy sản phẩm</h3>
-                <p className="empty-description">            
-                    Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
-                </p>
-                <button className="add-product-btn" onClick={handleAddProduct}>
-                  ➕ Thêm Sản Phẩm Đầu Tiên
-                </button>
-              </div>
+              )}
+              </>
             )}
-          </div>
-        </main>
 
+            </div>
+          </main>
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="delete-modal">

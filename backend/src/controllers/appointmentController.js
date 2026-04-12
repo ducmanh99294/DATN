@@ -4,13 +4,15 @@ const Doctor = require("../models/Doctor");
 const {sendNotification} = require("../sockets");
 
 exports.createAppointment = async (req, res) => {
+  console.log(req.body)
   try {
     const { doctorId, specialtyId, slotId, symptoms, description, patientId, price } = req.body;
 
     // 1. Kiểm tra slot
     const slot = await TimeSlot.findOne({
       _id: slotId,
-      status: "available",
+      status: "pending",
+      lockedBy: patientId,
     });
 
     if (!slot) {
@@ -28,14 +30,7 @@ exports.createAppointment = async (req, res) => {
       symptoms,
       description,
       price
-    })
-    .populate("patientId")
-    .populate({
-      path: "doctorId",
-      populate: { path: "userId" }
-    })
-    .populate("slotId");
-
+    });
 
     // populate sau khi create
     await appointment.populate([
@@ -67,9 +62,9 @@ exports.createAppointment = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       message: "Đặt lịch thất bại",
-      error: error.message,
     });
   }
 };

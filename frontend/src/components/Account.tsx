@@ -44,7 +44,7 @@ const Account = () => {
     name: '',
     phone: '',
     gender: '',
-    email: ''
+    email: '',
     });
 
 
@@ -65,7 +65,7 @@ const Account = () => {
   // Avatar upload
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-
+  console.log(profileForm)
   // Initialize forms
   useEffect(() => {
     if(!user) return;
@@ -156,7 +156,9 @@ const Account = () => {
   const handleSaveProfile = async () => {
     if (!profileForm.name.trim() || 
         !profileForm.email.trim() || 
-        !profileForm.phone.trim()) {
+        !profileForm.phone.trim() ||
+        !profileForm.gender.trim()
+        ) {
       notify.warning("Vui lòng điền đầy đủ thông tin", "Thông báo");
       return;
     }
@@ -171,6 +173,9 @@ const Account = () => {
       return;
     }
 
+    if (!["nam", "nữ", "khác"].includes(profileForm.gender?.trim()?.toLowerCase())) {
+       notify.warning("thông báo","Giới tính chỉ được nhập: nam, nữ hoặc khác");
+    }
     try {
       setEditLoading(true);
 
@@ -464,7 +469,7 @@ const Account = () => {
             <div className="form-group">
               <label>
                 <i className="fas fa-envelope"></i>
-                Email *
+                Giới tính *
               </label>
               <input
                 type="gender"
@@ -511,7 +516,7 @@ const Account = () => {
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-save"></i>
+                    <i className="fas fa-save" onClick={handleSaveProfile}></i>
                     Lưu thay đổi
                   </>
                 )}

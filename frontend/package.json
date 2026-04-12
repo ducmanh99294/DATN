@@ -20,6 +20,8 @@
     "bootstrap": "^5.3.6",
     "chart.js": "^4.4.9",
     "cloudinary": "^2.9.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.513.0",
     "multer": "^2.1.0",
@@ -33,10 +35,12 @@
     "socket.io-client": "^4.8.1",
     "styled-jsx": "^5.1.7",
     "swiper": "^11.2.10",
+    "tesseract.js": "^7.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@types/file-saver": "^2.0.7",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@types/swiper": "^5.4.3",

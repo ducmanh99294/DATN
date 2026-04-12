@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/user.css';
 import { useAuthContext, type User } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile } from '../../api/authApi';
+import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile, updateUser } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
 
@@ -24,6 +24,7 @@ const AdminUsers: React.FC = () => {
     status: 'all',
     search: ''
   });
+  const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,9 +60,9 @@ const AdminUsers: React.FC = () => {
       navigate("/");
       return;
     }
-
     const fetchUsers = async () => {
       try {
+        setLoading(true)
         const data = await getAllUsers(
           `?role=all&status=all&search=${searchTerm}`
         );
@@ -72,6 +73,9 @@ const AdminUsers: React.FC = () => {
       } catch (err) {
         console.error("Lỗi load user:", err);
         notify.error("Không thể tải danh sách người dùng");
+      } finally {
+        setLoading(false)
+
       }
     };
 
@@ -155,6 +159,7 @@ const AdminUsers: React.FC = () => {
     setShowModal(true);
   };
 
+  // console.log(profileForm)
   const handleAddEditUser = (user: any) => {
     setEditingUser(user);
       setProfileForm({
@@ -184,10 +189,12 @@ const AdminUsers: React.FC = () => {
     e.preventDefault();
     try {
       setShowModal(true);
-      const data = await updateProfile(profileForm.fullName, profileForm.phone, profileForm.email, profileForm.gender);
-      setUsers((pre: any) => 
-        pre.map((e: any) => e.id === editingUser.id ? {...e, ...data} : e)
-        );
+      const data = await updateUser(editingUser._id, profileForm.fullName, profileForm.phone, profileForm.email, profileForm.gender, profileForm.role);
+      setUsers((prev: any) =>
+        prev.map((order: any) =>
+          order._id === editingUser._id  ? { ...order, ...data } : editingUser
+      ))
+
       setShowModal(false);
       notify.success("Cập nhật thông tin người dùng thành công");
     } catch (err) {
@@ -370,6 +377,16 @@ const AdminUsers: React.FC = () => {
             </div>
 
             {/* Users Table */}
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">👥</div>
+              <h3 className="empty-title">Đang tải Người dùng...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
             {filteredUsers.length > 0 ? (
               <div className="users-table-container">
                 <table className="users-table">
@@ -469,11 +486,11 @@ const AdminUsers: React.FC = () => {
                     : 'Hãy thêm người dùng đầu tiên vào hệ thống'
                   }
                 </p>
-                <button className="add-user-btn" onClick={handleSetAddUser}>
-                  ➕ Thêm Người Dùng Đầu Tiên
-                </button>
               </div>
             )}
+              </>
+            )}
+
           </div>
         </main>
      
@@ -484,7 +501,7 @@ const AdminUsers: React.FC = () => {
             <h2 className="modal-title">
               {editingUser ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng Mới'}
             </h2>
-            <button className="close-btn" onClick={handleClose}>×</button>
+            <button className="close-btn" onClick={()=>setShowModal(false)}>×</button>
           </div>
 
           <form className="product-form" onSubmit={editingUser ? (handleUpdateUser) : (handleAddUser)}>
@@ -570,7 +587,7 @@ const AdminUsers: React.FC = () => {
 
 
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={handleClose}>
+              <button type="button" className="cancel-btn" onClick={()=>setShowModal(false)}>
                 Hủy
               </button>
               <button type="submit" className="save-btn">

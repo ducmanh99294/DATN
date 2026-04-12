@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../assets/checkout.css';
 import { useCart } from '../context/CartContext';
 import { createOrder } from '../api/orderApi';
+import { useNotify } from '../hooks/useNotification';
 
 export interface Address {
   _id: string;
@@ -64,7 +65,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
-
+  const notify = useNotify();
   // Cart items
   // const [state, setCartItems] = useState<CartItem[]>([
   //   {
@@ -390,7 +391,7 @@ const Checkout = () => {
     try {
       setIsProcessing(true);
 
-      const res = await createOrder(selectedAddress, orderNote);
+      const res = await createOrder(selectedAddress, orderNote, selectedPayment);
       if (!res) {
         throw new Error("Tạo đơn hàng thất bại");
       }
@@ -401,7 +402,14 @@ const Checkout = () => {
       setOrderSuccess(true);
       setCurrentStep(4);
 
-      alert(`Đặt hàng thành công! Mã đơn hàng: ${newOrder.orderCode || newOrder._id}`);
+      notify.success(`Đặt hàng thành công! Mã đơn hàng: ${newOrder.orderCode || newOrder._id}.
+Phương thức thanh toán: ${
+        selectedPayment === 'bank'
+          ? 'Chuyển khoản ngân hàng'
+          : selectedPayment === 'cod'
+          ? 'Thanh toán khi nhận hàng'
+          : selectedPayment.toUpperCase()
+      }`);
     } catch (error) {
       console.error("Payment error:", error);
     } finally {

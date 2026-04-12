@@ -23,3 +23,31 @@ exports.getAllFaqs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.createFaqs = async (req, res) => {
+  try { 
+  const { question } = req.body;
+
+    const news = await Faq.create({
+      question
+    });
+
+    res.status(201).json(news);
+  } catch (e) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+exports.answerFaq = async (req, res) => {
+  try {
+ const { question } = req.body;
+
+    const news = await Faq.findById({
+      question
+    });
+
+    res.status(201).json(news);
+  } catch (e) {
+    res.status(500).json({ message: error.message });
+  }
+}

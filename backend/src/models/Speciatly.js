@@ -16,6 +16,10 @@ const specialtySchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    keywords: {
+      type: [String],
+      index: true
+    },
     image: {
       type: String,
     }

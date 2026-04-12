@@ -16,30 +16,22 @@ router.get(
 // Callback từ Google
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false }),
+  (req, res, next) => {
+    // Nếu Google báo về là user đã bấm "Hủy" (Cancel)
+    if (req.query.error === "access_denied") {
+      return res.redirect("http://localhost:5173/login?status=cancelled");
+    }
+    next(); 
+  },
+
+  passport.authenticate("google", { 
+    session: false,
+    failureRedirect: "http://localhost:5173/login?status=failed" 
+  }),
+
   (req, res) => {
     const accessToken = generateAccessToken(req.user);
     const refreshToken = generateRefreshToken(req.user);
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      sameSite: "lax",
-    });
-
-    res.redirect("http://localhost:5173");
-  }
-);
-
-router.get(
-  "/facebook",
-  passport.authenticate("facebook", { scope: ["email"] })
-);
-
-router.get(
-  "/facebook/callback",
-  passport.authenticate("facebook", { session: false }),
-  (req, res) => {
-    const accessToken = generateAccessToken(req.user);
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -63,6 +55,7 @@ router.delete("/users/:id", auth, admin, userCtrl.deleteUser);
 //admin
 router.put("/:id/ban", auth, admin, userCtrl.banUser);
 router.put("/:id/unban", auth, admin, userCtrl.unbanUser);
+router.put("/update/:userId", auth, admin, userCtrl.updateUser);
 router.get("/", auth, admin, userCtrl.getAllUsers);
 
 module.exports = router

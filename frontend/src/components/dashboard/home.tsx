@@ -84,7 +84,6 @@ const Home: React.FC = () => {
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-text">{item.label}</span>
-                  {item.badge && <span className="nav-badge">{item.badge}</span>}
                 </div>
               ))}
             </nav>

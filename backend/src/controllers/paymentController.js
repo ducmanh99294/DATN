@@ -12,9 +12,6 @@ exports.getMyPayments = async (req, res) => {
   res.json(payments);
 };
 
-/**
- * ✅ CONFIRM PAYMENT (ADMIN / CALLBACK)
- */
 exports.confirmPayment = async (req, res) => {
   const { transactionId } = req.body;
 
@@ -29,7 +26,8 @@ exports.confirmPayment = async (req, res) => {
 
   // Update order status
   await Order.findByIdAndUpdate(payment.order, {
-    status: "confirmed"
+    status: "confirmed",
+    paymentStatus: "paid"
   });
 
   res.json({

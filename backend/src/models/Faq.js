@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const faqSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     question: {
       type: String,
       required: true,
@@ -9,7 +13,6 @@ const faqSchema = new mongoose.Schema(
     },
     answer: {
       type: String,
-      required: true,
     },
     order: {
       type: Number,

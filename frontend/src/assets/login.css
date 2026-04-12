@@ -375,7 +375,7 @@ body {
 
 .social-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 15px;
 }
 
@@ -399,6 +399,7 @@ body {
 }
 
 .social-btn.google {
+  
   color: #ea4335;
   border-color: rgba(234, 67, 53, 0.3);
   background: rgba(234, 67, 53, 0.05);

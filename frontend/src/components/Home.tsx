@@ -35,7 +35,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import { confirmAppointmentApi, getDoctorAppointments, getMyAppointment } from '../api/appointmentApi';
 import { useNotification } from '../context/NotificationContext';
-import { getMe } from '../api/authApi';
+import { getAllNews } from '../api/newsApi';
+// import background from "../assets/image/background.png"
 
 const Home = () => {
   const { user,doctor } = useAuthContext();
@@ -45,8 +46,11 @@ const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([])
+  const [news, setNews] = useState<any[]>([])
   const [appointments, setAppointments] = useState<any[]>([])
-  const [loading, setLoading] = useState(false);
+  const [doctorLoading, setDoctorLoading] = useState(false);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [appoinmentLoading, setAppoinmentLoading] = useState(false);
   const navigate = useNavigate();
 
   // Dữ liệu slider
@@ -91,27 +95,40 @@ const Home = () => {
   ];
 
   useEffect(()=>{
+      fetchNews();
+      fetchDoctor();
+      }
+    ,[])
+
     const fetchDoctor = async () => {
       try{
-          setLoading(true)
+          setDoctorLoading(true)
           const data = await getDoctor();
           setDoctors(data);
         } catch (e) {
           console.log(e);
         } finally {
-          setLoading(false);
+          setDoctorLoading(false);
         }
       }
-      fetchDoctor();
-      }
-    ,[])
 
+    const fetchNews = async () => {
+      try {
+        setNewsLoading(true)
+        const data = await getAllNews();
+        setNews(data.news)
+      } catch (e) {
+        console.log(e)
+      } finally {
+        setNewsLoading(false)
+      }
+    }
   useEffect(() => {
     if (!user) return;
 
     const fetchAppointments = async () => {
       try {
-        setLoading(true);
+        setAppoinmentLoading(true);
 
         if (user.role === 'patient') {
           const data = await getMyAppointment();
@@ -126,63 +143,12 @@ const Home = () => {
       } catch (e) {
         console.log(e);
       } finally {
-        setLoading(false);
+        setAppoinmentLoading(false);
       }
     };
 
     fetchAppointments();
   }, [user, doctor?._id]);
-    
-  // Dữ liệu tin tức
-  const news = [
-    {
-      id: 1,
-      title: "Phát hiện mới trong điều trị ung thư",
-      excerpt: "Công nghệ CRISPR mở ra hy vọng mới cho bệnh nhân ung thư giai đoạn cuối...",
-      category: "Nghiên cứu",
-      date: "15/12/2024",
-      readTime: "5 phút",
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400"
-    },
-    {
-      id: 2,
-      title: "Cách phòng chống sốt xuất huyết mùa mưa",
-      excerpt: "Các biện pháp hiệu quả giúp bảo vệ gia đình bạn khỏi sốt xuất huyết...",
-      category: "Phòng bệnh",
-      date: "12/12/2024",
-      readTime: "3 phút",
-      image: "https://images.unsplash.com/photo-1584467735871-8db9ac8f1f7a?w=400"
-    },
-    {
-      id: 3,
-      title: "Xu hướng y tế số 2025",
-      excerpt: "AI và IoT đang thay đổi cách chúng ta tiếp cận dịch vụ y tế...",
-      category: "Công nghệ",
-      date: "10/12/2024",
-      readTime: "7 phút",
-      image: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400"
-    }
-  ];
-
-  // Dữ liệu lịch đã đặt (nếu đã đăng nhập)
-  // const appointments = [
-  //   {
-  //     id: 1,
-  //     doctor: "TS.BS. Nguyễn Văn An",
-  //     specialty: "Tim mạch",
-  //     date: "20/12/2024",
-  //     time: "09:00",
-  //     status: "confirmed"
-  //   },
-  //   {
-  //     id: 2,
-  //     doctor: "ThS.BS. Trần Thị Bình",
-  //     specialty: "Nhi khoa",
-  //     date: "22/12/2024",
-  //     time: "14:30",
-  //     status: "pending"
-  //   }
-  // ];
 
   // Dữ liệu stats
   const stats = [
@@ -196,7 +162,7 @@ const Home = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/products?q=${encodeURIComponent(searchQuery)}`;
+      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
     }
   };
 
@@ -248,7 +214,7 @@ const Home = () => {
 
   // Xử lý xem chi tiết tin tức
   const handleReadNews = (newsId: number) => {
-    console.log(`Đọc tin tức ${newsId}`);
+    navigate(`/news/10-cach-tang-cuong-he`)
   };
 
   // Render rating stars
@@ -264,11 +230,14 @@ const Home = () => {
       </div>
     );
   };
+
   return (
     <div className="home-modern">
 
       {/* Main Content */}
       <div className="container main-container">
+        {/* <img src={background} alt="" /> */}
+
         <div className="content-wrapper">
           {/* Main Content Area */}
           <main className="main-content">
@@ -401,9 +370,15 @@ const Home = () => {
                   Xem tất cả <FaArrowRight />
                 </button>
               </div>
-              
+              <div>
+                {newsLoading ? (
+                  <div className="loading-state">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Đang tải bác sĩ...</p>
+                  </div>
+                ) : (
               <div className="doctors-grid">
-                {doctors.map((doctor) => (
+                {doctors && doctors.length > 0 ? doctors.map((doctor) => (
                   <div className="doctor-card" key={doctor._id}>
                     <div className="doctor-header">
                       <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />
@@ -439,8 +414,15 @@ const Home = () => {
                       </button>
                     </div>
                   </div>
-                ))}
+                )) : 
+                  <div className="loading-state">
+                    <p>Không tìm thấy danh sách bác sĩ</p>
+                  </div>
+                  }
               </div>
+                )}             
+              </div>
+
             </section>
 
             {/* News Section */}
@@ -454,27 +436,41 @@ const Home = () => {
                   Xem tất cả <FaArrowRight />
                 </button>
               </div>
-              
-              <div className="news-grid">
-                {news.map((item) => (
-                  <div className="news-card" key={item.id}>
-                    <div className="news-image">
-                      <div className="image-placeholder" />
-                      <span className="news-category">{item.category}</span>
-                    </div>
-                    <div className="news-content">
-                      <div className="news-meta">
-                        <span className="news-date">{item.date}</span>
-                        <span className="news-read-time">{item.readTime} đọc</span>
-                      </div>
-                      <h3 className="news-title">{item.title}</h3>
-                      <p className="news-excerpt">{item.excerpt}</p>
-                      <button className="read-more" onClick={() => handleReadNews(item.id)}>
-                        Đọc thêm <FaArrowRight />
-                      </button>
-                    </div>
+
+              <div>
+                {newsLoading ? (
+                  <div className="loading-state">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Đang tải tin tức...</p>
                   </div>
-                ))}
+                ) : (
+              <div className="news-grid">
+                  {news && news.length > 0 ? news.map((item) => (
+                    <div className="news-card" key={item._id}>
+                      <div className="news-image">
+                          <img src={item.thumbnail} alt="" />
+
+                        <span className="news-category">{item.category.name}</span>
+                      </div>
+                      <div className="news-content">
+                        <div className="news-meta">
+                          <span className="news-date">{item.createAt}</span>
+                          {/* <span className="news-read-time">{item.readTime} đọc</span> */}
+                        </div>
+                        <h3 className="news-title">{item.title}</h3>
+                        <p className="news-excerpt">{item.summary.slice(0,80)}...</p>
+                        <button className="read-more" onClick={() => handleReadNews(item._id)}>
+                          Đọc thêm <FaArrowRight />
+                        </button>
+                      </div>
+                    </div>
+                  ))  : 
+                  <div className="loading-state">
+                    <p>Không tìm thấy danh sách tin tức</p>
+                  </div> 
+                  }
+                    </div>
+                )}
               </div>
             </section>
           </main>
@@ -522,7 +518,7 @@ const Home = () => {
                   {appointments.map((appointment) => (
                     <div className="appointment-item" key={appointment._id}>
                       <div className="appointment-header">
-                        <h4>{appointment.doctor}</h4>
+                        {/* <h4>{appointment.doctorId.userId.fullName}</h4> */}
                         <span className={`status ${appointment.status}`}>
                           {status[appointment.status]?.label || appointment.status}
                         </span>

@@ -1,7 +1,7 @@
 // AdminOrders.js
 import { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/order.css';
-import { cancelOrder, getAllOrders, getOrderById, updateOrderStatus, importOrders } from '../../api/orderApi';
+import { cancelOrder, getAllOrders, getOrderById, updateOrderStatus, importOrders, updateOrderPaymentStatus } from '../../api/orderApi';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
@@ -40,9 +40,9 @@ const AdminOrders = () => {
       navigate("/");
       return;
     }
-
     const fetchOrders = async () => {
       try {
+        setLoading(true)
         const data = await getAllOrders(
           `?page=${currentPage}&date=${filters.date}&status=${filters.status}&search=${filters.search}`
         );
@@ -56,6 +56,8 @@ const AdminOrders = () => {
       } catch (err) {
         console.error("Lỗi load orders:", err);
         notify.error("Không thể tải danh sách đơn hàng");
+      } finally {
+        setLoading(false)
       }
     };
 
@@ -161,6 +163,44 @@ const AdminOrders = () => {
       cancelled: "Đã hủy",
     };
     return statusMap[status] || status;
+  };
+
+  const getPaymentInfo = (order: any) => {
+    const methodMap: any = {
+      cod: "Thanh toán khi nhận hàng",
+      bank: "Chuyển khoản ngân hàng",
+      momo: "Ví MoMo",
+      vnpay: "VNPAY",
+      zalopay: "ZaloPay",
+    };
+    const statusMap: any = {
+      pending: "Chờ thanh toán",
+      paid: "Đã thanh toán",
+      failed: "Thất bại",
+      refunded: "Đã hoàn tiền",
+    };
+
+    return {
+      methodText: methodMap[order.paymentMethod] || order.paymentMethod || "Không rõ",
+      statusText: statusMap[order.paymentStatus] || order.paymentStatus || "Chờ thanh toán",
+    };
+  };
+
+  const handleConfirmBankPayment = async (order: any) => {
+    try {
+      await updateOrderPaymentStatus(order._id, "paid");
+      setOrders(prev =>
+        prev.map(o =>
+          o._id === order._id
+            ? { ...o, paymentStatus: "paid", status: o.status === "pending" ? "confirmed" : o.status }
+            : o
+        )
+      );
+      notify.success("Đã xác nhận nhận tiền chuyển khoản!");
+    } catch (err) {
+      console.error(err);
+      notify.error("Xác nhận thanh toán thất bại!");
+    }
   };
 
   const handleExportExcel = async () => {
@@ -312,6 +352,17 @@ const AdminOrders = () => {
             </div>
 
             {/* Orders Table */}
+            {loading ? (
+            <div className="empty-products">
+              <div className="empty-icon">📦</div>
+              <h3 className="empty-title">Đang tải sản phẩm...</h3>
+              <p className="empty-description">            
+                Vui lòng đợi trong giây lát
+              </p>
+            </div>
+            ) : (
+              <>
+                {orders && orders.length > 0 ? (            
             <div className="orders-table-container">
               <table className="orders-table">
                 <thead>
@@ -321,6 +372,7 @@ const AdminOrders = () => {
                     <th>Tổng Tiền</th>
                     <th>Ghi chú</th>
                     <th>Địa chỉ</th>
+                    <th>Thanh toán</th>
                     <th>Trạng Thái</th>
                     <th>Thao Tác</th>
                   </tr>
@@ -331,8 +383,8 @@ const AdminOrders = () => {
                       <td className="order-id">{order._id.slice(0,8).toUpperCase()}</td>
                       <td>
                         <div className="customer-info">
-                          <div className="customer-name">{order.user.fullName}</div>
-                          <div className="customer-contact">{order?.userPhone}</div>
+                          <div className="customer-name">{order.user?.fullName || 'Khách hàng'}</div>
+                          <div className="customer-contact">{order?.userPhone || order.user?.phone || ''}</div>
                         </div>
                       </td>
                       <td className="order-amount">{formatPrice(order?.totalPrice)}</td>
@@ -349,6 +401,20 @@ const AdminOrders = () => {
                           {order.shippingAddress?.ward}, 
                           {order.shippingAddress?.district}
                         </div>
+                      </td>
+                      <td>
+                        {(() => {
+                          const info = getPaymentInfo(order);
+                          const isBankPending = order.paymentMethod === 'bank' && order.paymentStatus === 'pending';
+                          return (
+                            <div className="payment-cell">
+                              <div>{info.methodText}</div>
+                              <div className={`payment-status-badge ${order.paymentStatus || 'pending'}`}>
+                                {isBankPending ? 'Chờ xác nhận chuyển khoản' : info.statusText}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td>
                         <span 
@@ -382,6 +448,15 @@ const AdminOrders = () => {
                               >
                                 ❌
                               </button>
+                              {order.paymentMethod === 'bank' && order.paymentStatus === 'pending' && (
+                                <button
+                                  className="action-btn edit"
+                                  onClick={() => handleConfirmBankPayment(order)}
+                                  title="Xác nhận đã nhận tiền chuyển khoản"
+                                >
+                                  💰
+                                </button>
+                              )}
                             </>
                           )}
                           {order.status === 'confirmed' && (
@@ -400,6 +475,17 @@ const AdminOrders = () => {
                 </tbody>
               </table>
             </div>
+            ) : (
+            <div className="empty-products">
+              <div className="empty-icon">📦</div>
+              <h3 className="empty-title">Không tìm thấy đơn hàng...</h3>
+              <p className="empty-description">            
+                Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm
+              </p>
+            </div>
+            )}
+              </>
+            )}
 
             {/* Pagination */}
             <div className="pagination">
@@ -442,22 +528,24 @@ const AdminOrders = () => {
         >
             <div className="modal-content">
             <div className="modal-header">
-                <h2 className="modal-title">Chi Tiết Đơn Hàng {orderDetail.order._id.slice(0,8).toUpperCase()}</h2>
+                <h2 className="modal-title">
+                  Chi Tiết Đơn Hàng {orderDetail?.order?._id ? orderDetail.order._id.slice(0,8).toUpperCase() : ""}
+                </h2>
                 <button className="close-btn" onClick={() => closeModal()}>×</button>
             </div>
 
             <div style={{ display: 'grid', gap: '25px' }}>
                 {/* --- Thông tin khách hàng --- */}
                 <div>
-                <h3 style={{ color: '#4B3B2B', marginBottom: '15px', fontSize: '1.2rem' }}>Thông tin khách hàng</h3>
+                <h3 style={{ color: '#ffffff', marginBottom: '15px', fontSize: '1.2rem' }}>Thông tin khách hàng</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div><strong>Họ tên:</strong> {orderDetail.order.user.fullName}</div>
-                    <div><strong>SĐT:</strong> {orderDetail.order.user.phone}</div>
-                    <div><strong>Email:</strong> {orderDetail.order.user.email}</div>
-                    <div><strong>Thời gian đặt:</strong> {new Date(orderDetail.order.createdAt).toLocaleString('vi-VN')}</div>
+                    <div><strong>Họ tên:</strong> {orderDetail.order?.user?.fullName}</div>
+                    <div><strong>SĐT:</strong> {orderDetail.order?.user?.phone}</div>
+                    <div><strong>Email:</strong> {orderDetail.order?.user?.email}</div>
+                    <div><strong>Thời gian đặt:</strong> {orderDetail.order?.createdAt ? new Date(orderDetail.order.createdAt).toLocaleString('vi-VN') : ""}</div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                {orderDetail.order.note ? (
+                {orderDetail.order?.note ? (
                     <div style={{ marginTop: '10px' }}>
                     <strong>Ghi chú:</strong> {orderDetail.order.note}
                     </div>
@@ -466,14 +554,18 @@ const AdminOrders = () => {
                     <strong>Ghi chú:</strong> Không có ghi chú
                     </div>
                 )}
-                {orderDetail.order.dateConfirmed ? ( <div style={{ marginTop: '10px' }}><strong>Thời gian hoàn thành:</strong> {new Date(orderDetail.order.dateConfirmed).toLocaleString('vi-VN')}</div>): ("")}
+                {orderDetail.order?.dateConfirmed ? (
+                  <div style={{ marginTop: '10px' }}>
+                    <strong>Thời gian hoàn thành:</strong> {new Date(orderDetail.order.dateConfirmed).toLocaleString('vi-VN')}
+                  </div>
+                ) : null}
                     </div>
 
                     <div style={{ marginTop: '10px' }}>
                       <strong>Địa chỉ: </strong>
-                      {orderDetail.order.shippingAddress?.address}, 
-                      {orderDetail.order.shippingAddress?.ward}, 
-                      {orderDetail.order.shippingAddress?.district}
+                      {orderDetail.order?.shippingAddress?.address}, 
+                      {orderDetail.order?.shippingAddress?.ward}, 
+                      {orderDetail.order?.shippingAddress?.district}
                     </div>
                 </div>
 
@@ -481,7 +573,7 @@ const AdminOrders = () => {
                 <div>
                 <h3 style={{ color: '#4B3B2B', marginBottom: '15px', fontSize: '1.2rem' }}>Sản phẩm</h3>
                 <div style={{ background: '#FDFDFD', borderRadius: '10px', padding: '20px' }}>
-                    {orderDetail.items.map((item: any, index: any) => (
+                    {(orderDetail.items || []).map((item: any, index: any) => (
                     <div key={index} style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between', 
@@ -490,7 +582,7 @@ const AdminOrders = () => {
                         borderBottom: index < orderDetail.items.length - 1 ? '1px solid rgba(75, 59, 43, 0.1)' : 'none'
                     }}>
                         <div>
-                        <div style={{ fontWeight: '500', color: '#4B3B2B' }}>{item.product.name}</div>
+                        <div style={{ fontWeight: '500', color: '#4B3B2B' }}>{item.product?.name}</div>
                         <div style={{ fontSize: '0.9rem', color: 'rgba(75, 59, 43, 0.7)' }}>
                             Số lượng: {item.quantity}
                         </div>
@@ -517,7 +609,7 @@ const AdminOrders = () => {
                     <span>Tổng cộng:</span>
                     <span>
                         {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
-                        .format(orderDetail.order.totalPrice)}
+                        .format(orderDetail.order?.totalPrice || 0)}
                     </span>
                     </div>
                 </div>
@@ -529,7 +621,7 @@ const AdminOrders = () => {
                     Đóng
                 </button>
 
-                {orderDetail.order.status === 'pending' && (
+                {orderDetail.order?.status === 'pending' && (
                     <>
                     <button 
                         className="action-btn edit"
@@ -539,14 +631,14 @@ const AdminOrders = () => {
                     </button>
                     <button 
                         className="action-btn cancel"
-                        onClick={() => openReasonModal(orderDetail)}
+                        onClick={() => openReasonModal(orderDetail.order)}
                     >
                         Hủy đơn
                     </button>
                     </>
                 )}
 
-                {orderDetail.status === 'confirmed' && (
+                {orderDetail.order?.status === 'confirmed' && (
                     <button 
                     className="action-btn shipping"
                     onClick={() => handleUpdateOrderStatus(orderDetail.order._id, 'shipping')}

@@ -1,7 +1,8 @@
 .chat-container {
-.chat-container {
   z-index:1000;
   }
+
+.chat-container {
   .chatIcon {
     position: fixed;
     bottom: 20px;
@@ -20,6 +21,7 @@
   }
 
   .chatContainer {
+    z-index:1000;
     position: fixed;
     bottom: 90px;
     right: 20px;
