@@ -21,6 +21,7 @@ const faqRoutes = require('./routes/faqRoutes')
 const categoryRoutes =  require("./routes/categoryRoutes");
 const chatRoutes =  require("./routes/chatRoutes");
 const app = express()
+app.set("trust proxy", 1);
 const passport = require("./controllers/passport");
 
 app.use(passport.initialize());
