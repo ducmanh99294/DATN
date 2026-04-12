@@ -8,7 +8,11 @@ const chatSchema = new mongoose.Schema({
   role: {
     type: String, // "user" | "assistant"
   },
-  message: String
+  message: String,
+
+  type: String, 
+  // "text" | "image"
+  image: String // optional
 }, { timestamps: true });
 
 module.exports = mongoose.model("Chat", chatSchema);

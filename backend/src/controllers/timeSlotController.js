@@ -94,7 +94,6 @@ const TimeSlot = require("../models/TimeSlot");
           $gte: startOfDay,
           $lte: endOfDay,
         },
-        status: "available", // CHỈ lấy slot rảnh
       }).sort({ startTime: 1 });
 
       res.json(slots);
@@ -258,3 +257,82 @@ const TimeSlot = require("../models/TimeSlot");
       });
     }
   };
+
+// giữ slot (pending)
+exports.holdSlot = async (req, res) => {
+  try {
+    const { id } = req.params; // ✅ FIX
+    const userId = req.user.id;
+
+    console.log(id, userId);
+
+    const now = new Date();
+    const expire = new Date(now.getTime() + 5 * 60 * 1000);
+
+    const slot = await TimeSlot.findOneAndUpdate(
+      {
+        _id: id,
+        $or: [
+          { status: "available" },
+          { status: "pending", lockExpiresAt: { $lt: now } }
+        ]
+      },
+      {
+        status: "pending",
+        lockedBy: userId,
+        lockExpiresAt: expire
+      },
+      { new: true }
+    );
+
+    if (!slot) {
+      return res.status(400).json({
+        success: false,
+        message: "Slot đang được người khác giữ"
+      });
+    }
+
+    res.json({ success: true, slot });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Giữ slot thất bại"
+    });
+  }
+};
+
+// huỷ giữ slot
+exports.releaseSlot = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const slot = await TimeSlot.findOneAndUpdate(
+      {
+        _id: id,
+        lockedBy: userId, // ✅ chỉ người giữ mới được release
+        status: "pending"
+      },
+      {
+        status: "available",
+        lockedBy: null,
+        lockExpiresAt: null
+      },
+      { new: true }
+    );
+
+    if (!slot) {
+      return res.status(400).json({
+        message: "Không thể release slot"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: slot
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Release thất bại" });
+  }
+};

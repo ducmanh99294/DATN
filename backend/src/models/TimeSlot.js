@@ -25,11 +25,21 @@ const timeSlotSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["available", "booked", "cancelled"],
+      enum: ["available", "booked", "cancelled", "pending"],
       default: "available",
     },
 
-    appointmentId: {
+  lockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  lockExpiresAt: {
+    type: Date,
+    default: null
+  },
+    
+  appointmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
       default: null,
