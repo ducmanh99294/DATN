@@ -71,10 +71,18 @@ exports.login = async (req, res) => {
   user.lastLogin = new Date();
   await user.save();
 
-  res.cookie("accessToken", accessToken, { httpOnly: true ,sameSite: 'lax'});
-  res.cookie("refreshToken", refreshToken, { httpOnly: true ,sameSite: 'lax'});
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none"
+  });
 
-  
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none"
+  }); 
+
   res.json({
     message: "Login success",
     role: user.role
@@ -83,6 +91,7 @@ exports.login = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) return res.sendStatus(401);
 
   const user = await User.findOne({ refreshToken });
@@ -96,7 +105,17 @@ exports.refreshToken = async (req, res) => {
 
       const newAccessToken = generateAccessToken(user);
 
-      res.cookie("accessToken", newAccessToken, { httpOnly: true });
+      res.cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
       res.json({ message: "Token refreshed" });
     }
   );
