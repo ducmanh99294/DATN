@@ -114,8 +114,7 @@ const Chat: React.FC = () => {
                 {msg.type === "product_list" && msg.products && (
                   <div className="productList">
                     {msg.products.map((p: any) => (
-                      <div className="card" key={p._id}> {/* 3. Đổi key thành p._id cho đồng bộ */}
-                        {/* 4. Thêm optional chaining (?.) để chống sập nếu ảnh bị lỗi */}
+                      <div className="card" key={p._id}>
                         <img src={p.images?.[0] || "/default-placeholder.png"} alt={p.name} />
                         <h4>{p.name}</h4>
                         <p>{p.price}đ</p>

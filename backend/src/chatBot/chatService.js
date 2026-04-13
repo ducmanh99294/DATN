@@ -67,15 +67,25 @@ module.exports = async function chatService(userId, message) {
 
   // 3. Xử lý logic mua thuốc
   if (intent === "PRODUCT") {
-    const products = await Product.find({
-      name: { $regex: message, $options: "i" },
-      isSelling: true
-    }).limit(5);
+    const searchKeyword = entities.length > 0 ? entities.join("|") : message;
 
+    const products = await Product.find({
+          name: { $regex: searchKeyword, $options: "i" },
+          isSelling: true
+        }).limit(5);
+
+    if (products.length === 0) {
+          return { 
+            type: "text", 
+            message: `Xin lỗi, hiện tại nhà thuốc không tìm thấy sản phẩm nào khớp với yêu cầu của bạn.` 
+          };
+        }
+
+    // 4. Nếu có sản phẩm thì mới trả về list
     return { 
       type: "product", 
       products, 
-      message: "Tôi tìm thấy một số sản phẩm phù hợp cho bạn." 
+      message: "Tôi tìm thấy một số sản phẩm phù hợp cho bạn tham khảo dưới đây:" 
     };
   }
 
