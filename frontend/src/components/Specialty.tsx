@@ -45,7 +45,6 @@ const Specialty = () => {
   const [sortBy, setSortBy] = useState<string>('experience');
   useEffect(() => {
   if (!slug) return;
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -129,7 +128,7 @@ useEffect(() => {
     return (
       <div className="modal-overlay" onClick={() => setShowDoctorModal(false)}>
         <div className="modal-content doctor-modal" onClick={e => e.stopPropagation()}>
-          <button className="modal-close" onClick={() => setShowDoctorModal(false)}>
+          <button className="modal-close" onClick={() =>{ setShowDoctorModal(false),setSelectedDoctor(null)}}>
             <i className="fas fa-times"></i>
           </button>
 

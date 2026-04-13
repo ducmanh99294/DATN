@@ -77,6 +77,7 @@ const DoctorSchedule = () => {
     const map: any = {};
 
     timeSlots.forEach(slot => {
+      console.log(slot.status)
       const date = slot.date.split('T')[0];
 
       if (!map[date]) {
@@ -92,7 +93,7 @@ const DoctorSchedule = () => {
       map[date].slots.push(slot);
       map[date].totalSlots++;
 
-      if (slot.status === 'booked') {
+      if (slot.status=== 'booked') {
         map[date].bookedSlots++;
       }
     });
@@ -126,7 +127,6 @@ const DoctorSchedule = () => {
   };
 
   const weekDays = generateWeekDays();
-
   // Xử lý thay đổi form thêm slot mới
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -490,7 +490,7 @@ const DoctorSchedule = () => {
 
       map[dateKey].slots.push(slot);
 
-      if (slot.isBooked) {
+      if (slot.status === 'booked') {
         map[dateKey].bookedSlots++;
       }
     });
@@ -526,6 +526,7 @@ const DoctorSchedule = () => {
             const daySchedule = week ? week.find((s: any) => s.date === day.date) : null;
             const slotCount = daySchedule?.slots?.length ?? 0;
             const bookedCount = daySchedule?.bookedSlots ?? 0;
+
             return (
               <div 
                 key={day.date} 
@@ -879,50 +880,6 @@ const DoctorSchedule = () => {
                   </select>
                 </div>
               </div>
-
-              <div className="form-group">
-                <label htmlFor="maxPatients">
-                  <i className="fas fa-users"></i>
-                  Số bệnh nhân tối đa *
-                </label>
-                <div className="patient-input">
-                  <button 
-                    type="button" 
-                    className="patient-btn minus"
-                    onClick={() => setFormdata(prev => ({ 
-                      ...prev, 
-                      maxPatients: Math.max(1, prev.maxPatients - 1) 
-                    }))}
-                  >
-                    <i className="fas fa-minus"></i>
-                  </button>
-                  <input
-                    type="number"
-                    id="maxPatients"
-                    name="maxPatients"
-                    value={formData.maxPatients}
-                    onChange={handleNewSlotChange}
-                    min="1"
-                    max="10"
-                    required
-                  />
-                  <button 
-                    type="button" 
-                    className="patient-btn plus"
-                    onClick={() => setFormdata(prev => ({ 
-                      ...prev, 
-                      maxPatients: Math.min(10, prev.maxPatients + 1) 
-                    }))}
-                  >
-                    <i className="fas fa-plus"></i>
-                  </button>
-                </div>
-                <div className="input-note">
-                  <i className="fas fa-info-circle"></i>
-                  Tối đa 10 bệnh nhân cho mỗi khung giờ
-                </div>
-              </div>
-
               <div className="form-actions">
                 {editSlot ? (
                   <>
