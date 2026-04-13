@@ -15,12 +15,32 @@ module.exports = async function chatService(userId, message) {
   if (pendingBookings.has(userId)) {
     const session = pendingBookings.get(userId);
 
-    if (msgText.match(/có|ok|đồng ý|đặt|chốt|được|yes/)) {
-      await TimeSlot.findByIdAndUpdate(session.slotId, {
-        status: "booked", // Đổi trạng thái từ available/held sang booked
-        patientId: userId // Lưu ID bệnh nhân (tùy theo schema của bạn)
-      });
+    // 🔥 1. KIỂM TRA "QUAY XE" / TỪ CHỐI / HỎI LỊCH KHÁC
+    // Bắt các từ khóa: không, ko, dấu hỏi (?), hôm nay, ngày mai, khác...
+    const isChangingMind = msgText.match(/không|ko|hủy|thôi|đừng|\?|hôm nay|ngày mai|sớm hơn|khác/);
+
+    if (isChangingMind) {
+      // Ngoại lệ: Nếu khách chỉ gõ cụt lủn vài chữ (VD: "không", "ko", "hủy đi") -> Báo hủy ngay lập tức
+      if (msgText.length <= 15 && msgText.match(/^(không|ko|hủy|thôi|đừng|no)/)) {
+        pendingBookings.delete(userId);
+        return { type: "text", message: "Đã hủy thao tác đặt lịch. Bạn cần hỗ trợ gì thêm không?" };
+      }
       
+      // Ngược lại (VD: "có lịch hôm nay ko?", "bác sĩ khác được ko") 
+      // -> Bỏ qua lệnh chốt đơn, xóa bộ nhớ tạm để code trôi xuống dưới cho AI tự phân tích lại!
+      pendingBookings.delete(userId);
+    } 
+    
+    // 🔥 2. NẾU AN TOÀN VÀ LÀ CÂU ĐỒNG Ý
+    else if (msgText.match(/có|ok|okie|đồng ý|đặt|chốt|được|yes|vâng|dạ/)) {
+      
+      // 1. Khóa lịch (Update TimeSlot)
+      await TimeSlot.findByIdAndUpdate(session.slotId, {
+        status: "booked", 
+        patientId: userId 
+      });
+
+      // 2. Tạo Appointment
       await Appointment.create({
         patientId: userId,
         doctorId: session.doctorId,
@@ -35,13 +55,10 @@ module.exports = async function chatService(userId, message) {
       pendingBookings.delete(userId);
       return { 
         type: "text", 
-        message: `Đặt lịch thành công! Bạn đã đặt lịch khám với Bác sĩ vào ngày ${session.dateText}. Cảm ơn bạn.` 
+        message: `✅ Đặt lịch thành công! Bạn đã đặt lịch khám với Bác sĩ vào ngày ${session.dateText}. Bạn có thể vào mục "Lịch khám của tôi" để xem chi tiết nhé.` 
       };
     } 
-    else if (msgText.match(/không|hủy|thôi|ko|đừng/)) {
-      pendingBookings.delete(userId);
-      return { type: "text", message: "Đã hủy thao tác đặt lịch. Bạn cần hỗ trợ gì thêm không?" };
-    }
+    // Nếu chat tào lao (VD: "thời tiết nay đẹp nhỉ") -> Xóa phiên chờ, xuống cho AI xử lý
     else {
       pendingBookings.delete(userId);
     }
