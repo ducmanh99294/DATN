@@ -434,6 +434,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   <thead>
                     <tr>
                       <th>Người Dùng</th>
+                      <th>Họ và tên</th>
                       <th>Giới tính</th>
                       <th>Ngày sinh</th>
                       <th>Vai Trò</th>
@@ -459,6 +460,11 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         <td>
                           <div className="user-stats">
                             <div className="stat-value">{user.gender === 'male' ? 'Nam' : user.gender === 'female' ? 'Nữ' : 'Khác'}</div>
+                          </div>
+                        </td>
+                         <td>
+                          <div className="user-stats">
+                            <div className="stat-label">{formatDate(user.fullName)}</div>
                           </div>
                         </td>
                         <td>
