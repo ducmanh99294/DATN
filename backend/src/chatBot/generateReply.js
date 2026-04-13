@@ -87,7 +87,7 @@ async function rewriteWithAI(prompt, systemInstruction, retry = 0) {
       return "Hệ thống AI đang tạm thời lỗi.";
     }
 
-    return data.choices[0].message.content;
+    return data.choices[0].message.content.replaceAll("**", "").trim();
 
   } catch (error) {
     console.error("Lỗi khi gọi AI:", error);

@@ -281,12 +281,12 @@
 .products-container .category-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 12px 15px;
   background: white;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  color:#000000;
   font-size: 0.95rem;
   cursor: pointer;
   transition: var(--transition);
@@ -299,9 +299,10 @@
 }
 
 .products-container .category-item.active {
+  text-align: center;
   background: rgba(14, 116, 144, 0.1);
   border-color: var(--primary);
-  color: var(--primary);
+  color: #119bc1;
   font-weight: 600;
 }
 
