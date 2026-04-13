@@ -120,6 +120,86 @@
     }
   }
 
+  /* 1. Bao bọc danh sách, cho phép cuộn ngang nếu có nhiều sản phẩm */
+.productList {
+display: flex;
+  flex-direction: column; /* Bùa chú ép xếp từ trên xuống dưới */
+  gap: 12px;
+  padding: 10px 0;
+  width: 100%;
+
+&::-webkit-scrollbar {
+  height: 6px;
+}
+&::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+}
+
+/* 2. Style cho từng thẻ sản phẩm */
+.card {
+width: 100%; 
+  max-width: 300px; /* Giới hạn độ rộng để không bị to quá trên màn hình máy tính */
+  box-sizing: border-box;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card img {
+width: 100%;
+  height: 140px; 
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* 4. Chữ nghĩa và Giá tiền */
+.card h4 {
+  margin: 0;
+  font-size: 13px; /* Thu nhỏ chữ 1 chút cho 2 cột */
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: #ee4d2d; /* Màu cam đỏ bắt mắt giống các sàn TMĐT */
+}
+
+/* 5. Nút bấm (Buttons) */
+.card button {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 500;
+&:nth-of-type(1) {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+&:nth-of-type(2) {
+  background-color: #007bff; /* Màu xanh y tế */
+  color: white;
+  margin-top: -4px; /* Kéo nút 2 gần lại một chút */
+}
+
+&:hover {
+  filter: brightness(0.9);
+}
+}
+
   @keyframes blink {
     0% { opacity: .2; }
     20% { opacity: 1; }
