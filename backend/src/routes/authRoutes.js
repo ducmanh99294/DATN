@@ -57,5 +57,7 @@ router.put("/:id/ban", auth, admin, userCtrl.banUser);
 router.put("/:id/unban", auth, admin, userCtrl.unbanUser);
 router.put("/update/:userId", auth, admin, userCtrl.updateUser);
 router.get("/", auth, admin, userCtrl.getAllUsers);
+router.post("/import", auth, admin, userCtrl.importUsers);
+
 
 module.exports = router

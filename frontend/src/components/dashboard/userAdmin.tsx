@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/user.css';
 import { useAuthContext, type User } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { banUser, createUser, deleteUser, getAllUsers, unbanUser, updateProfile, updateUser } from '../../api/authApi';
+import { banUser, createUser, deleteUser, getAllUsers, importUsers, unbanUser, updateProfile, updateUser } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
 
@@ -13,7 +13,9 @@ const AdminUsers: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [banReason, setBanReason] = useState("");
   const [showBanModal, setShowBanModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<any>('');
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [reason, setReason] = useState<any>('');
   const { user } = useAuthContext();
@@ -22,7 +24,8 @@ const AdminUsers: React.FC = () => {
   const [filters, setFilters] = useState({
     role: 'all',
     status: 'all',
-    search: ''
+    search: '',
+    page: 1
   });
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -64,11 +67,12 @@ const AdminUsers: React.FC = () => {
       try {
         setLoading(true)
         const data = await getAllUsers(
-          `?role=all&status=all&search=${searchTerm}`
+          `?page=${page}&role=${filters.role}&status=${filters.status}&search=${filters.search}`
         );
 
         if (data) {
           setUsers(data.users);
+          setTotalPages(data.totalPages)
         }
       } catch (err) {
         console.error("Lỗi load user:", err);
@@ -80,11 +84,11 @@ const AdminUsers: React.FC = () => {
     };
 
     fetchUsers();
-  }, [user, searchTerm]);
+  }, [filters, page]);
 
   const filteredUsers = users ? users.filter((user: any) =>
-    user?.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user?.role?.toLowerCase().includes(searchTerm.toLowerCase())
+    user?.fullName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+    user?.role?.toLowerCase().includes(filters.search.toLowerCase())
   ) : [];
 
   const handleFilterChange = (key: any, value: any) => {
@@ -97,7 +101,7 @@ const AdminUsers: React.FC = () => {
   const handleExportExcel = async () => {
     try {
       setExporting(true);
-      const data = await getAllUsers(`?role=all&status=all&search=${searchTerm}`);
+      const data = await getAllUsers(`?role=all&status=all&search=${filters.search}`);
       const list = (data as any).users || [];
       const rows = list.map((u: any) => ({
         "Họ tên": u.fullName,
@@ -126,25 +130,60 @@ const AdminUsers: React.FC = () => {
     notify.success("Đã tải mẫu Excel!");
   };
 
-  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setImporting(true);
-      const rows = await parseExcelFile(file);
-      if (rows.length === 0) {
-        notify.error("File không có dữ liệu.");
-        e.target.value = "";
-        return;
-      }
-      notify.info("Chức năng nhập user từ Excel: dùng mẫu với cột email, fullName, password, role. Backend import có thể bổ sung sau.");
-    } catch (err: any) {
-      notify.error(err?.message || "Đọc file thất bại!");
-    } finally {
-      setImporting(false);
-      e.target.value = "";
+const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    setImporting(true);
+
+    const rows = await parseExcelFile(file);
+
+    if (rows.length === 0) {
+      notify.error("File không có dữ liệu.");
+      return;
     }
-  };
+
+    const usersPayload = rows.map((row: any, index: number) => {
+      const email = row.email ?? row["email"] ?? row["Email"] ?? "";
+      const fullName = row.fullName ?? row["fullName"] ?? row["Tên"] ?? "";
+      const password = row.password ?? row["password"] ?? row["Mật khẩu"] ?? "";
+      const role = row.role ?? row["role"] ?? row["Vai trò"] ?? "patient";
+
+      if (!email || !password) {
+        notify.error(`Dòng ${index + 1} thiếu email hoặc password`);
+        return null;
+      }
+
+      return {
+        email: String(email).trim(),
+        fullName: String(fullName).trim(),
+        password: String(password).trim(),
+        role: String(role).trim() || "patient",
+      };
+    }).filter((u: any) => u && u.email && u.password);
+
+    if (usersPayload.length === 0) {
+      notify.error("Không có dòng nào hợp lệ. Cần ít nhất: email, password.");
+      return;
+    }
+
+    console.log("USERS PAYLOAD:", usersPayload);
+
+    const res = await importUsers(usersPayload);
+
+    console.log("RES:", res.data);
+
+    notify.success(`Đã nhập ${res.data?.count || usersPayload.length} user!`);
+
+  } catch (err: any) {
+    console.error(err);
+    notify.error(err?.response?.data?.message || err.message);
+  } finally {
+    setImporting(false);
+    e.target.value = "";
+  }
+};
 
   const handleSetAddUser = () => {
     setEditingUser(null);
@@ -369,11 +408,13 @@ const AdminUsers: React.FC = () => {
                     className="search-input"
                     type="text"
                     placeholder="Tìm kiếm nhân viên theo tên, vai trò,..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={filters.search}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
                   />
                 </div>
               </div>
+
+              
             </div>
 
             {/* Users Table */}
@@ -494,6 +535,49 @@ const AdminUsers: React.FC = () => {
           </div>
         </main>
      
+       {totalPages > 1 && (
+          <div className="pagination">
+              <button 
+                className={`page-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                onClick={() => setCurrentPage(prev => prev - 1)} disabled={currentPage === 1}
+              >
+              <i className="fas fa-chevron-left"></i>
+                Trước
+              </button>
+              
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (page <= 3) {
+                  pageNum = i + 1;
+                } else if (page >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = page - 2 + i;
+                }
+                
+              return (
+                <button
+                  key={pageNum}
+                  className={`page-btn ${page === pageNum ? 'active' : ''}`}
+                  onClick={() => setPage(pageNum)}
+                >
+                {pageNum}
+              </button>
+            );
+          })}
+          
+          <button 
+            className={`page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, currentPage))}
+            disabled={currentPage === totalPages}
+          >
+            Sau
+             <i className="fas fa-chevron-right"></i>
+           </button>
+         </div>
+       )}
       {showModal && (
       <div className="product-modal">
         <div className="modal-content">
@@ -526,7 +610,7 @@ const AdminUsers: React.FC = () => {
                 onChange={handleInputChange}
                 required
               >
-                {roles.filter(r => r.id !== 'all').map(role => (
+                {roles.filters(r => r.id !== 'all').map(role => (
                   <option key={role.id} value={role.id}>
                     {role.name}
                   </option>

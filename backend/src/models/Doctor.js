@@ -8,7 +8,6 @@ const doctorProfileSchema = new mongoose.Schema(
       required: true,
       unique: true // 1 user chỉ có 1 hồ sơ bác sĩ
     },
-
     rating: {
       type: Number,
       max: 5,

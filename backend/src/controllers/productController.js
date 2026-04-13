@@ -4,7 +4,7 @@ const Category = require("../models/Category");
 
   exports.getProducts = async (req, res) => {
     try {
-      const { category, search, page = 1, limit = 10 } = req.query;
+      const { category, search, page = 1, limit = 9 } = req.query;
 
       const filter = { isSelling: true }; 
 

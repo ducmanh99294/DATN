@@ -77,3 +77,7 @@ export const banUser = async (id: string, reason: string) => {
 export const unbanUser = async (id: string) => {
   return await apiPut(`/api/auth/${id}/unban`, {});
 }
+
+export const importUsers = async (users: any[]) => {
+  return await apiPost("/api/auth/import", { users });
+};
