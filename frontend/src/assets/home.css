@@ -642,7 +642,7 @@
 
 .home-modern .doctor-header {
   display: flex;
-  gap: 16px;
+  gap: 9px;
   margin-bottom: 20px;
   align-items: flex-start;
 }

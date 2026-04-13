@@ -377,7 +377,7 @@ const Home = () => {
                   </div>
                 ) : (
               <div className="doctors-grid">
-                {doctors && doctors.length > 0 ? doctors.sort(() => 0.5 - Math.random()).slice(0, 5).map((doctor) => (
+                {doctors && doctors.length > 0 ? doctors.sort(() => 0.5 - Math.random()).slice(0,4).map((doctor) => (
                   <div className="doctor-card" key={doctor._id}>
                     <div className="doctor-header">
                       <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />
