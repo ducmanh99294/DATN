@@ -389,7 +389,7 @@ useEffect(() => {
           <div className="person-info">
             <div className="person-avatar">
               <img 
-                src={appointment.doctorId.userId.image} 
+                src={appointment?.doctorId?.userId?.image} 
                 alt={user?.role === 'patient' ? appointment.doctorId.userId.fullName : appointment.patientId.fullName}
               />
             </div>

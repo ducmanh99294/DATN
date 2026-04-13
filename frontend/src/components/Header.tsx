@@ -196,7 +196,7 @@ const Header: React.FC = () => {
     { label: 'Hồ sơ của tôi', onClick: () => navigate("/account") },
     { label: 'Lịch hẹn của tôi', onClick: () => navigate('/appoinments') },
     { label: 'Đơn thuốc', onClick: () => navigate("/orders") },
-    { label: 'Cài đặt', onClick: () => alert('Mở cài đặt') },
+    // { label: 'Cài đặt', onClick: () => alert('Mở cài đặt') },
     { label: 'Đăng xuất', onClick: handleLogout },
   ];
 
