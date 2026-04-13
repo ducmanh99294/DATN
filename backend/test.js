@@ -6,16 +6,16 @@ async function run() {
   await client.connect();
   const db = client.db("Hospital");
 
-  const docs = await db.collection("doctorprofiles").find({
-    userId: { $type: "string" }
+  const docs = await db.collection("products").find({
+    category: { $type: "string" }
   }).toArray();
 
   for (const doc of docs) {
-    await db.collection("doctorprofiles").updateOne(
+    await db.collection("products").updateOne(
       { _id: doc._id },
       {
         $set: {
-          userId: new ObjectId(doc.userId)
+          category: new ObjectId(doc.category)
         }
       }
     );

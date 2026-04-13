@@ -56,6 +56,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({
     category: "all",
     search: "",
@@ -69,9 +70,10 @@ const Products = () => {
   const fetchData = async () => {
     try{
       setLoading(true);
-      const res = await getAllProducts(`?page=${currentPage}&category=${filters.category}&search=${filters.search}`);
+      const res = await getAllProducts(`?page=${page}&category=${filters.category}&search=${filters.search}`);
       setProducts(res.products);
       setTotalPages(res.totalPages)
+      setTotal(res.total)
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -80,7 +82,7 @@ const Products = () => {
   };
 
   fetchData();
-}, [currentPage, filters.category, filters.search]);
+}, [page, filters.category, filters.search]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -290,12 +292,6 @@ const Products = () => {
                         {category.name}
                       </>
                     )}
-                    <span className="category-count">
-                      {category.name === 'all' 
-                        ? products.length 
-                        : products.filter(p => p.category._id === category._id).length
-                      }
-                    </span>
                   </button>
                 ))}
               </div>

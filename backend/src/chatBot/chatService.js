@@ -7,6 +7,21 @@ const Appointment = require("../models/Appointment");
 
 // bộ nhớ tạm thời
 const pendingBookings = new Map();
+const userHealthContexts = new Map();
+
+// Hàm tách chuỗi
+function extractCoreKeywords(specialtyName) {
+  // 1. Cắt bỏ các chữ vô nghĩa như "Khoa", "Nội", "Ngoại"
+  let cleanName = specialtyName.replace(/khoa|nội|ngoại/gi, "").trim();
+
+  // 2. Tách chuỗi dựa trên dấu gạch ngang (-), dấu phẩy (,) hoặc chữ "và"
+  let keywords = cleanName.split(/[-,\/]| và /i)
+                          .map(k => k.trim())
+                          .filter(k => k.length > 0); 
+                          
+  console.log(keywords)
+  return keywords; 
+}
 
 module.exports = async function chatService(userId, message) {
 
@@ -82,37 +97,84 @@ module.exports = async function chatService(userId, message) {
     };
   }
 
-  // 3. Xử lý logic mua thuốc
-  if (intent === "PRODUCT") {
-    const searchKeyword = entities.length > 0 ? entities.join("|") : message;
-
-    const products = await Product.find({
-          name: { $regex: searchKeyword, $options: "i" },
-          isSelling: true
-        }).limit(5);
-
-    if (products.length === 0) {
-          return { 
-            type: "text", 
-            message: `Xin lỗi, hiện tại nhà thuốc không tìm thấy sản phẩm nào khớp với yêu cầu của bạn.` 
-          };
-        }
-
-    // 4. Nếu có sản phẩm thì mới trả về list
-    return { 
-      type: "product", 
-      products, 
-      message: "Tôi tìm thấy một số sản phẩm phù hợp cho bạn tham khảo dưới đây:" 
-    };
-  }
-
-  // 4. Lấy Context cho Bệnh lý hoặc Đặt lịch
+  // 3. Lấy Context cho Bệnh lý hoặc Đặt lịch
   let context = {};
   
   if (intent === "MEDICAL") {
-    // Ép mảng entities (triệu chứng) thành chuỗi để tìm trong DB
+    // LƯU VÀO BỘ NHỚ: Khách vừa báo triệu chứng gì, cất ngay vào bộ nhớ
     context = await handleMedicalContext(entities); 
+
+    if (context.specialty) {
+      userHealthContexts.set(userId, { 
+        specialtyId: context.specialty._id,
+        specialtyName: context.specialty.name 
+      });
+      console.log(`Đã lưu lịch sử khám: Khoa ${context.specialty.name}`);
+    }
+
   } 
+
+  if (intent === "PRODUCT") {
+    let finalKeywords = [...entities];
+
+    // 1. Lọc bỏ các từ rác vô nghĩa
+    finalKeywords = finalKeywords.filter(keyword => 
+      !["thuốc", "uống gì", "thuốc gì", "mua thuốc", "chi", "gì"].includes(keyword.toLowerCase())
+    );
+
+    // 2. Khởi tạo câu truy vấn mặc định
+    let productQuery = { isSelling: true };
+    let savedSpecialtyName = "";
+
+    // 3. TÌM THEO CHUYÊN KHOA (Khi khách hỏi chung chung như "uống thuốc gì")
+if (finalKeywords.length === 0 && userHealthContexts.has(userId)) {
+      const memory = userHealthContexts.get(userId);
+      savedSpecialtyName = memory.specialtyName;
+      
+      // Sử dụng hàm bóc tách để lấy từ khóa cốt lõi
+      const coreKeywords = extractCoreKeywords(savedSpecialtyName);
+      
+      // Ghép lại thành Regex: "Tiêu hóa|Gan mật"
+      const searchRegex = coreKeywords.join("|");
+      
+      productQuery.$or = [
+        { name: { $regex: searchRegex, $options: "i" } },
+        { uses: { $regex: searchRegex, $options: "i" } },
+        { description: { $regex: searchRegex, $options: "i" } }
+      ];
+    }
+    // 4. TÌM THEO TỪ KHÓA (Khi khách chỉ đích danh "bán vỉ panadol")
+    else {
+      const searchKeyword = finalKeywords.length > 0 ? finalKeywords.join("|") : message;
+      productQuery.$or = [
+        { name: { $regex: searchKeyword, $options: "i" } },
+        { uses: { $regex: searchKeyword, $options: "i" } }
+      ];
+    }
+
+    // 5. Thực thi tìm kiếm
+    const products = await Product.find(productQuery).limit(3);
+
+    // 6. Nếu không có thuốc
+    if (products.length === 0) {
+      const fallbackText = savedSpecialtyName ? `thuộc ${savedSpecialtyName}` : "cho tình trạng này";
+      return { 
+        type: "text", 
+        message: `Hiện tại nhà thuốc không có sẵn thuốc ${fallbackText}. Để đảm bảo an toàn sức khỏe, bạn nên đi khám để được Bác sĩ chẩn đoán và kê đơn chính xác nhé. \n\nBạn có muốn tôi tìm Bác sĩ chuyên khoa phù hợp không?` 
+      };
+    }
+
+    // 7. Nếu có thuốc
+    const introText = savedSpecialtyName 
+      ? `Dựa trên tình trạng liên quan đến **${savedSpecialtyName}** của bạn` 
+      : `Dựa trên yêu cầu của bạn`;
+      
+    return { 
+      type: "product", 
+      products, 
+      message: `${introText}, tôi gợi ý một số loại thuốc phù hợp dưới đây. Tuy nhiên, nếu tình trạng không thuyên giảm, hãy đặt lịch khám Bác sĩ nhé!` 
+    };
+  }
 
   if( intent === "FAQ") {
     context = await handleFAQContext(message);

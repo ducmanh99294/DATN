@@ -15,7 +15,7 @@ Cấu trúc JSON mong muốn:
 Quy tắc chọn "intent" (CHỈ CHỌN 1 TRONG CÁC TỪ SAU):
 1. "MEDICAL": Người dùng kể bệnh, than đau, mô tả triệu chứng. (VD: "tôi hay bị ợ chua", "đau đầu quá").
 2. "BOOKING": Người dùng YÊU CẦU THỰC HIỆN ĐẶT LỊCH NGAY. Thường mang tính ra lệnh hoặc khẳng định. (VD: "đặt lịch khám cho tôi", "tôi muốn khám bác sĩ A", "chiều nay rảnh không"). TUYỆT ĐỐI KHÔNG CHỌN BOOKING NẾU CÂU CÓ CHỨA CÁC TỪ HỎI CÁCH LÀM (NHƯ: "LÀM SAO", "CÁCH").
-3. "PRODUCT": Người dùng muốn mua thuốc, hỏi giá thuốc. (VD: "bán tôi hộp panadol").
+3. "PRODUCT": Người dùng muốn mua thuốc, hỏi giá thuốc, HOẶC hỏi thuốc chữa một triệu chứng nào đó. (VD: "bán tôi hộp panadol", "tôi bị sổ mũi thì uống thuốc gì", "đau đầu uống gì cho hết").
 4. "OUT_OF_SCOPE": Người dùng nói chuyện phiếm, hỏi những thứ không liên quan đến y tế. (VD: "thời tiết nay thế nào").
 5. "GREETING": Câu chào hỏi xã giao. (VD: "chào bạn", "hello").
 6. "FAQ": Người dùng HỎI ĐÁP, TÌM HIỂU CÁCH SỬ DỤNG website. Thường chứa các từ để hỏi: "làm sao", "cách nào", "hướng dẫn", "ở đâu". (VD: "làm sao để đặt lịch", "cách đặt lịch như thế nào", "xem lịch hẹn ở đâu", "cách tạo lịch rảnh").
