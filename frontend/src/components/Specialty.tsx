@@ -43,7 +43,6 @@ const Specialty = () => {
   const [filterRating, setFilterRating] = useState<number>(0);
   const [filterAvailability, setFilterAvailability] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('experience');
-
   useEffect(() => {
   if (!slug) return;
 

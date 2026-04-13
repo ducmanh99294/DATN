@@ -351,7 +351,6 @@ useEffect(() => {
     setShowReviewModal(false);
     setSelectedAppointment(null);
   };
-  console.log(appointments[0].patientId.image)
   // Render appointment card
   const renderAppointmentCard = (appointment: Appointment) => {
     const statusBadge = getStatusBadge(appointment.status);

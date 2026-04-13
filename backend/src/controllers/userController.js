@@ -351,3 +351,51 @@ exports.deleteUser = async (req, res) => {
 
     res.json(user);
   };
+
+exports.importUsers = async (req, res) => {
+  try {
+    const { users: usersPayload } = req.body;
+
+    // 🔥 validate giống product
+    if (!Array.isArray(usersPayload) || usersPayload.length === 0) {
+      return res.status(400).json({ message: "Dữ liệu user không hợp lệ" });
+    }
+
+    const created = [];
+
+    for (const row of usersPayload) {
+      const { email, fullName, password, role } = row;
+
+      // ❌ thiếu field → bỏ qua (không throw)
+      if (!email || !password) continue;
+
+      // 🔥 check email đã tồn tại chưa
+      const existed = await User.findOne({ email });
+      if (existed) continue;
+
+      // 🔥 hash password
+      const hashedPassword = await bcrypt.hash(String(password), 10);
+
+      const user = await User.create({
+        email: String(email).trim(),
+        fullName: fullName ? String(fullName).trim() : "",
+        password: hashedPassword,
+        role: role ? String(role).trim() : "user"
+      });
+
+      created.push(user._id);
+    }
+
+    res.status(201).json({
+      message: `Đã thêm ${created.length} user`,
+      count: created.length,
+      ids: created
+    });
+
+  } catch (error) {
+    console.error("Import users error:", error);
+    res.status(500).json({
+      message: error.message || "Lỗi nhập user"
+    });
+  }
+};

@@ -583,7 +583,7 @@ const Account = () => {
                 </div>
                 <div className="detail-value">
                     <span className={`role-badge ${user.role}`}>
-                    {user.gender === 'male' ? 'Nam' : user.gender === 'female' ? 'Nữ' : 'Khác'}
+                    {user.gender?.toLocaleLowerCase() === 'male' || 'nam' ? 'Nam' : user.gender?.toLocaleLowerCase() === 'female' || 'nữ' ? 'Nữ' : 'Khác'}
                     </span>
                 </div>
                 </div>

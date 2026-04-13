@@ -20,6 +20,7 @@ const AdminProducts: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState<any>('');
   const [files, setFiles] = useState<File[]>([]);
+  const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -87,7 +88,7 @@ const AdminProducts: React.FC = () => {
       try {
         setLoading(true)
         const data = await getAllProducts(
-          `?page=${currentPage}&category=${filters.category}&search=${filters.search}`
+          `?page=${page}&category=${filters.category}&search=${filters.search}`
         );
 
         if (data) {
@@ -105,7 +106,7 @@ const AdminProducts: React.FC = () => {
 
     fetchOrders();
 
-  }, [user, filters.category, filters.search, currentPage]);
+  }, [user, filters.category, filters.search, page]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -558,6 +559,50 @@ const AdminProducts: React.FC = () => {
 
             </div>
           </main>
+
+             {totalPages > 1 && (
+          <div className="pagination">
+              <button 
+                className={`page-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                onClick={() => setCurrentPage(prev => prev - 1)} disabled={currentPage === 1}
+              >
+              <i className="fas fa-chevron-left"></i>
+                Trước
+              </button>
+              
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (page <= 3) {
+                  pageNum = i + 1;
+                } else if (page >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = page - 2 + i;
+                }
+                
+              return (
+                <button
+                  key={pageNum}
+                  className={`page-btn ${page === pageNum ? 'active' : ''}`}
+                  onClick={() => setPage(pageNum)}
+                >
+                {pageNum}
+              </button>
+            );
+          })}
+          
+          <button 
+            className={`page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, currentPage))}
+            disabled={currentPage === totalPages}
+          >
+            Sau
+             <i className="fas fa-chevron-right"></i>
+           </button>
+         </div>
+       )}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="delete-modal">

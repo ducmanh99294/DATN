@@ -92,6 +92,7 @@ export function parseExcelFile(file: File): Promise<Record<string, unknown>[]> {
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
+        console.log(data)
         if (!data) {
           reject(new Error("Không đọc được file"));
           return;

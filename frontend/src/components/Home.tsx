@@ -230,7 +230,6 @@ const Home = () => {
       </div>
     );
   };
-
   return (
     <div className="home-modern">
 
@@ -378,17 +377,17 @@ const Home = () => {
                   </div>
                 ) : (
               <div className="doctors-grid">
-                {doctors && doctors.length > 0 ? doctors.map((doctor) => (
+                {doctors && doctors.length > 0 ? doctors.sort(() => 0.5 - Math.random()).slice(0, 5).map((doctor) => (
                   <div className="doctor-card" key={doctor._id}>
                     <div className="doctor-header">
                       <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />
                       <div className="doctor-info">
                         <h3 className="doctor-name">{doctor?.userId?.fullName}</h3>
-                        <div className="doctor-specialty">{doctor.specialtyId.name}</div>
+                        <div className="doctor-specialty">{doctor?.specialtyId?.name}</div>
                         {renderRating(doctor.rating)}
                       </div>
                       <div className={`availability ${doctor.isActive ? 'available' : 'busy'}`}>
-                        {doctor.isActive ? 'Có lịch' : 'Bận'}
+                        {doctor.isActive ? 'hoạt động' : 'Bận'}
                       </div>
                     </div>
                     
@@ -488,7 +487,7 @@ const Home = () => {
                 </div>
                 <div className="user-stats">
                   <div className="user-stat">
-                    <div className="stat-number">{user?.gender === 'male' ? 'Nam' : 'Nữ'}</div>
+                    <div className="stat-number">{user?.gender === 'nam' || 'male'  ? 'Nam' : 'Nữ'}</div>
                     <div className="stat-label">Giới tính</div>
                   </div>
                   <div className="user-stat">
