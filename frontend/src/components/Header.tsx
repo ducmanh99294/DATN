@@ -428,10 +428,10 @@ const Header: React.FC = () => {
           </ul>
 
           <div className="mobile-nav-footer">
-            <button className="mobile-action-btn" onClick={handleOpenChatAI}>
+            {/* <button className="mobile-action-btn" onClick={handleOpenChatAI}>
               <FaRobot />
               <span>Chat với AI</span>
-            </button>
+            </button> */}
             <button
               className="mobile-action-btn"
               onClick={getBookingButtonConfig().onClick}
