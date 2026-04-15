@@ -440,8 +440,9 @@ const AdminProducts: React.FC = () => {
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
                 >
+                  <option value="all"> Tất cả</option>
                   {categories.map(category => (
-                    <option key={category.id} value={category}>
+                    <option key={category._id} value={category._id}>
                       {category.name}
                     </option>
                   ))}
@@ -469,8 +470,8 @@ const AdminProducts: React.FC = () => {
             type="text"
             className="search-input"
             placeholder="Tìm kiếm sản phẩm theo tên, mã..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
           />
         </div>
               </div>

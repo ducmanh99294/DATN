@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../assets/home.css';
 import { 
   FaSearch, 
@@ -36,7 +36,10 @@ import { useAuthContext } from '../context/AuthContext';
 import { confirmAppointmentApi, getDoctorAppointments, getMyAppointment } from '../api/appointmentApi';
 import { useNotification } from '../context/NotificationContext';
 import { getAllNews } from '../api/newsApi';
-// import background from "../assets/image/background.png"
+import bg from '../assets/image/bg.png'; 
+import slide1 from '../assets/image/slidebar1.png'; 
+import slide2 from '../assets/image/slidebar2.png'; 
+import slide3 from '../assets/image/slidebar3.png'; 
 
 const Home = () => {
   const { user,doctor } = useAuthContext();
@@ -44,42 +47,44 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSpecialty, setActiveSpecialty] = useState('all');
   const [currentSlide, setCurrentSlide] = useState(0);
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
   const [appointments, setAppointments] = useState<any[]>([])
   const [doctorLoading, setDoctorLoading] = useState(false);
   const [newsLoading, setNewsLoading] = useState(false);
   const [appoinmentLoading, setAppoinmentLoading] = useState(false);
+  const [randomDoctors, setRandomDoctors] = useState<any[]>([]);
   const navigate = useNavigate();
-
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
   // Dữ liệu slider
-  const slides = [
-    {
-      id: 1,
-      title: "Tư vấn y tế 24/7",
-      description: "Kết nối với bác sĩ mọi lúc, mọi nơi",
-      image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200",
-      cta: "Đặt lịch ngay",
-      color: "linear-gradient(135deg, #0E7490, #06B6D4)"
-    },
-    {
-      id: 2,
-      title: "Nhà thuốc trực tuyến",
-      description: "Giao thuốc tận nhà trong 2 giờ",
-      image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200",
-      cta: "Mua thuốc",
-      color: "linear-gradient(135deg, #1E40AF, #3B82F6)"
-    },
-    {
-      id: 3,
-      title: "Xét nghiệm tại nhà",
-      description: "Lấy mẫu và trả kết quả tận nơi",
-      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w-1200",
-      cta: "Đặt dịch vụ",
-      color: "linear-gradient(135deg, #059669, #10B981)"
-    }
-  ];
+
+const slides = [
+  {
+    id: 1,
+    title: "Tư vấn y tế 24/7",
+    description: "Kết nối với bác sĩ mọi lúc, mọi nơi",
+    image: slide1,
+    cta: "Đặt lịch ngay",
+    color: "linear-gradient(135deg, #0E7490, #06B6D4)"
+  },
+  {
+    id: 2,
+    title: "Nhà thuốc trực tuyến",
+    description: "Giao thuốc tận nhà trong 2 giờ",
+    image: slide2,
+    cta: "Mua thuốc",
+    color: "linear-gradient(135deg, #1E40AF, #3B82F6)"
+  },
+  {
+    id: 3,
+    title: "Xét nghiệm tại nhà",
+    description: "Lấy mẫu và trả kết quả tận nơi",
+    image: slide3,
+    cta: "Đặt dịch vụ",
+    color: "linear-gradient(135deg, #059669, #10B981)"
+  }
+];
 
   // Dữ liệu chuyên khoa
   const specialties = [
@@ -94,11 +99,29 @@ const Home = () => {
     { id: 'surgery', name: 'Ngoại khoa', icon: <FaProcedures />, color: '#0284C7' }
   ];
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
   useEffect(()=>{
       fetchNews();
       fetchDoctor();
       }
     ,[])
+
+  useEffect(() => {
+    if (doctors && doctors.length > 0) {
+      const shuffled = [...doctors]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 10);
+
+      setRandomDoctors(shuffled);
+    }
+  }, [doctors]);
 
     const fetchDoctor = async () => {
       try{
@@ -123,6 +146,7 @@ const Home = () => {
         setNewsLoading(false)
       }
     }
+
   useEffect(() => {
     if (!user) return;
 
@@ -162,7 +186,7 @@ const Home = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -230,6 +254,60 @@ const Home = () => {
       </div>
     );
   };
+
+  const addSearchQuerry = async (query: string) => {
+    setSearchQuery(query)
+    navigate(`/products?search=${encodeURIComponent(query)}`);
+  }
+  // -----------------------ANIMATION------------------------
+  useEffect(() => {
+  const container = scrollRef.current;
+  if (!container) return;
+
+  const interval = setInterval(() => {
+    container.scrollBy({
+      left: 320, // = width card + gap
+      behavior: "smooth"
+    });
+
+    // Nếu scroll tới cuối → quay lại đầu
+    if (
+      container.scrollLeft + container.clientWidth >=
+      container.scrollWidth - 5
+    ) {
+      container.scrollTo({
+        left: 0,
+        behavior: "smooth"
+      });
+    }
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, []);
+
+useEffect(() => {
+  if (isHovering) return;
+
+  const container = scrollRef.current;
+  if (!container) return;
+
+  const interval = setInterval(() => {
+    container.scrollBy({
+      left: 320,
+      behavior: "smooth"
+    });
+
+    if (
+      container.scrollLeft + container.clientWidth >=
+      container.scrollWidth - 5
+    ) {
+      container.scrollTo({ left: 0 });
+    }
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, [isHovering]);
+
   return (
     <div className="home-modern">
 
@@ -241,7 +319,10 @@ const Home = () => {
           {/* Main Content Area */}
           <main className="main-content">
             {/* Hero Search Section */}
-            <section className="hero-section">
+            <section 
+              className="hero-section" 
+              style={{ "--bg-url": `url(${bg})` }}
+            >
               <div className="hero-content">
                 <h1 className="hero-title">
                   Tìm <span className="highlight">bác sĩ</span> và 
@@ -267,10 +348,9 @@ const Home = () => {
                   </div>
                   <div className="search-tags">
                     <span>Phổ biến:</span>
-                    <button type="button" className="tag">Tim mạch</button>
-                    <button type="button" className="tag">Nhi khoa</button>
-                    <button type="button" className="tag">Da liễu</button>
-                    <button type="button" className="tag">Xét nghiệm</button>
+                    <button type="button" className="tag" onClick={() => addSearchQuerry('Omega')}>Omega</button>
+                    <button type="button" className="tag" onClick={() => addSearchQuerry('Vitamin')}>Vitamin</button>
+                    <button type="button" className="tag" onClick={() => addSearchQuerry('Men vi sinh')}>Men vi sinh</button>
                   </div>
                 </form>
 
@@ -322,20 +402,24 @@ const Home = () => {
               <div className="slider-container">
                 <div className="slider" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                   {slides.map((slide) => (
-                    <div 
-                      className="slide" 
-                      key={slide.id}
-                      style={{ background: slide.color }}
-                    >
+                <div 
+                  className="slide" 
+                  key={slide.id}
+                  style={{
+                    backgroundImage: `
+                      linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5)),
+                      url(${slide.image})
+                    `,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}
+                >
                       <div className="slide-content">
                         <h3 className="slide-title">{slide.title}</h3>
                         <p className="slide-description">{slide.description}</p>
                         <button className="slide-cta">
                           {slide.cta} <FaArrowRight />
                         </button>
-                      </div>
-                      <div className="slide-image">
-                        <div className="image-placeholder" />
                       </div>
                     </div>
                   ))}
@@ -376,8 +460,13 @@ const Home = () => {
                     <p>Đang tải bác sĩ...</p>
                   </div>
                 ) : (
-              <div className="doctors-grid">
-                {doctors && doctors.length > 0 ? doctors.sort(() => 0.5 - Math.random()).slice(0,4).map((doctor) => (
+              <div 
+                className="doctors-grid" 
+                ref={scrollRef}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+              >
+                {doctors && doctors.length > 0 ? randomDoctors.map((doctor) => (
                   <div className="doctor-card" key={doctor._id}>
                     <div className="doctor-header">
                       <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />

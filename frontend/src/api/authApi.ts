@@ -40,12 +40,12 @@ export const updateProfile = async (fullName: string, phone: string, email: stri
     });
 };
 
-export const updateUser = async (userId: string, fullName: string, phone: string, email: string, gender: string, role: string) => {
+export const updateUser = async (userId: string, formData: any) => {
     console.log(userId,
-      fullName,phone,email,gender, role)
-    return await apiPut(`/api/auth/update/${userId}`,{
-      fullName,phone,email,gender, role
-    });
+      formData)
+    return await apiPut(`/api/auth/update/${userId}`,
+     formData
+    );
 };
 
 export const changePassword = async (oldPassword: string, newPassword: string) => {

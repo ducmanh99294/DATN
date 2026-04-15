@@ -182,7 +182,7 @@
   transform: translateY(-2px);
 }
 
-.products-container .quick-category.products-container .active {
+.products-container .quick-category .active {
   background: white;
   color: var(--primary);
   border-color: white;
@@ -201,7 +201,7 @@
 }
 
 /* Filters Sidebar */
-.products-container .products-container .filters-sidebar {
+.products-container .filters-sidebar {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 25px;
@@ -212,7 +212,7 @@
   top: 20px;
 }
 
-.products-container .products-container .filters-header {
+.products-container .filters-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -221,7 +221,7 @@
   border-bottom: 2px solid var(--border-color);
 }
 
-.products-container .products-container .filters-header h3 {
+.products-container .filters-header h3 {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -230,7 +230,7 @@
   margin: 0;
 }
 
-.products-container .products-container .filters-header h3 i {
+.products-container .filters-header h3 i {
   color: var(--primary);
   font-size: 1.1rem;
 }
@@ -321,7 +321,7 @@
   font-weight: 500;
 }
 
-.products-container .category-item.products-container .active .products-container .category-count {
+.products-container .category-item .active .category-count {
   background: var(--primary);
   color: white;
 }
@@ -342,6 +342,7 @@
 }
 
 .products-container .price-input {
+  max-width: 200px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1022,7 +1023,7 @@
   color: var(--primary);
 }
 
-.products-container .page-btn.products-container .active {
+.products-container .page-btn .active {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
@@ -1166,7 +1167,7 @@
     grid-template-columns: 1fr;
   }
   
-  .products-container .products-container .filters-sidebar {
+  .products-container .filters-sidebar {
     position: fixed;
     top: 0;
     left: -100%;
@@ -1177,7 +1178,7 @@
     transition: left 0.3s ease;
   }
   
-  .products-container .products-container .filters-sidebar.products-container .mobile-show {
+  .products-container .filters-sidebar .mobile-show {
     left: 0;
   }
   

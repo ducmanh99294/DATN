@@ -32,7 +32,7 @@ function App() {
   // 1. MỞ COMMENT DÒNG NÀY ĐỂ REACT ĐƯỢC LẮNG NGHE URL THAY ĐỔI
   const location = useLocation(); 
   
-  const noHeaderFooterPaths = ["/login", "/register", '/notFound'];
+  const noHeaderFooterPaths = ["/login", "/register",];
   const hideHeaderFooter = noHeaderFooterPaths.includes(location.pathname);
   
   const { fetchMe, fetchDoctor } = useAuth();
@@ -67,7 +67,7 @@ function App() {
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<News />} />
         <Route path="/specialty/:slug" element={<Specialty />} />
-        {/* <Route path="/notFound" element={<Test/>} /> */}
+        <Route path="/notFound" element={<Test/>} />
 
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/dashborads" element={<Dashboard />} />

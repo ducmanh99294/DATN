@@ -1,10 +1,12 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const DoctorProfile = require("../models/Doctor");
 const {
   generateAccessToken,
   generateRefreshToken
 } = require("../utils/jwt");
+const mongoose = require("mongoose");
 
 exports.createGuest = async (req, res) => {
   const user = req.body;
@@ -274,12 +276,12 @@ exports.getAllUsers = async (req, res) => {
       page = 1,
       limit = 10,
       search = "",
-      role
+      role,
+      specialty
     } = req.query;
 
     const query = {};
 
-    // 🔎 Search theo tên hoặc email
     if (search) {
       query.$or = [
         { fullName: { $regex: search, $options: "i" } },
@@ -287,9 +289,22 @@ exports.getAllUsers = async (req, res) => {
       ];
     }
 
-    // 🎭 Filter theo role
     if (role && role !== "all") {
       query.role = role;
+    }
+
+    if (specialty && specialty !== "all") {
+      if (!mongoose.Types.ObjectId.isValid(specialty)) {
+        return res.status(400).json({ message: "Invalid specialty id" });
+      }
+
+      const doctors = await DoctorProfile.find({
+        specialtyId: new mongoose.Types.ObjectId(specialty) // ✅ đúng field
+      }).select("userId");
+
+      const userIds = doctors.map(d => d.userId).filter(Boolean);
+
+      query._id = userIds.length > 0 ? { $in: userIds } : null;
     }
 
     const users = await User.find(query)
@@ -336,12 +351,27 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-  exports.updateUser = async (req, res) => {
+exports.updateUser = async (req, res) => {
+  console.log(req.file);
+  try {
     const { userId } = req.params;
     const { fullName, phone, email, role, gender } = req.body;
+
+    let updateData = {
+      fullName,
+      phone,
+      email,
+      role,
+      gender,
+    };
+
+    if (req.file) {
+      updateData.image = req.file.path; 
+    }
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { fullName, phone, email, role, gender },
+      updateData,
       { new: true }
     );
 
@@ -350,7 +380,11 @@ exports.deleteUser = async (req, res) => {
     }
 
     res.json(user);
-  };
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.importUsers = async (req, res) => {
   try {

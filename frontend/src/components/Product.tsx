@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import '../assets/product.css';
 import { getAllProducts } from '../api/productApi';
 import { getCategories } from '../api/categoryApi';
@@ -42,6 +42,7 @@ interface FilterOptions {
 const Products = () => {
   const navigate = useNavigate();
   
+  const location = useLocation();
   const { addToCart } = useCart(); 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Product[]>([]);
@@ -65,12 +66,22 @@ const Products = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const queryParams = new URLSearchParams(location.search);
+  const searchFromURL = queryParams.get("search") || "";
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      search: searchFromURL
+    }));
+    setKeyword(searchFromURL)
+  }, [location.search]);
 
   useEffect(() => {
   const fetchData = async () => {
     try{
       setLoading(true);
-      const res = await getAllProducts(`?page=${page}&category=${filters.category}&search=${filters.search}`);
+      const res = await getAllProducts(`?page=${page}&category=${filters.category}&search=${filters.search}&minPrice=${activeFilters.priceRange[0]}&maxPrice=${activeFilters.priceRange[1]}&sortBy=${activeFilters.sortBy}`);
       setProducts(res.products);
       setTotalPages(res.totalPages)
       setTotal(res.total)
@@ -82,7 +93,7 @@ const Products = () => {
   };
 
   fetchData();
-}, [page, filters.category, filters.search]);
+}, [page, filters.category, filters.search, activeFilters.priceRange, activeFilters.sortBy]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -162,11 +173,6 @@ const Products = () => {
     );
   };
 
-  // Quick view
-  const handleQuickView = (product: Product) => {
-    // In real app, this would open a modal
-    alert(`Xem nhanh: ${product.name}`);
-  };
   return (
     <div className="products-container">
       {/* Hero Section */}
@@ -229,7 +235,7 @@ const Products = () => {
                 <button
                   key={category._id}
                   className={`quick-category ${selectedCategory === category.name ? 'active' : ''}`}
-                  onClick={() => handleSearch('category', category._id)}
+                  onClick={() => [handleSearch('category', category._id),setSelectedCategory(category.name)]}
                 >
                   <i className="fas fa-pills"></i>
                   {category.name}
@@ -450,7 +456,7 @@ const Products = () => {
                 <div className="active-filters">
                   <div className="active-filter">
                     <span>Danh mục: {selectedCategory}</span>
-                    <button onClick={() => setSelectedCategory('all')}>
+                    <button onClick={() => [setSelectedCategory('all'),handleSearch('category','all')]}>
                       <i className="fas fa-times"></i>
                     </button>
                   </div>
@@ -500,13 +506,13 @@ const Products = () => {
                             </div>
                           )}
                           <div className="image-overlay">
-                            <button 
+                            {/* <button 
                               className="quick-view-btn"
                               onClick={() => handleQuickView(product)}
                             >
                               <i className="fas fa-eye"></i>
                               Xem nhanh
-                            </button>
+                            </button> */}
                             <button 
                               className="add-to-cart-btn"
                               onClick={() => addToCart(product._id)}

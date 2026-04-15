@@ -214,9 +214,15 @@
 
 /* Hero Section */
 .home-modern .hero-section {
-  width: 100%;  
-    background: linear-gradient(140deg, #273952 0%, #151b2d 100%);
-  /* background: linear-gradient(135deg, #727a86 0%, #1e293b 100%); */
+  width: 100%;
+  background:
+    linear-gradient(140deg, rgba(39,57,82,0.4), rgba(21,27,45,0.9)),
+    var(--bg-url);
+    
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   border-radius: var(--radius-lg);
   padding: 40px;
   margin-bottom: 32px;
@@ -620,18 +626,31 @@
 }
 
 .home-modern .doctors-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  display: flex;              /* đổi từ grid → flex */
+  overflow-x: auto;           /* cuộn ngang */
+  gap: 20px;
+  padding-bottom: 10px;
+  scroll-behavior: smooth; 
 }
 
 .home-modern .doctor-card {
+  min-width: 200px;   /* hoặc 280–350 tùy bạn */
+  flex-shrink: 0;  
   background: #0f2838 !important;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 24px;
   transition: var(--transition-fast);
   box-shadow: var(--shadow-md);
+}
+
+.home-modern .doctors-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+.home-modern .doctors-grid {
+  scrollbar-width: none;
 }
 
 .home-modern .doctor-card:hover {

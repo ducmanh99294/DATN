@@ -341,7 +341,7 @@ text-overflow: ellipsis;
 
 .delete-btn {
   background: rgba(108, 117, 125, 0.1);
-  color: #6C757D;
+  color: #ffffff;
 &:hover {
   background: #6C757D;
   color: white;
@@ -364,14 +364,14 @@ text-overflow: ellipsis;
 }
 
 .modal-content {
-  background: rgba(0, 0, 0, 0.63);
+  background: rgba(0, 0, 0, 0.55);
   border-radius: 15px;
   padding: 30px;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
@@ -401,6 +401,73 @@ text-overflow: ellipsis;
 }
 }
 
+/* Vùng chứa toàn bộ phần upload */
+.image-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px; /* Khoảng cách giữa ảnh và nút bấm */
+  margin-top: 8px;
+  width: 100%;
+}
+
+/* Khung hiển thị hình ảnh (Preview) */
+.image-preview {
+  width: 100%;
+  height: 160px;
+  border: 2px dashed #4b5563; /* Viền nét đứt màu xám, phù hợp nền tối */
+  border-radius: 12px; /* Bo góc mềm mại, hoặc đổi thành 50% nếu muốn avatar tròn */
+  background-color: rgba(255, 255, 255, 0.05); /* Nền mờ nhẹ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.3s ease;
+&:hover {
+  border-color: #60a5fa; /* Viền sáng lên khi hover */
+  background-color: rgba(255, 255, 255, 0.08);
+}
+}
+
+/* Tùy chỉnh hình ảnh bên trong để không bị méo */
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Chữ "Chưa có hình ảnh" */
+.upload-placeholder {
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Nút "Chọn hình ảnh" */
+.upload-btn {
+  display: block;
+  width: 100%; /* Chiều rộng bằng với các input khác */
+  padding: 12px;
+  background-color: #111827; /* Màu tối tương đồng với nút Cập nhật trong hình */
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-sizing: border-box;
+  border: 1px solid #374151; /* Viền nhẹ để nổi bật trên nền */
+&:hover {
+  background-color: #1f2937;
+}
+
+&:active {
+  transform: scale(0.98);
+}
+}
 /* Form Styles */
 .user-form {
   display: grid;
@@ -414,7 +481,7 @@ text-overflow: ellipsis;
   gap: 8px;
 }
 
-.form-group.full-width {
+.form-group .full-width {
   grid-column: 1 / -1;
 }
 
@@ -435,8 +502,8 @@ text-overflow: ellipsis;
   padding: 12px 15px;
   border: 1px solid rgba(75, 59, 43, 0.3);
   border-radius: 8px;
-  background: #0f172a;
-  color: #b1b5bb;
+  background: #ffffff;
+  color: #000000;
   font-size: 0.95rem;
   transition: all 0.3s ease;
 &:focus {
@@ -476,27 +543,6 @@ text-overflow: ellipsis;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.upload-placeholder {
-  text-align: center;
-  color: rgba(75, 59, 43, 0.5);
-  font-size: 2rem;
-}
-
-.upload-btn {
-  background: #0f172a;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  font-size: 0.9rem;
-&:hover {
-  background: #263965
-}
 }
 
 /* Form Actions */
