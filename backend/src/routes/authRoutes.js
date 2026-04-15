@@ -19,7 +19,7 @@ router.get(
   (req, res, next) => {
     // Nếu Google báo về là user đã bấm "Hủy" (Cancel)
     if (req.query.error === "access_denied") {
-      return res.redirect("http://localhost:5173/login?status=cancelled");
+      return res.redirect(`http://localhost:5173/login?status=cancelled`);
     }
     next(); 
   },
@@ -54,8 +54,8 @@ router.put("/change-password", auth, userCtrl.changePassword);
 router.delete("/users/:id", auth, admin, userCtrl.deleteUser);
 //admin
 router.put("/:id/ban", auth, admin, userCtrl.banUser);
-router.put("/:id/unban", auth, admin, userCtrl.unbanUser);
-router.put("/update/:userId", auth, admin, userCtrl.updateUser);
+router.put("/:id/unban", auth, admin,  userCtrl.unbanUser);
+router.put("/update/:userId", auth, admin, upload.single("image"), userCtrl.updateUser);
 router.get("/", auth, admin, userCtrl.getAllUsers);
 router.post("/import", auth, admin, userCtrl.importUsers);
 

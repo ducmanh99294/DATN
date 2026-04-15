@@ -4,9 +4,29 @@ const Category = require("../models/Category");
 
   exports.getProducts = async (req, res) => {
     try {
-      const { category, search, page = 1, limit = 9 } = req.query;
+      const { category, search, minPrice, maxPrice, sortBy, page = 1, limit = 9 } = req.query;
 
       const filter = { isSelling: true }; 
+
+      let sortOption = { createdAt: -1 }; // mặc định mới nhất
+
+      switch (sortBy) {
+        case "name-asc":
+          sortOption = { name: 1 };
+          break;
+        case "name-desc":
+          sortOption = { name: -1 };
+          break;
+        case "price-asc":
+          sortOption = { price: 1 };
+          break;
+        case "price-desc":
+          sortOption = { price: -1 };
+          break;
+        case "rating":
+          sortOption = { rating: -1 };
+          break;
+      }
 
       if (category && category !== "all") {
         filter.category = category;
@@ -17,13 +37,24 @@ const Category = require("../models/Category");
         filter.name = { $regex: escapedKeyword, $options: "i" };
       }
 
+      if (minPrice || maxPrice) {
+        filter.price = {};
+
+        if (minPrice) {
+          filter.price.$gte = Number(minPrice);
+        }
+
+        if (maxPrice) {
+          filter.price.$lte = Number(maxPrice);
+        }
+      }
       const skip = (Number(page) - 1) * Number(limit);
 
       const [products, total] = await Promise.all([
         Product.find(filter)
           .populate("category", "name _id") 
           .select("-__v") // bỏ field không cần thiết
-          .sort({ createdAt: -1 })
+          .sort(sortOption)
           .skip(skip)
           .limit(Number(limit))
           .lean(), // giảm RAM

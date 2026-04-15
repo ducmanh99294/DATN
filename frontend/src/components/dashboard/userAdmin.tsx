@@ -3,12 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../../assets/admin/user.css';
 import { useAuthContext, type User } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { banUser, createUser, deleteUser, getAllUsers, importUsers, unbanUser, updateProfile, updateUser } from '../../api/authApi';
+import { banUser, createUser, deleteUser, getAllUsers, importUsers, unbanUser, updateAvatar, updateProfile, updateUser } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import { exportToExcel, parseExcelFile } from '../../utils/excelUtils';
+import { getAllSpecially } from '../../api/specialyApi';
 
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<any>([]);
+  const [specialties, setSpecialties] = useState<any>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [banReason, setBanReason] = useState("");
@@ -18,16 +20,19 @@ const AdminUsers: React.FC = () => {
   const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [reason, setReason] = useState<any>('');
+  const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const { user } = useAuthContext();
   const notify = useNotify()
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
     role: 'all',
-    status: 'all',
+    specialty: 'all',
     search: '',
     page: 1
   });
   const [loading, setLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,13 +53,19 @@ const AdminUsers: React.FC = () => {
     { id: 'banner', name: 'Khóa tài khoản' },
   ];
 
-  const statuses = [
-    { id: 'all', name: 'Tất cả trạng thái' },
-    { id: 'active', name: 'Hoạt động' },
-    { id: 'inactive', name: 'Không hoạt động' },
-    { id: 'banned', name: 'Đã khóa' }
-  ];
-
+    useEffect(() => {
+      const fetchSpecialties = async () => {
+        try {
+          const data = await getAllSpecially();
+          setSpecialties(data);
+        } catch (error) {
+          console.error("Lỗi load chuyên khoa:", error);
+        }
+      };
+  
+      fetchSpecialties();
+    }, []);
+    
   useEffect(() => {
     if (!user) return;
 
@@ -67,7 +78,7 @@ const AdminUsers: React.FC = () => {
       try {
         setLoading(true)
         const data = await getAllUsers(
-          `?page=${page}&role=${filters.role}&status=${filters.status}&search=${filters.search}`
+          `?page=${page}&role=${filters.role}&specialty=${filters.specialty}&search=${filters.search}`
         );
 
         if (data) {
@@ -101,7 +112,7 @@ const AdminUsers: React.FC = () => {
   const handleExportExcel = async () => {
     try {
       setExporting(true);
-      const data = await getAllUsers(`?role=all&status=all&search=${filters.search}`);
+      const data = await getAllUsers(`?role=all&specialty=all&search=${filters.search}`);
       const list = (data as any).users || [];
       const rows = list.map((u: any) => ({
         "Họ tên": u.fullName,
@@ -195,6 +206,8 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
       email: '',
       role: 'patient',
       })
+    setAvatarPreview(''),
+    setAvatarFile(null),
     setShowModal(true);
   };
 
@@ -211,7 +224,6 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     })
     setShowModal(true);
   };
-
   const handleAddUser = async (e: any) => {
     e.preventDefault();
     try {
@@ -227,17 +239,47 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const handleUpdateUser = async (e: any) => {
     e.preventDefault();
     try {
+      setEditLoading(true)
       setShowModal(true);
-      const data = await updateUser(editingUser._id, profileForm.fullName, profileForm.phone, profileForm.email, profileForm.gender, profileForm.role);
+      const formData = new FormData();
+      formData.append("fullName", profileForm.fullName);
+      formData.append("phone", profileForm.phone);
+      formData.append("email", profileForm.email);
+      formData.append("role", profileForm.role);
+      formData.append("gender", profileForm.gender);
+
+      if (avatarFile) {
+        formData.append("image", avatarFile);
+      }
+
+      const res = await updateUser(editingUser._id, formData);
+
       setUsers((prev: any) =>
-        prev.map((order: any) =>
-          order._id === editingUser._id  ? { ...order, ...data } : editingUser
-      ))
+        prev.map((user: any) =>
+          user._id === editingUser._id
+            ? res 
+            : user
+        )
+      );
+
+      setProfileForm({
+        fullName: '',
+        phone: '',
+        gender: '',
+        dateOfBirth: new Date(),
+        email: '',
+        role: 'patient',
+        })
+      setAvatarPreview('');
+      setAvatarFile(null);
 
       setShowModal(false);
       notify.success("Cập nhật thông tin người dùng thành công");
     } catch (err) {
+      notify.error("Cập nhật thông tin người dùng thất bại");
       console.log(err);
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -256,14 +298,13 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const handleImageUpload = (e: any) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setFormData((prev: any) => ({
-          ...prev,
-          image: ev.target?.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+      setProfileForm((prev) => ({
+        ...prev,
+        image: file,
+      }));
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
     }
   };
 
@@ -377,6 +418,8 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   value={filters.role}
                   onChange={(e) => handleFilterChange('role', e.target.value)}
                 >
+                  <option value="all">Tất cả</option>
+
                   {roles.map(role => (
                     <option key={role.id} value={role.id}>
                       {role.name}
@@ -386,15 +429,17 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
               </div>
 
               <div className="filter-group">
-                <label className="filter-label">Trạng thái</label>
+                <label className="filter-label">Chuyên khoa</label>
                 <select 
                   className="filter-select"
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  value={filters.specialty}
+                  onChange={(e) => [handleFilterChange('specialty', e.target.value),handleFilterChange('role', 'doctor')]}
                 >
-                  {statuses.map(status => (
-                    <option key={status.id} value={status.id}>
-                      {status.name}
+                  <option value="all">Tất cả</option>
+
+                  {specialties.map((s: any) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name}
                     </option>
                   ))}
                 </select>
@@ -514,7 +559,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                               className="action-btn delete-btn"
                               onClick={() => handleDeleteUser(user._id)}
                             >
-                              🗑️ Xóa
+                              Xóa
                             </button>
                           </div>
                         </td>
@@ -528,7 +573,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="empty-icon">👥</div>
                 <h3 className="empty-title">Không tìm thấy người dùng</h3>
                 <p className="empty-description">
-                  {filters.search || filters.role !== 'all' || filters.status !== 'all'
+                  {filters.search || filters.role !== 'all' || filters.specialty !== 'all'
                     ? 'Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm'
                     : 'Hãy thêm người dùng đầu tiên vào hệ thống'
                   }
@@ -591,7 +636,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
             <h2 className="modal-title">
               {editingUser ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng Mới'}
             </h2>
-            <button className="close-btn" onClick={()=>setShowModal(false)}>×</button>
+            <button className="close-btn" onClick={()=>[setShowModal(false), setAvatarPreview('')]}>×</button>
           </div>
 
           <form className="product-form" onSubmit={editingUser ? (handleUpdateUser) : (handleAddUser)}>
@@ -604,6 +649,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 value={profileForm.fullName}
                 onChange={handleInputChange}
                 required
+                placeholder={!profileForm.fullName ? "Hãy cập nhật thông tin" : ""}
               />
             </div>
 
@@ -616,11 +662,14 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 onChange={handleInputChange}
                 required
               >
-                {roles.filters(r => r.id !== 'all').map(role => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
+              {Array.isArray(roles) &&
+                roles
+                  .filter(r => r.id !== 'all')
+                  .map(role => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+              ))}
               </select>
             </div>
 
@@ -634,6 +683,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 onChange={handleInputChange}
                 min="0"
                 required
+                placeholder={!profileForm.email ? "Hãy cập nhật thông tin" : ""}
               />
             </div>
 
@@ -646,6 +696,7 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 value={profileForm.phone}
                 onChange={handleInputChange}
                 min="0"
+                placeholder={!profileForm.phone ? "Hãy cập nhật thông tin" : ""}
               />
             </div>
 
@@ -653,14 +704,13 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <label className="form-label">Hình ảnh</label>
               <div className="image-upload">
                 <div className="image-preview">
-                  {profileForm.image ? (
-                    <img src={profileForm.image} alt="Preview" />
-                  ) : (
-                    <div className="upload-placeholder">
-                      <div>📷</div>
-                      <div>Chưa có hình ảnh</div>
-                    </div>
-                  )}
+                {editingUser?.image ? (
+                  <img src={avatarPreview || editingUser?.image } alt="Preview" />
+                ) : (
+                  <div className="upload-placeholder">
+                    <div>Chưa có hình ảnh</div>
+                  </div>
+                )}
                 </div>
                 <input
                   type="file"
@@ -675,13 +725,12 @@ const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
               </div>
             </div>
 
-
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={()=>setShowModal(false)}>
+              <button type="button" className="cancel-btn" onClick={()=>[setShowModal(false), setAvatarPreview('')]}>
                 Hủy
               </button>
               <button type="submit" className="save-btn">
-                {editingUser ? 'Cập nhật' : 'Thêm người dùng'}
+                {editingUser ? editLoading ? 'Đang cập nhật' : "Cập nhập" : 'Thêm người dùng'}
               </button>
             </div>
           </form>
