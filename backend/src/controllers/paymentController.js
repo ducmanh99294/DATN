@@ -106,19 +106,13 @@ const signed = crypto
 
 console.log("HASH CREATED:", signed);
 
-console.log("FINAL URL:",
-  process.env.VNP_URL + "?" + qs.stringify({
-    ...sortedParams,
-    vnp_SecureHash: signed
-  }, { encode: true })
-);
+const queryString = qs.stringify(sortedParams, { encode: false });
 
+// Nối SecureHash vào cuối chuỗi
+const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
+
+console.log("FINAL URL:", paymentUrl);
 console.log("===== END CREATE DEBUG =====");
-
-    vnp_Params["vnp_SecureHash"] = signed;
-
-    const paymentUrl =
-      vnpUrl + "?" + qs.stringify(vnp_Params, { encode: true });
 
     return res.json({ paymentUrl });
 
