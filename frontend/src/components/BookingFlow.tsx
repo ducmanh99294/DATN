@@ -4,6 +4,7 @@ import { useAuthContext, type User } from '../context/AuthContext';
 import { getDoctor } from '../api/doctorApi';
 import { getSlotsByDoctorAndDateApi, holdSlot, releaseSlot } from '../api/timeSlotApi';
 import { createAppoinmentApi } from '../api/appointmentApi';
+import { getPaymentUrl } from '../api/paymentApi';
 import { useNotify } from '../hooks/useNotification';
 import { useRef } from "react";
 
@@ -43,6 +44,7 @@ export interface TimeSlot {
   startTime: string;
   available: boolean;
   isSelected: boolean;
+  status: string;
 }
 
 const BookingFlow = () => {
@@ -402,13 +404,27 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
 };
 
   // Hoàn tất đặt lịch
-  const completeBooking = () => {
+  const completeBooking = async () => {
     if (!formData.paymentMethod) {
       notify.warning("Vui lòng chọn phương thức thanh toán");
       return;
     }
     try {
-      createAppoinmentApi(
+      if (formData.paymentMethod === "vnpay") {
+      const res = await getPaymentUrl({
+        type: "appointment",
+        amount: formData.doctorId.price,
+        orderInfo: `Dat lich voi ${formData.doctorId.userId.fullName}`,
+        slotId: formData.slotId,
+        doctorId: formData.doctorId._id,
+      });
+
+      // 🔥 redirect sang VNPay
+      window.location.href = res.paymentUrl;
+      return;
+    }
+
+      await createAppoinmentApi(
         formData.doctorId._id,
         formData.patientId,
         formData.doctorId.specialtyId._id,
@@ -422,18 +438,18 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
       // Hiển thị thông báo thành công
       notify.success(`Đặt lịch thành công!\nMã đặt lịch: \nBác sĩ: ${formData.doctorId.userId.fullName}\nThời gian: ${selectedDate} ${selectedTime}`, "thông báo")
       // Reset form
-      // setFormData({
-      // patientId: user?._id || '',
-      // symptoms: [],
-      // doctorId: null,
-      // slotId: null,
-      // description: '',
-      // price: 0,
-      // paymentMethod: ""
-      // });
-      // setCurrentStep(1);
-      // setSymptom('');
-      // setSelectedDate('');
+      setFormData({
+      patientId: user?._id || '',
+      symptoms: [],
+      doctorId: null,
+      slotId: null,
+      description: '',
+      price: 0,
+      paymentMethod: ""
+      });
+      setCurrentStep(1);
+      setSymptom('');
+      setSelectedDate('');
     } catch (e) {
       console.log(e)
     }

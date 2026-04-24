@@ -4,6 +4,7 @@ import '../assets/checkout.css';
 import { useCart } from '../context/CartContext';
 import { createOrder } from '../api/orderApi';
 import { useNotify } from '../hooks/useNotification';
+import { getPaymentUrl } from '../api/paymentApi';
 
 export interface Address {
   _id: string;
@@ -66,57 +67,8 @@ const Checkout = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   const notify = useNotify();
-  // Cart items
-  // const [state, setCartItems] = useState<CartItem[]>([
-  //   {
-  //     id: 1,
-  //     productId: 101,
-  //     name: 'Paracetamol 500mg',
-  //     category: 'Giảm đau, hạ sốt',
-  //     price: 25000,
-  //     originalPrice: 30000,
-  //     discount: 17,
-  //     image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop',
-  //     quantity: 2,
-  //     prescriptionRequired: false,
-  //     hasPrescription: true
-  //   },
-  //   {
-  //     id: 2,
-  //     productId: 102,
-  //     name: 'Vitamin C 1000mg',
-  //     category: 'Tăng sức đề kháng',
-  //     price: 150000,
-  //     originalPrice: 180000,
-  //     discount: 17,
-  //     image: 'https://images.unsplash.com/photo-1583324113626-70df0f4deaab?w=300&h=300&fit=crop',
-  //     quantity: 1,
-  //     prescriptionRequired: false,
-  //     hasPrescription: true
-  //   }
-  // ]);
-
   // Addresses
-  const [addresses, setAddresses] = useState<Address[]>([
-    // {
-    //   _id: 'addr1',
-    //   fullName: 'Nguyễn Văn A',
-    //   phone: '0987 654 321',
-    //   address: '123 Đường Y Tế, Phường 10',
-    //   district: 'Quận 1',
-    //   ward: 'Phường Bến Nghé',
-    //   isDefault: true,
-    // },
-    // {
-    //   _id: 'addr2',
-    //   fullName: 'Nguyễn Văn A',
-    //   phone: '0987 654 321',
-    //   address: '456 Văn Phòng, Tầng 5, Tòa nhà ABC',
-    //   district: 'Quận 3',
-    //   ward: 'Phường 7',
-    //   isDefault: false,
-    // }
-  ]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -387,37 +339,57 @@ const Checkout = () => {
     console.log("open edti")
   };
   // Handle payment
-  const handlePayment = async () => {
-    try {
-      setIsProcessing(true);
+const handlePayment = async () => {
+  try {
+    setIsProcessing(true);
 
-      const res = await createOrder(selectedAddress, orderNote, selectedPayment);
+    if (selectedPayment !== "vnpay") {
+      const res = await createOrder(
+        selectedAddress,
+        orderNote,
+        selectedPayment
+      );
+
       if (!res) {
         throw new Error("Tạo đơn hàng thất bại");
       }
 
-      const newOrder = res;
-
-      setOrderId(newOrder.orderCode || newOrder._id);
+      setOrderId(res.orderCode || res._id);
       setOrderSuccess(true);
       setCurrentStep(4);
 
-      notify.success(`Đặt hàng thành công! Mã đơn hàng: ${newOrder.orderCode || newOrder._id}.
-Phương thức thanh toán: ${
-        selectedPayment === 'bank'
-          ? 'Chuyển khoản ngân hàng'
-          : selectedPayment === 'cod'
-          ? 'Thanh toán khi nhận hàng'
-          : selectedPayment.toUpperCase()
-      }`);
-    } catch (error) {
-      console.error("Payment error:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-                            
+      notify.success(
+        `Đặt hàng thành công! Mã đơn hàng: ${res.orderCode || res._id}`
+      );
 
+      return;
+    }
+
+    // 🔥 VNPay
+    const res = await getPaymentUrl({
+      type: "medicine",
+      amount: summary.total,
+      metadata: {
+        shippingAddress: selectedAddress,
+        note: orderNote,
+      },
+    });
+
+    if (!res?.paymentUrl) {
+      throw new Error("Không tạo được link thanh toán");
+    }
+
+    // 👉 redirect VNPay
+    window.location.href = res.paymentUrl;
+
+  } catch (error) {
+    console.error("Payment error:", error);
+    notify.error("Có lỗi xảy ra khi thanh toán");
+  } finally {
+    setIsProcessing(false);
+  }
+};
+                            
   // Navigate to order detail
   const handleViewOrder = () => {
     navigate(`/orders/${orderId}`);

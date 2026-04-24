@@ -48,10 +48,29 @@ const appointmentSchema = new mongoose.Schema(
       enum: ["pending","confirmed", "cancelled", "completed"],
       default: "pending",
     },
+
     price: {
       type: Number,
       default: 0
     },
+    
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "bank", "momo", "vnpay", "zalopay"],
+      default: "cod"
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending"
+    },
+
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment"
+    },
+
     reason: {
       type: String,
       trim: true,

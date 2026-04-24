@@ -5,6 +5,7 @@ const auth = require("../middlewares/authMiddleware");
 const admin = require("../middlewares/adminMiddleware");
 
 router.get("/me", auth, paymentCtrl.getMyPayments);
-router.put("/:id/confirm", auth, admin, paymentCtrl.confirmPayment);
+router.get("/vnpay_ipn", auth, paymentCtrl.vnpayReturn);
+router.post("/create-payment", auth, paymentCtrl.createPaymentUrl);
 
 module.exports = router;

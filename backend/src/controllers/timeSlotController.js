@@ -261,7 +261,7 @@ const TimeSlot = require("../models/TimeSlot");
 // giữ slot (pending)
 exports.holdSlot = async (req, res) => {
   try {
-    const { id } = req.params; // ✅ FIX
+    const { id } = req.params;
     const userId = req.user.id;
 
     console.log(id, userId);

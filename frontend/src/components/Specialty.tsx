@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import '../assets/specialty.css';
 import type { Doctor } from './BookingFlow';
 import { getSpeciallyBySlug } from '../api/specialyApi';
+import { useNotify } from '../hooks/useNotification';
 
 interface Specialty {
   _id: string;
@@ -43,6 +44,7 @@ const Specialty = () => {
   const [filterRating, setFilterRating] = useState<number>(0);
   const [filterAvailability, setFilterAvailability] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('experience');
+  const notify = useNotify();
   useEffect(() => {
   if (!slug) return;
   const fetchData = async () => {
@@ -60,6 +62,7 @@ const Specialty = () => {
       setFilteredDoctors(data.doctors || []);
 
     } catch (error) {
+      notify.error('thông báo', 'có lỗi xảy ra vui lòng thử lại')
       console.error("Lỗi khi load chuyên khoa:", error);
     } finally {
       setLoading(false);
@@ -68,7 +71,6 @@ const Specialty = () => {
 
   fetchData();
 }, [slug]);
-
 useEffect(() => {
     // Apply filters
     let filtered = [...doctors];
@@ -124,7 +126,6 @@ useEffect(() => {
 
   const renderDoctorModal = () => {
     if (!selectedDoctor) return null;
-
     return (
       <div className="modal-overlay" onClick={() => setShowDoctorModal(false)}>
         <div className="modal-content doctor-modal" onClick={e => e.stopPropagation()}>
@@ -134,7 +135,7 @@ useEffect(() => {
 
           <div className="doctor-profile">
             <div className="profile-header">
-              <img src={selectedDoctor.image} alt={selectedDoctor.userId.fullName} />
+              <img src={selectedDoctor.userId.image} alt={selectedDoctor.userId.fullName} />
               <div className="profile-header-info">
                 <h2>{selectedDoctor.userId.fullName}</h2>
                 <p className="doctor-title">{selectedDoctor.description}</p>
@@ -418,7 +419,7 @@ useEffect(() => {
                 {filteredDoctors.map(doctor => (
                   <div key={doctor._id} className="doctor-card">
                     <div className="doctor-card-header">
-                      <img src={doctor.image} alt={doctor.userId.fullName} />
+                      <img src={doctor.userId.image} alt={doctor.userId.fullName} />
                       {doctor.availableToday && (
                         <span className="available-badge">
                           <i className="fas fa-check-circle"></i>
