@@ -27,7 +27,14 @@ exports.getMyPayments = async (req, res) => {
 };
 
 exports.createPaymentUrl = async (req, res) => {
-  console.log("===== DEBUG CREATE PAYMENT =====");
+
+  try {
+    const tmnCode = process.env.VNP_TMN_CODE;
+    const secretKey = process.env.VNP_HASH_SECRET;
+    const vnpUrl = process.env.VNP_URL;
+    const returnUrl = process.env.VNP_RETURN_URL;
+
+      console.log("===== DEBUG CREATE PAYMENT =====");
 
   console.log("tmnCode:", tmnCode ? "OK" : "❌ undefined");
   console.log("secretKey:", secretKey ? "OK" : "❌ undefined");
@@ -52,11 +59,6 @@ exports.createPaymentUrl = async (req, res) => {
   console.log("generated hash:", signed);
 
   console.log("===== END DEBUG =====");
-  try {
-    const tmnCode = process.env.VNP_TMN_CODE;
-    const secretKey = process.env.VNP_HASH_SECRET;
-    const vnpUrl = process.env.VNP_URL;
-    const returnUrl = process.env.VNP_RETURN_URL;
 
     const { amount, type, metadata } = req.body;
 
@@ -123,7 +125,35 @@ exports.createPaymentUrl = async (req, res) => {
 };
 
 exports.vnpayReturn = async (req, res) => {
-  console.log("===== DEBUG VNPAY RETURN =====");
+
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    let vnp_Params = req.query;
+
+    const secureHash = vnp_Params["vnp_SecureHash"];
+    delete vnp_Params["vnp_SecureHash"];
+
+    vnp_Params = sortObject(vnp_Params);
+
+    const signData = qs.stringify(vnp_Params, { encode: false });
+
+    const signed = crypto
+      .createHmac("sha512", process.env.VNP_HASH_SECRET)
+      .update(signData)
+      .digest("hex");
+
+    if (secureHash !== signed) {
+      await session.abortTransaction();
+      return res.redirect("https://datn-z8rb.vercel.app/payment-fail");
+    }
+
+    const orderId = vnp_Params["vnp_TxnRef"];
+    const responseCode = vnp_Params["vnp_ResponseCode"];
+
+      console.log("===== DEBUG VNPAY RETURN =====");
 
 let vnp_Params = req.query;
 
@@ -151,32 +181,6 @@ console.log("CHECK HASH:", secureHash === signed ? "✅ TRUE" : "❌ FALSE");
 console.log("ResponseCode:", vnp_Params["vnp_ResponseCode"]);
 
 console.log("===== END DEBUG =====");
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    let vnp_Params = req.query;
-
-    const secureHash = vnp_Params["vnp_SecureHash"];
-    delete vnp_Params["vnp_SecureHash"];
-
-    vnp_Params = sortObject(vnp_Params);
-
-    const signData = qs.stringify(vnp_Params, { encode: false });
-
-    const signed = crypto
-      .createHmac("sha512", process.env.VNP_HASH_SECRET)
-      .update(signData)
-      .digest("hex");
-
-    if (secureHash !== signed) {
-      await session.abortTransaction();
-      return res.redirect("https://datn-z8rb.vercel.app/payment-fail");
-    }
-
-    const orderId = vnp_Params["vnp_TxnRef"];
-    const responseCode = vnp_Params["vnp_ResponseCode"];
 
     const payment = await Payment.findOne({ orderId }).session(session);
 
