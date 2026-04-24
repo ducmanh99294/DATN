@@ -309,7 +309,7 @@ const Checkout = () => {
   // Add new address
   const handleAddAddress = () => {
     if (!newAddress.fullName || !newAddress.phone || !newAddress.address) {
-      alert('Vui lòng điền đầy đủ thông tin');
+      notify.warning('thông báo','Vui lòng điền đầy đủ thông tin');
       return;
     }
 
@@ -403,12 +403,12 @@ const handlePayment = async () => {
   // Go to next step
   const handleNextStep = () => {
     if (currentStep === 1 && !selectedAddress) {
-      alert('Vui lòng chọn địa chỉ giao hàng');
+      notify.warning('thông báo','Vui lòng chọn địa chỉ giao hàng');
       return;
     }
 
     if (currentStep === 2 && !selectedPayment) {
-      alert('Vui lòng chọn phương thức thanh toán');
+      notify.warning('thông báo','Vui lòng chọn phương thức thanh toán');
       return;
     }
 

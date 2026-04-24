@@ -27,6 +27,31 @@ exports.getMyPayments = async (req, res) => {
 };
 
 exports.createPaymentUrl = async (req, res) => {
+  console.log("===== DEBUG CREATE PAYMENT =====");
+
+  console.log("tmnCode:", tmnCode ? "OK" : "❌ undefined");
+  console.log("secretKey:", secretKey ? "OK" : "❌ undefined");
+  console.log("returnUrl:", returnUrl);
+
+  console.log("amount:", amount, typeof amount);
+  console.log("orderId:", orderId);
+
+  console.log("vnp_Params BEFORE SORT:", vnp_Params);
+
+  const sortedParams = sortObject(vnp_Params);
+  console.log("vnp_Params AFTER SORT:", sortedParams);
+
+  const signData = qs.stringify(sortedParams, { encode: true });
+  console.log("signData:", signData);
+
+  const signed = crypto
+    .createHmac("sha512", secretKey)
+    .update(signData)
+    .digest("hex");
+
+  console.log("generated hash:", signed);
+
+  console.log("===== END DEBUG =====");
   try {
     const tmnCode = process.env.VNP_TMN_CODE;
     const secretKey = process.env.VNP_HASH_SECRET;
@@ -98,6 +123,35 @@ exports.createPaymentUrl = async (req, res) => {
 };
 
 exports.vnpayReturn = async (req, res) => {
+  console.log("===== DEBUG VNPAY RETURN =====");
+
+let vnp_Params = req.query;
+
+const secureHash = vnp_Params["vnp_SecureHash"];
+console.log("secureHash (from VNPay):", secureHash);
+
+delete vnp_Params["vnp_SecureHash"];
+
+vnp_Params = sortObject(vnp_Params);
+
+const signData = qs.stringify(vnp_Params, { encode: true });
+
+console.log("signData (rebuild):", signData);
+
+const signed = crypto
+  .createHmac("sha512", process.env.VNP_HASH_SECRET)
+  .update(signData)
+  .digest("hex");
+
+console.log("signed (your server):", signed);
+
+// ✅ SO SÁNH
+console.log("CHECK HASH:", secureHash === signed ? "✅ TRUE" : "❌ FALSE");
+
+console.log("ResponseCode:", vnp_Params["vnp_ResponseCode"]);
+
+console.log("===== END DEBUG =====");
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
