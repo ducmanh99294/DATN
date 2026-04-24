@@ -23,7 +23,7 @@ const getMissingFields = (user) => {
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: ["http://localhost:5173", 'https://datn-khaki-xi.vercel.app'],
+      origin: ["http://localhost:5173", 'https://datn-khaki-xi.vercel.app',  'https://datn-z8rb.vercel.app'],
       credentials: true
     }
   });
