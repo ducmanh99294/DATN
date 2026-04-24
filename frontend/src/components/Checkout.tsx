@@ -372,6 +372,7 @@ const handlePayment = async () => {
       metadata: {
         shippingAddress: selectedAddress,
         note: orderNote,
+        items: state,
       },
     });
 

@@ -135,7 +135,7 @@ const signed = crypto
     console.log("===== END CREATE DEBUG =====");
 
     return res.json({ paymentUrl });
-    
+
   } catch (err) {
     console.error("Create payment error:", err);
     return res.status(500).json({ message: "Payment error" });
@@ -143,8 +143,6 @@ const signed = crypto
 };
 
 exports.vnpayReturn = async (req, res) => {
-
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -210,7 +208,7 @@ console.log("===== END RETURN DEBUG =====");
       payment.status = "FAILED";
       await payment.save({ session });
 
-      if (payment.type === "APPOINTMENT") {
+      if (payment.type === "appointment") {
         await releaseSlot(payment.metadata.slotId);
       }
 
@@ -224,7 +222,7 @@ console.log("===== END RETURN DEBUG =====");
     await payment.save({ session });
 
     // APPOINTMENT
-    if (payment.type === "APPOINTMENT") {
+    if (payment.type === "appointment") {
       const existed = await Appointment.findOne({
         paymentId: payment._id,
       }).session(session);
@@ -278,7 +276,7 @@ console.log("===== END RETURN DEBUG =====");
     }
 
     // MEDICINE
-    if (payment.type === "MEDICINE") {
+    if (payment.type === "medicine") {
       const existed = await Order.findOne({
         paymentId: payment._id,
       }).session(session);
