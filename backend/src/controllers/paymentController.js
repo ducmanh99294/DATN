@@ -91,7 +91,7 @@ console.log("PARAMS RAW:", vnp_Params);
 const sortedParams = sortObject(vnp_Params);
 console.log("PARAMS SORTED:", sortedParams);
 
-const signData = qs.stringify(sortedParams, { encode: true });
+const signData = qs.stringify(sortedParams, { encode: false });
 console.log("SIGN DATA:", signData);
 
 const signed = crypto
@@ -148,7 +148,7 @@ const sortedParams = sortObject(rawParams);
 
 console.log("PARAMS AFTER REMOVE HASH:", sortedParams);
 
-const signData = qs.stringify(sortedParams, { encode: true });
+const signData = qs.stringify(sortedParams, { encode: false });
 console.log("SIGN DATA (REBUILD):", signData);
 
 const signed = crypto
