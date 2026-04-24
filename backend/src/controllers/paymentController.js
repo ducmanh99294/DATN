@@ -45,43 +45,6 @@ exports.createPaymentUrl = async (req, res) => {
       .format("YYYYMMDDHHmmss");
 
 
-           console.log("===== DEBUG CREATE PAYMENT =====");
-
-  console.log("tmnCode:", tmnCode ? "OK" : "❌ undefined");
-  console.log("secretKey:", secretKey ? "OK" : "❌ undefined");
-  console.log("returnUrl:", returnUrl);
-
-  console.log("amount:", amount, typeof amount);
-  console.log("orderId:", orderId);
-
-  console.log("vnp_Params BEFORE SORT:", vnp_Params);
-
-  const sortedParams = sortObject(vnp_Params);
-  console.log("vnp_Params AFTER SORT:", sortedParams);
-
-  const signData = qs.stringify(sortedParams, { encode: true });
-  console.log("signData:", signData);
-
-  const signed = crypto
-    .createHmac("sha512", secretKey)
-    .update(signData)
-    .digest("hex");
-
-  console.log("generated hash:", signed);
-
-  console.log("===== END DEBUG =====");
-  
-    // lưu payment trước
-    await Payment.create({
-      orderId,
-      type, // "APPOINTMENT" | "MEDICINE"
-      user: req.user.id,
-      amount,
-      method: "vnpay",
-      status: "PENDING",
-      metadata
-    });
-
     let vnp_Params = {
       vnp_Version: "2.1.0",
       vnp_Command: "pay",
@@ -102,19 +65,55 @@ exports.createPaymentUrl = async (req, res) => {
       vnp_ExpireDate: expireDate,
     };
 
-    vnp_Params = sortObject(vnp_Params);
+    // lưu payment trước
+    await Payment.create({
+      orderId,
+      type, // "APPOINTMENT" | "MEDICINE"
+      user: req.user.id,
+      amount,
+      method: "vnpay",
+      status: "PENDING",
+      metadata
+    });
 
-    const signData = qs.stringify(vnp_Params, { encode: false });
+console.log("===== CREATE PAYMENT DEBUG =====");
 
-    const signed = crypto
-      .createHmac("sha512", secretKey)
-      .update(signData)
-      .digest("hex");
+console.log("ENV:");
+console.log("tmnCode:", process.env.VNP_TMN_CODE);
+console.log("secretKey:", process.env.VNP_HASH_SECRET ? "OK" : "❌");
+
+console.log("DATA:");
+console.log("amount:", amount);
+console.log("orderId:", orderId);
+
+console.log("PARAMS RAW:", vnp_Params);
+
+const sortedParams = sortObject(vnp_Params);
+console.log("PARAMS SORTED:", sortedParams);
+
+const signData = qs.stringify(sortedParams, { encode: true });
+console.log("SIGN DATA:", signData);
+
+const signed = crypto
+  .createHmac("sha512", process.env.VNP_HASH_SECRET)
+  .update(signData)
+  .digest("hex");
+
+console.log("HASH CREATED:", signed);
+
+console.log("FINAL URL:",
+  process.env.VNP_URL + "?" + qs.stringify({
+    ...sortedParams,
+    vnp_SecureHash: signed
+  }, { encode: true })
+);
+
+console.log("===== END CREATE DEBUG =====");
 
     vnp_Params["vnp_SecureHash"] = signed;
 
     const paymentUrl =
-      vnpUrl + "?" + qs.stringify(vnp_Params, { encode: false });
+      vnpUrl + "?" + qs.stringify(vnp_Params, { encode: true });
 
     return res.json({ paymentUrl });
 
@@ -133,17 +132,38 @@ exports.vnpayReturn = async (req, res) => {
   try {
     let vnp_Params = req.query;
 
-    const secureHash = vnp_Params["vnp_SecureHash"];
-    delete vnp_Params["vnp_SecureHash"];
+    console.log("===== VNPAY RETURN DEBUG =====");
 
-    vnp_Params = sortObject(vnp_Params);
+// copy raw để so sánh
+const rawParams = { ...req.query };
+console.log("RAW PARAMS FROM VNPAY:", rawParams);
 
-    const signData = qs.stringify(vnp_Params, { encode: false });
+const secureHash = rawParams["vnp_SecureHash"];
+console.log("SECURE HASH FROM VNPAY:", secureHash);
 
-    const signed = crypto
-      .createHmac("sha512", process.env.VNP_HASH_SECRET)
-      .update(signData)
-      .digest("hex");
+// remove để ký lại
+delete rawParams["vnp_SecureHash"];
+
+const sortedParams = sortObject(rawParams);
+
+console.log("PARAMS AFTER REMOVE HASH:", sortedParams);
+
+const signData = qs.stringify(sortedParams, { encode: true });
+console.log("SIGN DATA (REBUILD):", signData);
+
+const signed = crypto
+  .createHmac("sha512", process.env.VNP_HASH_SECRET)
+  .update(signData)
+  .digest("hex");
+
+console.log("HASH SERVER:", signed);
+
+// 🔥 KẾT QUẢ
+console.log("MATCH:", secureHash === signed ? "✅ TRUE" : "❌ FALSE");
+
+console.log("RESPONSE CODE:", sortedParams["vnp_ResponseCode"]);
+
+console.log("===== END RETURN DEBUG =====");
 
     if (secureHash !== signed) {
       await session.abortTransaction();
@@ -152,35 +172,6 @@ exports.vnpayReturn = async (req, res) => {
 
     const orderId = vnp_Params["vnp_TxnRef"];
     const responseCode = vnp_Params["vnp_ResponseCode"];
-
-      console.log("===== DEBUG VNPAY RETURN =====");
-
-let vnp_Params = req.query;
-
-const secureHash = vnp_Params["vnp_SecureHash"];
-console.log("secureHash (from VNPay):", secureHash);
-
-delete vnp_Params["vnp_SecureHash"];
-
-vnp_Params = sortObject(vnp_Params);
-
-const signData = qs.stringify(vnp_Params, { encode: true });
-
-console.log("signData (rebuild):", signData);
-
-const signed = crypto
-  .createHmac("sha512", process.env.VNP_HASH_SECRET)
-  .update(signData)
-  .digest("hex");
-
-console.log("signed (your server):", signed);
-
-// ✅ SO SÁNH
-console.log("CHECK HASH:", secureHash === signed ? "✅ TRUE" : "❌ FALSE");
-
-console.log("ResponseCode:", vnp_Params["vnp_ResponseCode"]);
-
-console.log("===== END DEBUG =====");
 
     const payment = await Payment.findOne({ orderId }).session(session);
 
