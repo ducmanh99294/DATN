@@ -11,8 +11,6 @@ const chatSchema = new mongoose.Schema({
   message: String,
 
   type: String, 
-  // "text" | "image"
-  image: String // optional
 }, { timestamps: true });
 
 module.exports = mongoose.model("Chat", chatSchema);

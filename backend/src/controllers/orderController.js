@@ -76,6 +76,52 @@ exports.createOrder = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
+  
+exports.createPaymentForOrder = async (req, res) => {
+  try {
+    const { shippingAddress, note, paymentMethod } = req.body;
+
+    const cart = await Cart.findOne({ user: req.user.id });
+    const cartItems = await CartItem.find({ cart: cart._id }).populate("product");
+
+    if (!cartItems.length) {
+      return res.status(400).json({ message: "Cart empty" });
+    }
+
+    const totalPrice = cartItems.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
+
+    // 🔥 tạo payment trước
+    const orderId = `${Date.now()}`;
+
+    const payment = await Payment.create({
+      orderId,
+      user: req.user.id,
+      amount: totalPrice,
+      type: "MEDICINE",
+      status: "PENDING",
+      metadata: {
+        shippingAddress,
+        note,
+        items: cartItems.map(i => ({
+          product: i.product._id,
+          quantity: i.quantity,
+          price: i.product.price
+        }))
+      }
+    });
+
+    // 👉 gọi VNPay
+    const paymentUrl = createVNPayUrl(payment);
+
+    return res.json({ paymentUrl });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 //get my orders
 exports.getMyOrders = async (req, res) => {
