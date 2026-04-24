@@ -28,7 +28,7 @@ app.use(passport.initialize());
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://datn-khaki-xi.vercel.app'],
+  origin: ['http://localhost:5173', 'https://datn-khaki-xi.vercel.app', 'https://datn-z8rb.vercel.app'],
   credentials: true
 }))
 
