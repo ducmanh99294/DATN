@@ -41,15 +41,29 @@ exports.createPaymentUrl = async (req, res) => {
     const { amount, type, metadata } = req.body;
 
     const date = new Date();
+
     const createDate = moment(date).format("YYYYMMDDHHmmss");
+    const expireDate = moment(date).add(15, "minutes").format("YYYYMMDDHHmmss");
 
     const orderId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-    const expireDate = moment(date)
-      .add(15, "minutes")
-      .format("YYYYMMDDHHmmss");
+    let ipAddr = 
+      req.headers['x-forwarded-for'] || 
+      req.connection?.remoteAddress || 
+      req.socket?.remoteAddress || 
+      req.ip;
 
+    // Nếu lấy được nhiều IP do qua proxy, lấy IP đầu tiên
+    if (typeof ipAddr === 'string' && ipAddr.includes(',')) {
+      ipAddr = ipAddr.split(',')[0].trim();
+    }
 
+    // Nếu IP vẫn là private (Render dùng 10.x.x.x) hoặc localhost (::1, 127.0.0.1)
+    // -> Fake tạm một IP Public hợp lệ tại Việt Nam để test Sandbox
+    if (!ipAddr || ipAddr === '::1' || ipAddr === '127.0.0.1' || ipAddr.startsWith('10.') || ipAddr.startsWith('192.168.')) {
+      ipAddr = '113.160.225.97'; // Giả lập IP của mạng VNPT/FPT
+    }
+    
     let vnp_Params = {
       vnp_Version: "2.1.0",
       vnp_Command: "pay",
@@ -64,7 +78,7 @@ exports.createPaymentUrl = async (req, res) => {
       vnp_Amount: amount * 100,
 
       vnp_ReturnUrl: returnUrl,
-      vnp_IpAddr: req.ip,
+      vnp_IpAddr: ipAddr,
 
       vnp_CreateDate: createDate,
       vnp_ExpireDate: expireDate,
@@ -73,7 +87,7 @@ exports.createPaymentUrl = async (req, res) => {
     // lưu payment trước
     await Payment.create({
       orderId,
-      type, // "APPOINTMENT" | "MEDICINE"
+      type, 
       user: req.user.id,
       amount,
       method: "vnpay",
@@ -106,10 +120,14 @@ const signed = crypto
 
 console.log("HASH CREATED:", signed);
 
-const queryString = qs.stringify(sortedParams, { encode: false });
+vnp_Params["vnp_SecureHash"] = signed;
+
+const secureSortedParams = sortObject(vnp_Params);
+
+const queryString = qs.stringify(secureSortedParams, { encode: false });
 
 // Nối SecureHash vào cuối chuỗi
-const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
+const paymentUrl = vnpUrl + "?" + queryString;
 
 console.log("FINAL URL:", paymentUrl);
 console.log("===== END CREATE DEBUG =====");
