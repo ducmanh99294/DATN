@@ -10,7 +10,7 @@ const paymentSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ["APPOINTMENT", "MEDICINE"],
+    enum: ["appointment", "medicine"],
     required: true
   },
 
