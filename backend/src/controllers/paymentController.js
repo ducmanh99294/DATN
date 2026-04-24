@@ -127,7 +127,7 @@ const secureSortedParams = sortObject(vnp_Params);
 const queryString = qs.stringify(secureSortedParams, { encode: false });
 
 // Nối SecureHash vào cuối chuỗi
-const paymentUrl = vnpUrl + "?" + queryString;
+const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
 
 console.log("FINAL URL:", paymentUrl);
 console.log("===== END CREATE DEBUG =====");
