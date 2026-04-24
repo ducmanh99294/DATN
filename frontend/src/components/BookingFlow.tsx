@@ -421,6 +421,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
 
       // 🔥 redirect sang VNPay
       window.location.href = res.paymentUrl;
+
       return;
     }
 

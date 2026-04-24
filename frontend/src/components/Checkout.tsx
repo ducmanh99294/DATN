@@ -382,6 +382,10 @@ const handlePayment = async () => {
 
     // 👉 redirect VNPay
     window.location.href = res.paymentUrl;
+ 
+    if(res.ok) {
+       notify.success('thông báo', 'tạo đơn hàng thành công')
+    }
 
   } catch (error) {
     console.error("Payment error:", error);
@@ -713,88 +717,6 @@ const handlePayment = async () => {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="voucher-section">
-        <h4>
-          <i className="fas fa-ticket-alt"></i>
-          Mã giảm giá
-        </h4>
-
-        <div className="voucher-input">
-          <input
-            type="text"
-            placeholder="Nhập mã giảm giá"
-            value={voucherCode}
-            onChange={(e) => setVoucherCode(e.target.value)}
-          />
-          <button 
-            className="apply-btn"
-            onClick={handleApplyVoucher}
-          >
-            Áp dụng
-          </button>
-        </div>
-
-        {appliedVoucher && (
-          <div className="applied-voucher">
-            <div className="voucher-info">
-              <span className="voucher-code">{appliedVoucher.code}</span>
-              <span className="voucher-name">{appliedVoucher.name}</span>
-            </div>
-            <button 
-              className="remove-voucher"
-              onClick={handleRemoveVoucher}
-            >
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-        )}
-
-        {voucherError && (
-          <div className="voucher-message error">
-            <i className="fas fa-exclamation-circle"></i>
-            {voucherError}
-          </div>
-        )}
-
-        {voucherSuccess && (
-          <div className="voucher-message success">
-            <i className="fas fa-check-circle"></i>
-            {voucherSuccess}
-          </div>
-        )}
-
-        <div className="available-vouchers">
-          <p className="voucher-title">Mã giảm giá bạn có:</p>
-          <div className="voucher-list">
-            {availableVouchers.map(voucher => (
-              <div key={voucher.id} className="voucher-card">
-                <div className="voucher-card-left">
-                  <div className="voucher-icon">
-                    <i className="fas fa-tag"></i>
-                  </div>
-                  <div className="voucher-details">
-                    <div className="voucher-card-code">{voucher.code}</div>
-                    <div className="voucher-card-name">{voucher.name}</div>
-                    <div className="voucher-card-expiry">
-                      HSD: {voucher.expiryDate}
-                    </div>
-                  </div>
-                </div>
-                <button 
-                  className="use-voucher-btn"
-                  onClick={() => {
-                    setVoucherCode(voucher.code);
-                    handleApplyVoucher();
-                  }}
-                >
-                  Sử dụng
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div className="invoice-section">

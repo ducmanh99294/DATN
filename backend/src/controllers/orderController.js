@@ -26,6 +26,7 @@ exports.createOrder = async (req, res) => {
 
     // Create order
     const order = await Order.create({
+      type: "medicine",
       user: req.user.id,
       shippingAddress,
       note,
@@ -53,12 +54,13 @@ exports.createOrder = async (req, res) => {
     await order.save();
 
     // Create payment record (để theo dõi thanh toán, đặc biệt cho bank)
-    await Payment.create({
-      order: order._id,
+await Payment.create({
+      orderId: order._id.toString(),
+      type: "medicine",         
       user: req.user.id,
       amount: totalPrice,
       method: paymentMethod,
-      status: "pending"
+      status: "PENDING"
     });
 
     // Clear cart
@@ -100,7 +102,7 @@ exports.createPaymentForOrder = async (req, res) => {
       orderId,
       user: req.user.id,
       amount: totalPrice,
-      type: "MEDICINE",
+      type: "medicine",
       status: "PENDING",
       metadata: {
         shippingAddress,

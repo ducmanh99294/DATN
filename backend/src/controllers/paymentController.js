@@ -1,10 +1,21 @@
 const Payment = require("../models/Payment");
+const Cart = require("../models/Cart");
+const CartItem = require("../models/CartItem");
 const Order = require("../models/Order");
+const OrderItem = require("../models/OrderItem");
+const User = require("../models/User");
+const Product = require("../models/Product");
+const Appointment = require("../models/Appointment");
+const TimeSlot = require("../models/TimeSlot");
+const Doctor = require("../models/Doctor");
+
+const AppoitmentController = require("./appointmentController");
+const OrderController = require("./orderController");
+
 const qs = require("qs");
 const crypto = require("crypto");
 const moment = require('moment-timezone');
-const AppoitmentController = require("./appointmentController");
-const OrderController = require("./orderController");
+
 
 function sortObject(obj) {
   let sorted = {};
@@ -53,15 +64,12 @@ exports.createPaymentUrl = async (req, res) => {
       req.socket?.remoteAddress || 
       req.ip;
 
-    // Nếu lấy được nhiều IP do qua proxy, lấy IP đầu tiên
     if (typeof ipAddr === 'string' && ipAddr.includes(',')) {
       ipAddr = ipAddr.split(',')[0].trim();
     }
 
-    // Nếu IP vẫn là private (Render dùng 10.x.x.x) hoặc localhost (::1, 127.0.0.1)
-    // -> Fake tạm một IP Public hợp lệ tại Việt Nam để test Sandbox
     if (!ipAddr || ipAddr === '::1' || ipAddr === '127.0.0.1' || ipAddr.startsWith('10.') || ipAddr.startsWith('192.168.')) {
-      ipAddr = '113.160.225.97'; // Giả lập IP của mạng VNPT/FPT
+      ipAddr = '113.160.225.97'; 
     }
     
     let vnp_Params = {
@@ -94,46 +102,20 @@ exports.createPaymentUrl = async (req, res) => {
       status: "PENDING",
       metadata
     });
-
-console.log("===== CREATE PAYMENT DEBUG =====");
-
-console.log("ENV:");
-console.log("tmnCode:", process.env.VNP_TMN_CODE);
-console.log("secretKey:", process.env.VNP_HASH_SECRET ? "OK" : "❌");
-
-console.log("DATA:");
-console.log("amount:", amount);
-console.log("orderId:", orderId);
-
-console.log("PARAMS RAW:", vnp_Params);
-
 const sortedParams = sortObject(vnp_Params);
-console.log("PARAMS SORTED:", sortedParams);
 
 const signData = qs.stringify(sortedParams, { encode: false });
-console.log("SIGN DATA:", signData);
 
 const signed = crypto
       .createHmac("sha512", process.env.VNP_HASH_SECRET)
       .update(signData)
       .digest("hex");
 
-    console.log("HASH CREATED:", signed);
-
-    // 🔥 XÓA DÒNG NÀY TRONG CODE CỦA BẠN: 
-    // vnp_Params["vnp_SecureHash"] = signed; 
-
-    // Chỉ sort lại mảng tham số gốc (không bao gồm Hash)
     const secureSortedParams = sortObject(vnp_Params);
 
     const queryString = qs.stringify(secureSortedParams, { encode: false });
 
-    // Nối SecureHash vào cuối chuỗi (1 lần duy nhất ở đây)
     const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
-
-    console.log("FINAL URL:", paymentUrl);
-    console.log("===== END CREATE DEBUG =====");
-
     return res.json({ paymentUrl });
 
   } catch (err) {
@@ -149,49 +131,31 @@ exports.vnpayReturn = async (req, res) => {
   try {
     let vnp_Params = req.query;
 
-    console.log("===== VNPAY RETURN DEBUG =====");
+    const rawParams = { ...req.query };
 
-// copy raw để so sánh
-const rawParams = { ...req.query };
-console.log("RAW PARAMS FROM VNPAY:", rawParams);
+    const secureHash = rawParams["vnp_SecureHash"];
 
-const secureHash = rawParams["vnp_SecureHash"];
-console.log("SECURE HASH FROM VNPAY:", secureHash);
+    delete rawParams["vnp_SecureHash"];
+    delete rawParams["vnp_SecureHashType"];
 
-// remove để ký lại
-delete rawParams["vnp_SecureHash"];
-delete rawParams["vnp_SecureHashType"];
+    const sortedParams = sortObject(rawParams);
 
-const sortedParams = sortObject(rawParams);
 
-console.log("PARAMS AFTER REMOVE HASH:", sortedParams);
+    const signData = qs.stringify(sortedParams, { encode: false });
 
-const signData = qs.stringify(sortedParams, { encode: false });
-console.log("SIGN DATA (REBUILD):", signData);
-
-const signed = crypto
-  .createHmac("sha512", process.env.VNP_HASH_SECRET)
-  .update(signData)
-  .digest("hex");
-
-console.log("HASH SERVER:", signed);
-
-// 🔥 KẾT QUẢ
-console.log("MATCH:", secureHash === signed ? "✅ TRUE" : "❌ FALSE");
-
-console.log("RESPONSE CODE:", sortedParams["vnp_ResponseCode"]);
-
-console.log("===== END RETURN DEBUG =====");
-
-    if (secureHash !== signed) {
-      await session.abortTransaction();
-      return res.redirect("https://datn-z8rb.vercel.app/payment-fail");
+    const signed = crypto
+      .createHmac("sha512", process.env.VNP_HASH_SECRET)
+      .update(signData)
+      .digest("hex");
+        if (secureHash !== signed) {
+          await session.abortTransaction();
+          return res.redirect("https://datn-z8rb.vercel.app/payment-fail");
     }
 
     const orderId = vnp_Params["vnp_TxnRef"];
     const responseCode = vnp_Params["vnp_ResponseCode"];
-
     const payment = await Payment.findOne({ orderId }).session(session);
+    console.log("🛑 [DEBUG 1] Tìm Payment với orderId:", orderId);
 
     if (!payment) {
       await session.abortTransaction();
@@ -274,9 +238,8 @@ console.log("===== END RETURN DEBUG =====");
         );
       }
     }
-
     // MEDICINE
-    if (payment.type === "medicine") {
+if (payment.type === "medicine") {
       const existed = await Order.findOne({
         paymentId: payment._id,
       }).session(session);
@@ -284,12 +247,22 @@ console.log("===== END RETURN DEBUG =====");
       if (!existed) {
         const { shippingAddress, note, items } = payment.metadata;
 
-        const order = await Order.create([{
-          user: payment.user,
+        console.log("🛑 [DEBUG 3] Dữ liệu chuẩn bị tạo Order:", {
+          user: payment.user, 
           shippingAddress,
           note,
           paymentMethod: "vnpay",
-          paymentStatus: "paid",
+          paymentStatus: "pending",
+          totalPrice: payment.amount,
+          paymentId: payment._id,
+        });
+
+        const order = await Order.create([{
+          user: payment.user, 
+          shippingAddress,
+          note,
+          paymentMethod: "vnpay",
+          paymentStatus: "paid", 
           totalPrice: payment.amount,
           paymentId: payment._id,
         }], { session });
@@ -297,9 +270,9 @@ console.log("===== END RETURN DEBUG =====");
         for (const item of items) {
           await OrderItem.create([{
             order: order[0]._id,
-            product: item.product,
+            product: item.product._id || item.product, 
             quantity: item.quantity,
-            price: item.price,
+            price: item.product.price || item.price, 
           }], { session });
         }
 
@@ -318,7 +291,7 @@ console.log("===== END RETURN DEBUG =====");
 
   } catch (err) {
     await session.abortTransaction();
-    console.error("VNPay return error:", err);
+    console.error("VNPay return error:", err.message, err.stack);
     return res.redirect("https://datn-z8rb.vercel.app/payment-fail");
   } finally {
     session.endSession();

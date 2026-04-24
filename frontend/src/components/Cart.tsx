@@ -306,7 +306,7 @@ const Cart = () => {
 
                     <div className="item-image">
                       <img src={item.productId.images[0]} alt={item.productId.name} />
-                      {item.productId.discount && (
+                      {item.productId.discount != undefined && item.productId.discount > 0 && (
                         <span className="discount-badge">-{item.productId.discount}%</span>
                       )}
                     </div>

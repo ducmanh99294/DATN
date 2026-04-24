@@ -326,7 +326,7 @@ const Orders = () => {
                 )}
               </div>
               <div className="item-details">
-                <div className="item-name">{item.product.name}</div>
+                <div className="item-name">{item?.product?.name}</div>
                 <div className="item-price">
                   {formatPrice(item.price)} x {item.quantity}
                 </div>
