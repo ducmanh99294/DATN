@@ -114,26 +114,28 @@ const signData = qs.stringify(sortedParams, { encode: false });
 console.log("SIGN DATA:", signData);
 
 const signed = crypto
-  .createHmac("sha512", process.env.VNP_HASH_SECRET)
-  .update(signData)
-  .digest("hex");
+      .createHmac("sha512", process.env.VNP_HASH_SECRET)
+      .update(signData)
+      .digest("hex");
 
-console.log("HASH CREATED:", signed);
+    console.log("HASH CREATED:", signed);
 
-vnp_Params["vnp_SecureHash"] = signed;
+    // 🔥 XÓA DÒNG NÀY TRONG CODE CỦA BẠN: 
+    // vnp_Params["vnp_SecureHash"] = signed; 
 
-const secureSortedParams = sortObject(vnp_Params);
+    // Chỉ sort lại mảng tham số gốc (không bao gồm Hash)
+    const secureSortedParams = sortObject(vnp_Params);
 
-const queryString = qs.stringify(secureSortedParams, { encode: false });
+    const queryString = qs.stringify(secureSortedParams, { encode: false });
 
-// Nối SecureHash vào cuối chuỗi
-const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
+    // Nối SecureHash vào cuối chuỗi (1 lần duy nhất ở đây)
+    const paymentUrl = vnpUrl + "?" + queryString + "&vnp_SecureHash=" + signed;
 
-console.log("FINAL URL:", paymentUrl);
-console.log("===== END CREATE DEBUG =====");
+    console.log("FINAL URL:", paymentUrl);
+    console.log("===== END CREATE DEBUG =====");
 
     return res.json({ paymentUrl });
-
+    
   } catch (err) {
     console.error("Create payment error:", err);
     return res.status(500).json({ message: "Payment error" });
