@@ -27,14 +27,25 @@ exports.getMyPayments = async (req, res) => {
 };
 
 exports.createPaymentUrl = async (req, res) => {
-
   try {
     const tmnCode = process.env.VNP_TMN_CODE;
     const secretKey = process.env.VNP_HASH_SECRET;
     const vnpUrl = process.env.VNP_URL;
     const returnUrl = process.env.VNP_RETURN_URL;
 
-      console.log("===== DEBUG CREATE PAYMENT =====");
+    const { amount, type, metadata } = req.body;
+
+    const date = new Date();
+    const createDate = moment(date).format("YYYYMMDDHHmmss");
+
+    const orderId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    const expireDate = moment(date)
+      .add(15, "minutes")
+      .format("YYYYMMDDHHmmss");
+
+
+           console.log("===== DEBUG CREATE PAYMENT =====");
 
   console.log("tmnCode:", tmnCode ? "OK" : "❌ undefined");
   console.log("secretKey:", secretKey ? "OK" : "❌ undefined");
@@ -59,18 +70,7 @@ exports.createPaymentUrl = async (req, res) => {
   console.log("generated hash:", signed);
 
   console.log("===== END DEBUG =====");
-
-    const { amount, type, metadata } = req.body;
-
-    const date = new Date();
-    const createDate = moment(date).format("YYYYMMDDHHmmss");
-
-    const orderId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-
-    const expireDate = moment(date)
-      .add(15, "minutes")
-      .format("YYYYMMDDHHmmss");
-
+  
     // lưu payment trước
     await Payment.create({
       orderId,
