@@ -2,7 +2,7 @@ const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 const qs = require("qs");
 const crypto = require("crypto");
-const moment = require("moment");
+const moment = require('moment-timezone');
 const AppoitmentController = require("./appointmentController");
 const OrderController = require("./orderController");
 
@@ -42,8 +42,8 @@ exports.createPaymentUrl = async (req, res) => {
 
     const date = new Date();
 
-    const createDate = moment(date).format("YYYYMMDDHHmmss");
-    const expireDate = moment(date).add(15, "minutes").format("YYYYMMDDHHmmss");
+    const createDate = moment(date).tz("Asia/Ho_Chi_Minh").format("YYYYMMDDHHmmss");
+    const expireDate = moment(date).tz("Asia/Ho_Chi_Minh").add(15, "minutes").format("YYYYMMDDHHmmss");
 
     const orderId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
@@ -72,7 +72,7 @@ exports.createPaymentUrl = async (req, res) => {
       vnp_CurrCode: "VND",
 
       vnp_TxnRef: orderId,
-      vnp_OrderInfo: "Thanh toan don hang",
+      vnp_OrderInfo: "Thanh_toan_don_hang",
       vnp_OrderType: "other",
 
       vnp_Amount: amount * 100,
