@@ -5,5 +5,5 @@ export const getPaymentUrl = async (data: any) => {
 };
 
 export const vnpayReturn = async () => {
-    return await apiGet(`/api/payments/vnpay_ipn`);
+    return await apiGet(`/api/payments/vnpay_return`);
 };
