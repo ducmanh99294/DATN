@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../assets/login.css';
 import { useNavigate } from 'react-router-dom';
-import { loginApi, loginWithFacebookApi, loginWithGoogleApi } from '../api/authApi';
+import { loginApi, loginWithGoogleApi } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import { useNotify } from '../hooks/useNotification';
 
@@ -85,17 +85,7 @@ const Login: React.FC = () => {
     try {
       if (provider === "Google") {
         window.location.href =
-          "http://localhost:3000/api/auth/google";
-      }
-
-      if (provider === "Facebook") {
-        loginWithFacebookApi()
-          .then(() => {
-            notify.success("Đăng nhập thành công", "Thông báo");
-          })
-          .catch(() => {
-            notify.error("Đăng nhập thất bại", "Thông báo");
-          });
+          "https://datn-1-rznz.onrender.com/api/auth/google";
       }
     } catch (e) {
       notify.error("Đăng nhập thất bại", "Thông báo");

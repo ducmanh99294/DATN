@@ -65,7 +65,6 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderId, setOrderId] = useState('');
   const notify = useNotify();
   // Addresses
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -184,9 +183,6 @@ const Checkout = () => {
   ]);
 
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
-  const [voucherCode, setVoucherCode] = useState('');
-  const [voucherError, setVoucherError] = useState('');
-  const [voucherSuccess, setVoucherSuccess] = useState('');
 
   // Order note
   const [orderNote, setOrderNote] = useState('');
@@ -219,7 +215,6 @@ const Checkout = () => {
     { id: 1, name: 'Thông tin giao hàng', icon: 'fas fa-map-marker-alt' },
     { id: 2, name: 'Phương thức thanh toán', icon: 'fas fa-credit-card' },
     { id: 3, name: 'Xác nhận đơn hàng', icon: 'fas fa-check-circle' },
-    { id: 4, name: 'Hoàn tất', icon: 'fas fa-flag-checkered' }
   ];
 
   // Initialize
@@ -274,42 +269,10 @@ const Checkout = () => {
     });
   };
 
-  // Apply voucher
-  const handleApplyVoucher = () => {
-    if (!voucherCode.trim()) {
-      setVoucherError('Vui lòng nhập mã giảm giá');
-      return;
-    }
-
-    const voucher = availableVouchers.find(
-      v => v.code.toLowerCase() === voucherCode.trim().toLowerCase()
-    );
-
-    if (voucher) {
-      if (voucher.minOrder && summary.subtotal < voucher.minOrder) {
-        setVoucherError(`Đơn hàng tối thiểu ${voucher.minOrder.toLocaleString()}₫ để áp dụng mã này`);
-        setAppliedVoucher(null);
-      } else {
-        setAppliedVoucher(voucher);
-        setVoucherError('');
-        setVoucherSuccess(`Áp dụng mã ${voucher.code} thành công!`);
-        setVoucherCode('');
-      }
-    } else {
-      setVoucherError('Mã giảm giá không hợp lệ');
-      setAppliedVoucher(null);
-    }
-  };
-
-  // Remove voucher
-  const handleRemoveVoucher = () => {
-    setAppliedVoucher(null);
-    setVoucherSuccess('');
-  };
   // Add new address
   const handleAddAddress = () => {
     if (!newAddress.fullName || !newAddress.phone || !newAddress.address) {
-      notify.warning('thông báo','Vui lòng điền đầy đủ thông tin');
+      notify.warning('Vui lòng điền đầy đủ thông tin','thông báo');
       return;
     }
 
@@ -335,10 +298,6 @@ const Checkout = () => {
     });
   };
 
-  const handleEditAddresss = () => {
-    console.log("open edti")
-  };
-  // Handle payment
 const handlePayment = async () => {
   try {
     setIsProcessing(true);
@@ -354,9 +313,9 @@ const handlePayment = async () => {
         throw new Error("Tạo đơn hàng thất bại");
       }
 
-      setOrderId(res.orderCode || res._id);
+      const orderId = res.orderCode || res._id
       setOrderSuccess(true);
-      setCurrentStep(4);
+      navigate(`/checkout/success/${orderId}`);
 
       notify.success(
         `Đặt hàng thành công! Mã đơn hàng: ${res.orderCode || res._id}`
@@ -384,7 +343,7 @@ const handlePayment = async () => {
     window.location.href = res.paymentUrl;
  
     if(res.ok) {
-       notify.success('thông báo', 'tạo đơn hàng thành công')
+       notify.success('tạo đơn hàng thành công','thông báo')
     }
 
   } catch (error) {
@@ -394,26 +353,16 @@ const handlePayment = async () => {
     setIsProcessing(false);
   }
 };
-                            
-  // Navigate to order detail
-  const handleViewOrder = () => {
-    navigate(`/orders/${orderId}`);
-  };
-
-  // Continue shopping
-  const handleContinueShopping = () => {
-    navigate('/products');
-  };
 
   // Go to next step
   const handleNextStep = () => {
     if (currentStep === 1 && !selectedAddress) {
-      notify.warning('thông báo','Vui lòng chọn địa chỉ giao hàng');
+      notify.warning('Vui lòng chọn địa chỉ giao hàng','thông báo');
       return;
     }
 
     if (currentStep === 2 && !selectedPayment) {
-      notify.warning('thông báo','Vui lòng chọn phương thức thanh toán');
+      notify.warning('Vui lòng chọn phương thức thanh toán','thông báo');
       return;
     }
 
@@ -699,24 +648,7 @@ const handlePayment = async () => {
           </div>
         )}
 
-        {selectedPayment === 'vnpay' && (
-          <div className="ewallet-info">
-            <img 
-              src="https://vnpay.vn/sites/default/files/logo-vnpay-2021.png" 
-              alt="VNPAY" 
-              className="ewallet-logo"
-            />
-            <p>Chọn ngân hàng hoặc ví điện tử để thanh toán</p>
-            <div className="bank-logos">
-              <div className="bank-logo">VCB</div>
-              <div className="bank-logo">TCB</div>
-              <div className="bank-logo">BIDV</div>
-              <div className="bank-logo">AGR</div>
-              <div className="bank-logo">MBB</div>
-              <div className="bank-logo">VISA</div>
-            </div>
-          </div>
-        )}
+        {selectedPayment === 'vnpay'}
       </div>
 
       <div className="invoice-section">
@@ -1045,106 +977,6 @@ const handlePayment = async () => {
     </div>
   );
 
-  // Render step 4: Order Success
-  const renderSuccessStep = () => (
-    <div className="checkout-step success-step">
-      <div className="success-animation">
-        <div className="success-icon">
-          <i className="fas fa-check-circle"></i>
-        </div>
-      </div>
-
-      <h2>Đặt hàng thành công!</h2>
-      
-      <div className="success-message">
-        <p>Cảm ơn bạn đã mua sắm tại MediCare.</p>
-        <p>Mã đơn hàng của bạn: <strong>{orderId}</strong></p>
-        <p>Chúng tôi sẽ gửi email xác nhận và thông tin vận chuyển trong vài phút nữa.</p>
-      </div>
-
-      <div className="order-timeline">
-        <div className="timeline-item completed">
-          <div className="timeline-icon">
-            <i className="fas fa-check"></i>
-          </div>
-          <div className="timeline-content">
-            <h4>Đã tiếp nhận đơn hàng</h4>
-            <p>{new Date().toLocaleString('vi-VN')}</p>
-          </div>
-        </div>
-
-        <div className="timeline-item active">
-          <div className="timeline-icon">
-            <i className="fas fa-box"></i>
-          </div>
-          <div className="timeline-content">
-            <h4>Đang chuẩn bị hàng</h4>
-            <p>Đơn hàng đang được đóng gói</p>
-          </div>
-        </div>
-
-        <div className="timeline-item">
-          <div className="timeline-icon">
-            <i className="fas fa-truck"></i>
-          </div>
-          <div className="timeline-content">
-            <h4>Đang vận chuyển</h4>
-            <p>Dự kiến: {deliveryOptions.find(d => d.id === selectedDelivery)?.estimatedDays}</p>
-          </div>
-        </div>
-
-        <div className="timeline-item">
-          <div className="timeline-icon">
-            <i className="fas fa-check-circle"></i>
-          </div>
-          <div className="timeline-content">
-            <h4>Giao hàng thành công</h4>
-            <p></p>
-          </div>
-        </div>
-      </div>
-
-      <div className="success-actions">
-        <button 
-          className="view-order-btn"
-          onClick={handleViewOrder}
-        >
-          <i className="fas fa-file-invoice"></i>
-          Xem chi tiết đơn hàng
-        </button>
-        
-        <button 
-          className="continue-shopping-btn"
-          onClick={handleContinueShopping}
-        >
-          <i className="fas fa-shopping-bag"></i>
-          Tiếp tục mua sắm
-        </button>
-      </div>
-
-      <div className="tracking-info">
-        <div className="qr-tracking">
-          <div className="qr-placeholder small">
-            <i className="fas fa-qrcode"></i>
-          </div>
-          <p>Quét mã QR để theo dõi đơn hàng</p>
-        </div>
-        
-        <div className="support-info">
-          <h5>Cần hỗ trợ?</h5>
-          <p>
-            <i className="fas fa-headset"></i>
-            Hotline: <strong>1900 1234</strong>
-          </p>
-          <p>
-            <i className="fas fa-envelope"></i>
-            Email: <strong>support@medicare.com</strong>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="checkout-container">
       {/* Header */}
@@ -1187,7 +1019,6 @@ const handlePayment = async () => {
             {currentStep === 1 && renderShippingStep()}
             {currentStep === 2 && renderPaymentStep()}
             {currentStep === 3 && renderConfirmationStep()}
-            {currentStep === 4 && renderSuccessStep()}
           </div>
 
           {/* Order Summary Sidebar */}

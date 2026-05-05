@@ -7,6 +7,8 @@ import { useNotify } from '../hooks/useNotification';
 import { useNavigate } from 'react-router-dom';
 import type { Order } from './Order';
 import { getMyOrder } from '../api/orderApi';
+import { getDoctorAppointments, getMyAppointment } from '../api/appointmentApi';
+import type { Appointment } from './Appointment';
 
 interface AccountStats {
   totalAppointments: number;
@@ -36,6 +38,7 @@ const Account = () => {
   // State cho edit mode
   const [editMode, setEditMode] = useState<'profile' | 'password' | 'doctor' | null>(null);
   const [EditLoading, setEditLoading] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);  
   const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -106,8 +109,34 @@ const Account = () => {
       };
   
       fetchOrders();
+      
+      if (user?.role) {
+        fetchAppointments();
+      }
     }, []);
   
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+
+      let data;
+
+      if (user?.role === "doctor") {
+        data = await getDoctorAppointments();
+      } else {
+        data = await getMyAppointment();
+      }
+
+      setAppointments(data || []);
+
+    } catch (error) {
+      console.error("Fetch appointments failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Handle profile form change
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,6 +346,11 @@ const Account = () => {
     );
   };
 
+  // trạng thái cuộc hẹn
+  const totalAppointmentsSuccess = appointments.filter(app => app.status === 'completed').length;  
+  const totalOrdersSuccess = orders.filter(order => order.status === 'completed').length;
+  // chỉ lấy đơn đã thành công để tính tổng chi tiêu
+  const totalOrderPrice = orders.filter(order => order.status === 'completed').reduce((total, order) => total + order.totalPrice, 0);
   // Render account stats
   const renderStats = () => (
     <div className="stats-grid">
@@ -325,7 +359,7 @@ const Account = () => {
           <i className="fas fa-calendar-check"></i>
         </div>
         <div className="stat-info">
-          <div className="stat-value">{stats.totalAppointments}</div>
+          <div className="stat-value">{appointments.length}</div>
           <div className="stat-label">Tổng cuộc hẹn</div>
         </div>
       </div>
@@ -335,7 +369,7 @@ const Account = () => {
           <i className="fas fa-check-circle"></i>
         </div>
         <div className="stat-info">
-          <div className="stat-value">{stats.completedAppointments}</div>
+          <div className="stat-value">{totalOrdersSuccess}</div>
           <div className="stat-label">Đã hoàn thành</div>
         </div>
       </div>
@@ -345,7 +379,7 @@ const Account = () => {
           <i className="fas fa-clock"></i>
         </div>
         <div className="stat-info">
-          <div className="stat-value">{stats.upcomingAppointments}</div>
+          <div className="stat-value">{totalAppointmentsSuccess}</div>
           <div className="stat-label">Sắp tới</div>
         </div>
       </div>
@@ -365,7 +399,7 @@ const Account = () => {
           <i className="fas fa-wallet"></i>
         </div>
         <div className="stat-info">
-          <div className="stat-value">{new Intl.NumberFormat('vi-VN').format(stats.totalSpent)} ₫</div>
+          <div className="stat-value">{new Intl.NumberFormat('vi-VN').format(totalOrderPrice)} ₫</div>
           <div className="stat-label">Tổng chi tiêu</div>
         </div>
       </div>

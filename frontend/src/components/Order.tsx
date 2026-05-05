@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import '../assets/order.css';
 import { getMyOrder } from '../api/orderApi';
 import type { Product } from './Product';
+import { useAuthContext } from '../context/AuthContext';
+import { useNotify } from '../hooks/useNotification';
 
 interface OrderItem {
   id: number;
@@ -71,6 +73,8 @@ const Orders = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [cancellationNote, setCancellationNote] = useState('');
+  const user = useAuthContext()
+  const notify = useNotify();
   const [filter, setFilter] = useState<OrderFilter>({
     status: 'all',
     dateRange: 'all',
@@ -91,6 +95,10 @@ const Orders = () => {
 
   // Mock data - Đơn hàng mẫu
   useEffect(() => {
+    if(!user) {
+      notify.warning("vui lòng đăng nhập để xem đơn hàng","Thông báo")
+      navigate("/login")
+    }
     const fetchOrders = async () => {
       try {
         setLoading(true);
@@ -106,7 +114,7 @@ const Orders = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [user]);
 
     console.log(orders)
 

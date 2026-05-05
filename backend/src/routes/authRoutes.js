@@ -45,6 +45,7 @@ router.get(
 router.post("/", userCtrl.createGuest);
 router.post("/register", userCtrl.register);
 router.post("/login", userCtrl.login);
+router.post("/verify", userCtrl.verifyEmail);
 router.post("/refresh-token", userCtrl.refreshToken);
 router.post("/logout", userCtrl.logout);
 router.get("/me", auth, userCtrl.getMe);

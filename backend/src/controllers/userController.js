@@ -1,7 +1,8 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const DoctorProfile = require("../models/Doctor");
+const { sendOtpMail } = require("../utils/sendMail");
+const jwt = require("jsonwebtoken");
 const {
   generateAccessToken,
   generateRefreshToken
@@ -28,25 +29,106 @@ exports.createGuest = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { fullName, email, password, phone, andress, dateOfBirth, gender } = req.body;
+  try {
+    const {
+      fullName,
+      email,
+      password,
+      phone,
+      andress,
+      dateOfBirth,
+      gender
+    } = req.body;
 
-  const exists = await User.findOne({ email });
-  if (exists) return res.status(400).json({ message: "Email already exists" });
+    const exists = await User.findOne({ email });
 
-  const hashed = await bcrypt.hash(password, 10);
+    if (exists) {
+      return res.status(400).json({
+        message: "Email already exists"
+      });
+    }
 
-  const user = await User.create({
-    fullName,
-    email,
-    phone, 
-    andress, 
-    dateOfBirth,
-    gender,
-    password: hashed,
-    role: "patient"
-  });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  res.json({ message: "Register success" });
+    const hashed = await bcrypt.hash(password, 10);
+
+    const verifyToken = jwt.sign(
+      {
+        fullName,
+        email,
+        password: hashed,
+        phone,
+        andress,
+        dateOfBirth,
+        gender,
+        otp
+      },
+      process.env.JWT_ACCESS_SECRET,
+      {
+        expiresIn: "5m"
+      }
+    );
+
+    await sendOtpMail(email, otp);
+
+    res.json({
+      message: "Đã gửi OTP",
+      verifyToken
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { otp, verifyToken } = req.body;
+
+    const data = jwt.verify(
+      verifyToken,
+      process.env.JWT_ACCESS_SECRET
+    );
+
+    if (data.otp !== otp) {
+      return res.status(400).json({
+        message: "Sai mã OTP"
+      });
+    }
+
+    const exists = await User.findOne({
+      email: data.email
+    });
+
+    if (exists) {
+      return res.status(400).json({
+        message: "Email đã tồn tại"
+      });
+    }
+
+    await User.create({
+      fullName: data.fullName,
+      email: data.email,
+      password: data.password,
+      phone: data.phone,
+      andress: data.andress,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      role: "patient"
+    });
+
+    res.json({
+      message: "Xác thực thành công"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      message: "OTP hết hạn hoặc token lỗi"
+    });
+  }
 };
 
 exports.login = async (req, res) => {
@@ -75,14 +157,14 @@ exports.login = async (req, res) => {
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none"
+    secure: false,
+    sameSite: "lax"
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none"
+    secure: false,
+    sameSite: "lax"
   }); 
 
   res.json({
@@ -109,8 +191,8 @@ exports.refreshToken = async (req, res) => {
 
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none"
+        secure: false,
+        sameSite: "lax"
       });
 
       res.cookie("refreshToken", refreshToken, {

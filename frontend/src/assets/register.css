@@ -990,7 +990,6 @@ body {
   text-align: center;
   padding: 40px;
   animation: fadeIn 0.5s ease;
-
 }
 
 .register-container .success-icon {
@@ -1106,6 +1105,146 @@ body {
   background: var(--bg-main);
   border-color: var(--primary-light);
   transform: translateY(-2px);
+}
+
+//verify
+/* --- Background chia đôi mảng màu giống ảnh --- */
+.verify-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* Cắt chéo màu nền: 45% bên trái màu xanh lơ, còn lại màu trắng xanh nhạt */
+  background: linear-gradient(100deg, #11a4ba 45%, #e4f4fb 45%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* --- Khối Card chính --- */
+.verify-message-container {
+  background-color: #212c3f; /* Xanh đen */
+  width: 450px;
+  padding: 50px 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  color: #ffffff;
+  z-index: 1;
+}
+
+.verify-message-container h2 {
+  font-size: 32px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.verify-message-container p {
+  color: #94a3b8; /* Xám nhạt */
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+
+/* --- Khối bao bọc Form Input --- */
+.verify-details {
+  background-color: #1a2335; /* Nền tối hơn card một chút */
+  border: 1px solid #2c384e;
+  border-radius: 12px;
+  padding: 25px 20px;
+  margin-bottom: 40px;
+  text-align: left; /* Căn trái nội dung bên trong */
+}
+
+/* --- Dòng chữ xác nhận email --- */
+.verify-detail-item {
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.verify-detail-item i {
+  color: #11a4ba; /* Icon màu xanh lơ */
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.verify-detail-item strong {
+  color: #ffffff;
+  margin-left: 5px;
+}
+
+/* --- Form Input màu trắng --- */
+.verify-input-group {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.verify-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333333;
+  letter-spacing: 2px; /* Tăng khoảng cách chữ cho giống mã OTP */
+  text-align: center;
+}
+
+.verify-input::placeholder {
+  color: #94a3b8;
+  font-weight: normal;
+  letter-spacing: normal;
+  text-align: center;
+}
+
+/* --- Khối Nút Bấm --- */
+.verify-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.verify-btn {
+  flex: 1; /* Chia đều chiều rộng 2 nút */
+  padding: 16px 10px;
+  border: none;
+  border-radius: 12px; /* Bo góc to như trong hình */
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+.verify-btn.primary {
+  background-color: #11a4ba; /* Nút xanh */
+  color: #ffffff;
+}
+
+.verify-btn.primary:hover {
+  background-color: #0e899c;
+}
+
+.verify-btn.primary:disabled {
+  background-color: #71c6d4;
+  cursor: not-allowed;
+}
+
+.verify-btn.secondary {
+  background-color: #ffffff; /* Nút trắng */
+  color: #94a3b8;
+}
+
+.verify-btn.secondary:hover {
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
 /* Responsive Design */

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../assets/register.css';
 import { useNavigate } from 'react-router-dom';
-import { loginWithFacebookApi, registerApi } from '../api/authApi';
+import { registerApi, verifyEmail } from '../api/authApi';
 import { useNotify } from '../hooks/useNotification';
 
 interface RegisterProps {
@@ -31,6 +31,9 @@ const Register: React.FC<RegisterProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [verifyToken, setVerifyToken] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showOtpForm, setShowOtpForm] = useState(false);
 
   // Xử lý thay đổi input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -169,10 +172,11 @@ const Register: React.FC<RegisterProps> = ({
         formData.password,
         formData.phone
       )
-      console.log
-      console.log(res)
-      // Hiển thị thông báo thành công
-      setRegistrationSuccess(true);
+
+      setVerifyToken(res.verifyToken);
+      setShowOtpForm(true);
+
+      notify.success("Mã OTP đã gửi về email");
     } catch (error) {
       console.error('Registration error:', error);
       setErrors({ submit: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.' });
@@ -181,23 +185,35 @@ const Register: React.FC<RegisterProps> = ({
     }
   };
 
+  const handleVerifyOtp = async () => {
+  try {
+    setIsLoading(true);
+
+    await verifyEmail(
+      otp,
+      verifyToken
+    );
+
+    setRegistrationSuccess(true);
+    setShowOtpForm(false)
+  } catch (error) {
+    console.log(error)
+    notify.error(
+      "OTP không đúng"
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   // Đăng ký bằng mạng xã hội
   const handleSocialRegister = (provider: string) => {
     try {
       if (provider === "Google") {
         window.location.href =
-          "http://localhost:3000/api/auth/google";
+          "https://datn-1-rznz.onrender.com/api/auth/google";
       }
 
-      if (provider === "Facebook") {
-        loginWithFacebookApi()
-          .then(() => {
-            notify.success("Đăng nhập thành công", "Thông báo");
-          })
-          .catch(() => {
-            notify.error("Đăng nhập thất bại", "Thông báo");
-          });
-      }
     } catch (e) {
       notify.error("Đăng nhập thất bại", "Thông báo");
       console.log(e);
@@ -505,36 +521,6 @@ const Register: React.FC<RegisterProps> = ({
                 Tôi muốn nhận thông tin về dịch vụ y tế và khuyến mãi qua email
               </label>
             </div>
-
-            <div className="account-type">
-              <h4>
-                <i className="fas fa-user-tag"></i>
-                Loại tài khoản
-              </h4>
-              <div className="account-options">
-                <div className="account-option active">
-                  <div className="account-icon">
-                    <i className="fas fa-user-injured"></i>
-                  </div>
-                  <div className="account-info">
-                    <h5>Bệnh nhân</h5>
-                    <p>Đặt lịch khám, mua thuốc, xem kết quả xét nghiệm</p>
-                  </div>
-                </div>
-                <div className="account-option">
-                  <div className="account-icon">
-                    <i className="fas fa-user-md"></i>
-                  </div>
-                  <div className="account-info">
-                    <h5>Bác sĩ</h5>
-                    <p>Quản lý lịch hẹn, tư vấn trực tuyến, kê đơn thuốc</p>
-                    <button type="button" className="account-action">
-                      Đăng ký là bác sĩ <i className="fas fa-arrow-right"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         );
 
@@ -542,6 +528,51 @@ const Register: React.FC<RegisterProps> = ({
         return null;
     }
   };
+
+  if (!showOtpForm) {
+    return (
+<div className="register-container">
+  <div className="verify-message-container">
+    <h2>Xác Thực Email</h2>
+    <p>Vui lòng nhập mã OTP đã được gửi.</p>
+    
+    <div className="verify-details">
+      <div className="verify-detail-item">
+        <i className="fas fa-envelope"></i>
+        <span>Xác nhận đã được gửi đến: <strong>{formData.email}</strong></span>
+      </div>
+      
+      {/* Ô input nhập OTP riêng biệt */}
+      <div className="verify-input-group">
+        <input 
+          type="text"
+          className="verify-input"
+          maxLength={6}
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          placeholder="Nhập 6 số OTP"
+        />
+      </div>
+    </div>
+
+    <div className="verify-actions">
+      <button 
+        className="verify-btn primary"      
+        onClick={handleVerifyOtp}
+        disabled={isLoading}
+      >
+        <i className="fas fa-sign-in-alt"></i>
+        Xác nhận ngay
+      </button>
+      <button className="verify-btn secondary" onClick={()=> {navigate('/login')}}>
+        <i className="fas fa-home"></i>
+        Về trang chủ
+      </button>
+    </div>
+  </div>
+</div>
+    );
+  }
 
   // Render success message
   if (registrationSuccess) {

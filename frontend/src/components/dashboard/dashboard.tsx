@@ -2,26 +2,24 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../assets/admin/dashboard.css';
-import { getStats } from '../../api/orderApi';
+import { getAllOrders, getMyOrder } from '../../api/orderApi';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { apiGet } from '../../api/api';
 import { getAllProducts } from '../../api/productApi';
+import { getReports } from '../../api/reportApi';
 
 const AdminDashboard = () => {
   const [monthReports, setMonthReports] = useState<any>([]);
+  const [reportToday, setReportToday] = useState<any>([]);
   const [productReport, setProductReport] = useState<any>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  
-  const [totalRevenue, setTotalRevenue] = useState<any>([]);
-  const [totalOrders, setTotalOrders] = useState<any>([]);
+  // const newestOrder = orders.slice(-5).reverse();
 
   const { user } = useAuthContext();
   const notify = useNotify();
   const navigate = useNavigate();
 
-  const newestOrder = orders.slice(-5).reverse();
-
+  console.log(orders)
   useEffect(() => {
     if (!user) return;
     
@@ -33,28 +31,55 @@ const AdminDashboard = () => {
 
     fetchReportByMonth();
     fetchTopSellProduct();
-    fetchStatsOrders();
-  }, []);
-  console.log(totalOrders, totalRevenue)
+    fetchReportToday();
+    fetchOrders();
+
+  }, [user?.role]);
+
+const fetchReportByMonth = async () => {
+  try {
+    const now = new Date();
+    const month = now.getMonth() + 1; // JS bắt đầu từ 0
+    const year = now.getFullYear();
+
+    const data = await getReports(
+      `?type=month&month=${month}&year=${year}`
+    );
+    setMonthReports(data.stats || []);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+    const fetchOrders = async () => {
+      try {
+        const data = await getAllOrders(
+          ``
+        );
+        // Nếu backend trả mảng orders
+        setOrders(data.slice(-5).reverse || []);
+      } catch (error) {
+        console.error("Fetch orders failed:", error);
+      } 
+    }
+
+const fetchReportToday = async () => {
+  try {
+    const data = await getReports(
+      `?type=today`
+    );
+    setReportToday(data.stats || []);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
   const formatPrice = (price: any) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
   };
-
-  const fetchReportByMonth = async () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1
-    try {
-      const data = await apiGet<any[]>(`/api/report/admin/${year}/${month}`);
-      setMonthReports(data || []);
-    } catch (err) {
-      console.log(err);
-      setMonthReports([]);
-    } 
-  }
 
   const fetchTopSellProduct = async () => {
     try {
@@ -70,23 +95,13 @@ const AdminDashboard = () => {
     }
   }
 
-  const fetchStatsOrders = async () => {
-    try {
-      const data = await getStats();
-      setTotalRevenue(data.totalRevenue)
-      setTotalOrders(data.totalOrders)
-    } catch (err) {
-      console.error("Lỗi khi lấy đơn hàng:", err);
-      setOrders([]);
-    }
-  };
-
   const formatNumber = (number: any) => {
     return new Intl.NumberFormat('vi-VN').format(number);
   };
 
   const formatDate = (dateTime: string) =>
     new Date(dateTime).toLocaleString("vi-VN");
+
 
   console.log()
   return (
@@ -98,12 +113,12 @@ const AdminDashboard = () => {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-card-icon primary">💰</div>
-                <div className="stat-card-value">{formatPrice(totalRevenue)}</div>
+                <div className="stat-card-value">{formatPrice(monthReports.totalRevenue)}</div>
                 <div className="stat-card-label">Tổng Doanh Thu Tháng Này</div>
               </div>
               <div className="stat-card">
                 <div className="stat-card-icon success">📦</div>
-                <div className="stat-card-value">{formatNumber(totalOrders)}</div>
+                <div className="stat-card-value">{formatNumber(monthReports.totalOrders)}</div>
                 <div className="stat-card-label">Tổng Đơn Hàng Tháng này</div>
               </div>
             </div>
@@ -137,7 +152,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/activities" className="view-all">Xem tất cả</Link>
               </div>
               <div className="activity-list">
-                {newestOrder.map((order: any) => {
+                {orders.map((order: any) => {
                   const code = order._id ? String(order._id).slice(-4) : "";
                   const customerName = order.user?.fullName || order.username || "Khách hàng";
                   const avatarText = customerName.slice(0, 2).toUpperCase();
@@ -182,7 +197,7 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {newestOrder.map((order: any) => {
+                  {orders.map((order: any) => {
                     const code = order._id ? String(order._id).slice(-4) : "";
                     const customerName = order.user?.fullName || order.username || "Khách hàng";
                     return (

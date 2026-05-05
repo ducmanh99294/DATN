@@ -8,10 +8,6 @@ export const loginWithGoogleApi = async () => {
     return await apiGet('/api/auth/google');
 }
 
-export const loginWithFacebookApi = async () => { 
-    return await apiGet('/api/auth/facebook');
-}
-
 export const registerApi = async (andress:string,dateOfBirth:string,email:string,fullName:string,gender:string,password:string,phone:string,) => {
     return await apiPost('/api/auth/register', 
         {   
@@ -25,6 +21,13 @@ export const registerApi = async (andress:string,dateOfBirth:string,email:string
         }
     );
 }
+
+export const verifyEmail = async (otp: string, verifyToken: string) => {
+    return await apiPost("/api/auth/verify", {
+      otp,
+      verifyToken,
+    });
+};
 
 export const getMe = async () => {
     return await apiGet("/api/auth/me");

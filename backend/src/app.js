@@ -16,6 +16,7 @@ const appointmentRoutes = require('./routes/appointmentRoutes')
 const doctorRoutes = require('./routes/doctorRoutes')
 const speciallyRoutes = require('./routes/speciallyRoutes')
 const newsRoutes = require('./routes/newsRoutes')
+const reportRoutes = require('./routes/reportRoutes')
 const faqRoutes = require('./routes/faqRoutes')
 
 const categoryRoutes =  require("./routes/categoryRoutes");
@@ -49,6 +50,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/chatbot", chatRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend is running')

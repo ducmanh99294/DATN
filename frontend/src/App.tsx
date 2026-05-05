@@ -27,6 +27,7 @@ import AdminProducts from "./components/dashboard/productAdmin";
 import AdminUsers from "./components/dashboard/userAdmin";
 import AdminDashboard from "./components/dashboard/home";
 import Test from "./components/Notfound";
+import CheckoutSuccess from "./components/CheckoutSuccess";
 
 function App() {
   // 1. MỞ COMMENT DÒNG NÀY ĐỂ REACT ĐƯỢC LẮNG NGHE URL THAY ĐỔI
@@ -68,6 +69,7 @@ function App() {
         <Route path="/news/:slug" element={<News />} />
         <Route path="/specialty/:slug" element={<Specialty />} />
         <Route path="/notFound" element={<Test/>} />
+        <Route path="/checkout/success/:orderId" element={<CheckoutSuccess />} />
 
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/dashborads" element={<Dashboard />} />
