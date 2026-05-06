@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../assets/header.css';
 
 // Import các icon (sử dụng react-icons)
@@ -9,7 +9,6 @@ import {
   FaBars, 
   FaTimes,
   FaPills,
-  FaRobot,
   FaCalendarAlt,
   FaHome,
   FaClinicMedical,
@@ -22,13 +21,22 @@ import { useNotify } from '../hooks/useNotification';
 import type Specialty from './Specialty';
 import { getAllSpecially } from '../api/specialyApi';
 import { useSocket } from '../context/SocketContext';
-
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const Header: React.FC = () => {
+  gsap.registerPlugin(ScrollTrigger);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const logoRef = useRef<HTMLElement | null>(null);
+  const logoTitle = useRef<HTMLElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const navRef2 = useRef<HTMLElement | null>(null);
+  const iconRef = useRef<HTMLElement | null>(null);
+  const menuBtnRef = useRef<HTMLElement | null>(null);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSpecialtiesOpen, setIsSpecialtiesOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [activeNav, setActiveNav] = useState('home');
@@ -37,19 +45,6 @@ const Header: React.FC = () => {
   const notify = useNotify();
   const { socket } = useSocket();
   const [notifications, setNotifications] = useState<any[]>([]);
-  // Xử lý scroll để thay đổi style header
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Đóng menu khi click ra ngoài
   useEffect(() => {
@@ -164,21 +159,9 @@ const Header: React.FC = () => {
     }
   };
 
-  // Xử lý click mở chat AI
-  const handleOpenChatAI = () => {
-    alert('Mở chat AI');
-    // Ở đây bạn sẽ mở chat AI
-  };
-
   // Xử lý click mở giỏ hàng
   const handleOpenCart = () => {
     navigate("/cart")
-  };
-
-  // Xử lý click thông báo
-  const handleOpenNotifications = () => {
-    alert('Mở thông báo');
-    // Ở đây bạn sẽ mở thông báo
   };
 
   // Xử lý click đăng nhập
@@ -200,23 +183,280 @@ const Header: React.FC = () => {
     { label: 'Đăng xuất', onClick: handleLogout },
   ];
 
+  //------------aniation--------------
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+
+    // nếu mobile thì không chạy animation
+    if (isMobile)  {
+      const trigger = ScrollTrigger.create({
+        trigger: document.body,
+        start: "50px top",
+
+        onEnter: () => {
+          gsap.to(headerRef.current, {
+            backgroundColor: "rgba(255, 255, 255, 0)",
+            duration: 0.4
+          });
+
+          gsap.to(logoRef.current, {
+            scale: 1.2,
+            y: 5,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+
+          gsap.to(menuBtnRef.current, {
+            opacity: 1,
+            x: 40,
+            duration: 0.4
+          });
+
+          gsap.to(navRef.current, {
+            opacity: 0,
+            y: -10,
+            duration: 0.2
+          });
+
+          gsap.to(iconRef.current, {
+            opacity: 0,
+            y: -10,
+            duration: 0.2
+          });
+        },
+
+        onLeaveBack: () => {
+          gsap.to(headerRef.current, {
+            backgroundColor: "#ffffff",
+            backdropFilter: "blur(0px)",
+            duration: 0.4
+          });
+
+          gsap.to(logoRef.current, {
+            scale: 1,
+            y: 0,
+            duration: 0.4
+          });
+
+          gsap.to(menuBtnRef.current, {
+            opacity: 1,
+            x: 40,
+            duration: 0.3
+          });
+
+          gsap.to(navRef.current, {
+            opacity: 1,
+            y: 0,
+            duration: 0.3
+          });
+
+          gsap.to(iconRef.current, {
+            opacity: 1,
+            y: 0,
+            duration: 0.3
+          });
+        }
+      });
+
+      return () => trigger.kill();
+    }
+
+    const trigger = ScrollTrigger.create({
+      trigger: document.body,
+      start: "80px top",
+
+      onEnter: () => {
+        gsap.to(headerRef.current, {
+          background: "rgba(255,255,255,0)",
+          duration: 0.5,
+          boxShadow: "none",
+
+        });
+
+        gsap.to(logoRef.current, {
+          x: 20,
+          y: 25,
+          scale: 1.5,
+          duration: 0.6,
+          ease: "power3.out"
+        });
+
+        gsap.to(logoTitle.current, {
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+
+        gsap.to(navRef.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.3
+        });
+
+        if (navRef2.current) {
+          gsap.to(navRef2.current.querySelectorAll('.cta-btn, .cart-btn, .notification-btn'), {
+            display: "none",
+            opacity: 0,
+            x: 160,
+            duration: 0.3
+          });
+        }
+        if (navRef.current) {
+        gsap.to(navRef.current.querySelectorAll('.nav-icon'), {
+          opacity: 0,
+          duration: 0.3
+        });
+
+        gsap.to(navRef.current.querySelectorAll('.nav-link'), {
+          duration: 0.3,
+          opacity:0,
+        });
+        }
+        
+        if (headerRef.current) {
+        // Làm biến mất chữ (tên hoặc chữ "Đăng nhập")
+        gsap.to(headerRef.current.querySelectorAll('.user-name, .login-text'), {
+          width: 0,
+          opacity: 0,
+          display: "none",
+          duration: 0.3
+        });
+
+        // Xóa khoảng trống (gap) và thu nhỏ padding để nút thành hình tròn bao quanh avatar
+        gsap.to(headerRef.current.querySelectorAll('.user-btn, .login-btn'), {
+          gap: 0,
+          padding: "8px", // Thu nhỏ padding 2 bên lại
+          duration: 0.3
+        });
+
+        gsap.to(headerRef.current.querySelectorAll('.mobile-menu-toggle'), {
+          display: "block",
+          color: "white",
+          opacity: 1,
+        });
+        }
+
+        gsap.to(iconRef.current, {
+          opacity: 0,
+          y: -20,
+          duration: 0.3
+        });
+
+        gsap.to(menuBtnRef.current, {
+          opacity: 1,
+          x: 0,
+          duration: 0.5
+        });
+      },
+
+      onLeaveBack: () => {
+        gsap.to(headerRef.current, {
+          background: "radial-gradient(circle, #1a2238 10%, #0E7490 50%, #1a2238 90%)",
+          duration: 0.5
+        });
+
+        gsap.to(logoRef.current, {
+          x: 0,
+          y:0,
+          scale: 1,
+          duration: 0.6
+        });
+
+        gsap.to(logoTitle.current, {
+          opacity: 1,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+
+        gsap.to(navRef.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.3
+        });
+        if (navRef.current) {
+        gsap.to(navRef.current.querySelectorAll('.nav-icon'), {
+          opacity: 1,
+          duration: 0.3
+        });
+
+        gsap.to(navRef.current.querySelectorAll('.nav-link'), {
+          clearProps: "all",
+          duration: 0.6,
+          backgroundColor: "rgba(14, 116, 144, 0.1)",
+          paddingRight: 0,
+        });
+        }
+
+        if (navRef2.current) {
+        gsap.to(navRef2.current.querySelectorAll('.cta-btn, .cart-btn, .notification-btn'), {
+          display: "block",
+          opacity: 1,
+          x: 0,
+          duration: 0.2
+        });
+        }
+
+        if (headerRef.current) {
+        // Hiện lại chữ
+        gsap.to(headerRef.current.querySelectorAll('.user-name, .login-text'), {
+          display: "block",
+          width: "auto",
+          opacity: 1,
+          duration: 0.3
+        });
+
+        // Trả lại khoảng trống và padding ban đầu cho nút
+        gsap.to(headerRef.current.querySelectorAll('.user-btn, .login-btn'), {
+          gap: "8px",
+          padding: "8px 12px", 
+          duration: 0.3
+        });
+
+        gsap.to(headerRef.current.querySelectorAll('.mobile-menu-toggle'), {
+          display: "none",
+          color: "white",
+          duration: 0.3,
+          opacity:0,
+        });
+        }
+
+        gsap.to(iconRef.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.3
+        });
+
+        gsap.to(menuBtnRef.current, {
+          opacity: 0,
+          x: -80,
+          duration: 0.3
+        });
+      }
+    });
+
+    return () => {
+      trigger.kill();
+    };
+  }, []);
+
   if (isLoading) return null;
+
   return (
-    <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
+    <header className="header" ref={headerRef}>
       <div className="header-container">
         {/* Logo và Brand */}
         <div className="header-brand" onClick={handleLogoClick}>
-          <div className="logo">
+          <div className="logo" ref={logoRef}>
             <MdHealthAndSafety className="logo-icon" />
           </div>
-          <div className="brand-text">
+          <div className="brand-text" ref={logoTitle}>
             <h1 className="brand-name">MediCare</h1>
             <p className="brand-tagline">Chăm sóc sức khỏe toàn diện</p>
           </div>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="desktop-nav">
+        <nav className="desktop-nav" ref={navRef}>
           <ul className="nav-list">
             {navItems.map(item => (
             <li
@@ -231,7 +471,7 @@ const Header: React.FC = () => {
                   if (!item.isDropdown) handleNavClick(item.id);
                 }}
               >
-                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-icon" >{item.icon}</span>
                 <span className="nav-label">{item.label}</span>
               </button>
 
@@ -258,14 +498,8 @@ const Header: React.FC = () => {
         </nav>
 
         {/* Header Actions */}
-        <div className="header-actions">
-          {/* Nút Chat AI */}
-          {/* <button className="action-btn ai-btn" onClick={handleOpenChatAI} title="Chat với AI">
-            <FaRobot className="action-icon" />
-            <span className="action-label">Chat AI</span>
-          </button> */}
-
-          {/* Nút Đặt lịch (CTA chính) */}
+        <div className="header-actions" ref={navRef2}>
+          {/* Đặt lịch */}
           {(() => {
             const bookingBtn = getBookingButtonConfig();
 
@@ -354,7 +588,7 @@ const Header: React.FC = () => {
 
             {/* User Dropdown Menu */}
             {isUserMenuOpen && user && (
-              <div className="user-dropdown">
+              <div className="user-dropdown" >
                 <div className="user-info">
                   {user.image ? (
                     <img src={user.image} alt={user.fullName} className="dropdown-avatar" />
@@ -392,8 +626,8 @@ const Header: React.FC = () => {
         </div>
 
         {/* Mobile Navigation Menu */}
-        <div className={`mobile-nav ${isMenuOpen ? 'open' : ''}`}>
-          <div className="mobile-nav-header">
+        <div className={`mobile-nav ${isMenuOpen ? 'open' : ''}`} >
+          <div className="mobile-nav-header" >
             {user ? (
               <div className="mobile-user-info">
                 {user.image ? (
@@ -441,7 +675,7 @@ const Header: React.FC = () => {
             </button>
             <button className="mobile-action-btn" onClick={handleOpenCart}>
               <FaShoppingCart />
-              {/* <span>Giỏ hàng {cartItemCount > 0 && `(${cartItemCount})`}</span> */}
+              <span>Giỏ hàng</span>
             </button>
           </div>
         </div>

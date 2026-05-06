@@ -1,12 +1,21 @@
-/* 1. Reset cơ bản (bạn đã có) */
+/* 1. Reset cơ bản */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body, #root, .App {
+html, body {
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden; /* Ngăn thanh cuộn ngang thừa */
+  overflow-x: hidden; 
+}
+
+#root, .App {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.App{ /* Thay bằng class thực tế đang bọc trang Home của bạn */
+  padding-top: 70px; /* Bằng với chiều cao 70px của header */
 }

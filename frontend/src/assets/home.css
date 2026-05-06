@@ -621,6 +621,7 @@
 
 /* Doctors Section */
 .home-modern .doctors-section {
+  height:700px;
   width:100%;  
   margin-bottom: 32px;
 }

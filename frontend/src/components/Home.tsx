@@ -322,7 +322,7 @@ useEffect(() => {
             <section 
               className="hero-section" 
               style={{ "--bg-url": `url(${bg})` }}
-            >
+            >-
               <div className="hero-content">
                 <h1 className="hero-title">
                   Tìm <span className="highlight">bác sĩ</span> và 
