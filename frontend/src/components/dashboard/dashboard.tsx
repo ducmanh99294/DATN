@@ -2,25 +2,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../assets/admin/dashboard.css';
-import { getStats } from '../../api/orderApi';
+import { getAllOrders, getStats } from '../../api/orderApi';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
-import { apiGet } from '../../api/api';
 import { getAllProducts } from '../../api/productApi';
 
 const AdminDashboard = () => {
-  const [monthReports, setMonthReports] = useState<any>([]);
   const [productReport, setProductReport] = useState<any>([]);
   const [orders, setOrders] = useState<any[]>([]);
   
-  const [totalRevenue, setTotalRevenue] = useState<any>([]);
-  const [totalOrders, setTotalOrders] = useState<any>([]);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [totalOrders, setTotalOrders] = useState<number>(0);
 
   const { user } = useAuthContext();
   const notify = useNotify();
   const navigate = useNavigate();
 
-  const newestOrder = orders.slice(-5).reverse();
+  const newestOrder = orders.slice(0, 5);
 
   useEffect(() => {
     if (!user) return;
@@ -31,30 +29,17 @@ const AdminDashboard = () => {
       return;
     }
 
-    fetchReportByMonth();
     fetchTopSellProduct();
     fetchStatsOrders();
-  }, []);
-  console.log(totalOrders, totalRevenue)
+    fetchRecentOrders();
+  }, [user]);
+
   const formatPrice = (price: any) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
   };
-
-  const fetchReportByMonth = async () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1
-    try {
-      const data = await apiGet<any[]>(`/api/report/admin/${year}/${month}`);
-      setMonthReports(data || []);
-    } catch (err) {
-      console.log(err);
-      setMonthReports([]);
-    } 
-  }
 
   const fetchTopSellProduct = async () => {
     try {
@@ -81,6 +66,16 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchRecentOrders = async () => {
+    try {
+      const data = await getAllOrders("?page=1&limit=30");
+      setOrders(data?.orders || []);
+    } catch (err) {
+      console.error("Lỗi khi lấy danh sách đơn hàng:", err);
+      setOrders([]);
+    }
+  };
+
   const formatNumber = (number: any) => {
     return new Intl.NumberFormat('vi-VN').format(number);
   };
@@ -88,7 +83,46 @@ const AdminDashboard = () => {
   const formatDate = (dateTime: string) =>
     new Date(dateTime).toLocaleString("vi-VN");
 
-  console.log()
+  const getLast7DaysRevenue = () => {
+    const result = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i -= 1) {
+      const day = new Date(now);
+      day.setHours(0, 0, 0, 0);
+      day.setDate(now.getDate() - i);
+      const nextDay = new Date(day);
+      nextDay.setDate(day.getDate() + 1);
+
+      const dailyRevenue = orders
+        .filter((order: any) => {
+          const createdAt = new Date(order.createdAt);
+          return createdAt >= day && createdAt < nextDay && order.status !== "cancelled";
+        })
+        .reduce((sum: number, order: any) => sum + (order.totalPrice || 0), 0);
+
+      result.push({
+        key: day.toISOString(),
+        label: day.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+        revenue: dailyRevenue,
+      });
+    }
+
+    return result;
+  };
+
+  const weeklyRevenue = getLast7DaysRevenue();
+  const maxRevenue = Math.max(...weeklyRevenue.map((item) => item.revenue), 1);
+
+  const getOrderStatusText = (status: string) => {
+    if (status === "pending") return "Chờ xác nhận";
+    if (status === "confirmed") return "Đã xác nhận";
+    if (status === "shipping") return "Đang giao";
+    if (status === "completed") return "Hoàn thành";
+    if (status === "cancelled") return "Đã hủy";
+    return status;
+  };
+
   return (
     <div className="admin-dashboard">
         {/* Main Content */}
@@ -116,17 +150,21 @@ const AdminDashboard = () => {
                 <h3 className="chart-title">Doanh Thu 7 Ngày Qua</h3>
                 <div className="chart-actions">
                   <button className="chart-action-btn">Tuần</button>
-                  <button className="chart-action-btn">Tháng</button>
-                  <button className="chart-action-btn">Năm</button>
                 </div>
               </div>
               <div className="chart-container">
-                <div className="placeholder-chart">
-                  <div className="icon">📈</div>
-                  {/* <div>Biểu đồ doanh thu</div> */}
-                  <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'rgba(75, 59, 43, 0.5)' }}>
-                    {/* (Trong thực tế sẽ tích hợp với Chart.js hoặc D3.js) */}
-                  </div>
+                <div className="revenue-chart">
+                  {weeklyRevenue.map((day) => (
+                    <div key={day.key} className="revenue-bar-item">
+                      <div className="revenue-value">{formatNumber(day.revenue)}</div>
+                      <div
+                        className="revenue-bar"
+                        style={{ height: `${Math.max((day.revenue / maxRevenue) * 180, 8)}px` }}
+                        title={`${day.label}: ${formatPrice(day.revenue)}`}
+                      />
+                      <div className="revenue-label">{day.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -137,6 +175,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/activities" className="view-all">Xem tất cả</Link>
               </div>
               <div className="activity-list">
+                {newestOrder.length === 0 && <div className="no-orders">Chưa có đơn hàng mới</div>}
                 {newestOrder.map((order: any) => {
                   const code = order._id ? String(order._id).slice(-4) : "";
                   const customerName = order.user?.fullName || order.username || "Khách hàng";
@@ -150,7 +189,8 @@ const AdminDashboard = () => {
                         <div className="activity-text">
                           <strong>{customerName}</strong> đã 
                             {order.status === 'pending' && ' tạo đơn hàng '}
-                            {order.status === 'processing' && ' đang được xử lý '}
+                            {order.status === 'confirmed' && ' xác nhận đơn '}
+                            {order.status === 'shipping' && ' đang giao đơn '}
                             {order.status === 'completed' && ' hoàn thành '}
                             {order.status === 'cancelled' && ' hủy '}
                           đơn hàng <strong>{code}</strong>
@@ -182,6 +222,11 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  {newestOrder.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="no-orders">Chưa có đơn hàng mới</td>
+                    </tr>
+                  )}
                   {newestOrder.map((order: any) => {
                     const code = order._id ? String(order._id).slice(-4) : "";
                     const customerName = order.user?.fullName || order.username || "Khách hàng";
@@ -197,10 +242,7 @@ const AdminDashboard = () => {
                         <td className="order-amount">{formatPrice(order.totalPrice)}</td>
                         <td>
                           <span className={`order-status ${order.status}`}>
-                            {order.status === 'pending' && 'Chờ xác nhận'}
-                            {order.status === 'processing' && 'Đang xử lí'}
-                            {order.status === 'completed' && 'Hoàn thành'}
-                            {order.status === 'cancelled' && 'Đã hủy'}
+                            {getOrderStatusText(order.status)}
                           </span>
                         </td>
                         <td>{formatDate(order.createdAt)}</td>
