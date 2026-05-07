@@ -5,7 +5,8 @@ import { getMyOrder } from '../api/orderApi';
 import type { Product } from './Product';
 
 interface OrderItem {
-  id: number;
+  _id?: string;
+  id?: number;
   product: Product;
   name: string;
   image: string;
@@ -13,6 +14,7 @@ interface OrderItem {
   quantity: number;
   total: number;
   prescriptionRequired?: boolean;
+  prescriptionImage?: string | null;
 }
 
 export interface Order {
@@ -316,10 +318,10 @@ const Orders = () => {
 
         <div className="order-items">
           {order.items.slice(0, 3).map(item => (
-            <div key={item.id} className="order-item">
+            <div key={item._id || item.id} className="order-item">
               <div className="item-image">
                 <img src={item?.product?.images[0]} alt={item.name} />
-                {item.prescriptionRequired && (
+                {(item.prescriptionRequired || item.product?.prescriptionRequired) && (
                   <span className="prescription-icon" title="Thuốc kê đơn">
                     <i className="fas fa-prescription"></i>
                   </span>
@@ -330,6 +332,16 @@ const Orders = () => {
                 <div className="item-price">
                   {formatPrice(item.price)} x {item.quantity}
                 </div>
+                {item.prescriptionImage && (
+                  <a
+                    href={item.prescriptionImage}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="prescription-view-link"
+                  >
+                    Xem đơn thuốc
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -581,7 +593,7 @@ const Orders = () => {
                 Sản phẩm đã mua
               </h4>
               {selectedOrder.items.map(item => (
-                <div key={item.id} className="product-item">
+                <div key={item._id || item.id} className="product-item">
                   <div className="product-image">
                     <img src={item.product.images[0]} alt={item.name} />
                   </div>
@@ -590,6 +602,16 @@ const Orders = () => {
                     <div className="product-price">
                       {formatPrice(item.price)} x {item.quantity}
                     </div>
+                    {item.prescriptionImage && (
+                      <a
+                        href={item.prescriptionImage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="prescription-view-link"
+                      >
+                        Xem đơn thuốc đã tải
+                      </a>
+                    )}
                   </div>
                   <div className="product-total">
                     {formatPrice(item.price * item.quantity)}

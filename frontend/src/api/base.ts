@@ -10,9 +10,7 @@ export async function request<T = any>(
 ): Promise<T> {
 
   const isFormData =
-    typeof FormData !== "undefined" &&
-    data &&
-    (data as any).constructor?.name === "FormData";
+    typeof FormData !== "undefined" && data instanceof FormData;
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     method,
@@ -33,8 +31,20 @@ export async function request<T = any>(
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Request failed");
+    let message = "Request failed";
+    try {
+      const ct = res.headers.get("content-type");
+      if (ct?.includes("application/json")) {
+        const error = await res.json();
+        message = (error as { message?: string }).message || message;
+      } else {
+        const text = await res.text();
+        if (text) message = text.slice(0, 300);
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
   }
 
   return res.json();

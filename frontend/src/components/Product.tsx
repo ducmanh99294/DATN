@@ -44,6 +44,7 @@ const Products = () => {
   
   const location = useLocation();
   const { addToCart } = useCart(); 
+  const [rxConfirmProduct, setRxConfirmProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Product[]>([]);
   const [keyword, setKeyword] = useState('');
@@ -155,6 +156,21 @@ const Products = () => {
   // Format price
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + ' ₫';
+  };
+
+  const handleAddToCartClick = (product: Product) => {
+    if (product.prescriptionRequired) {
+      setRxConfirmProduct(product);
+      return;
+    }
+    addToCart(product._id);
+  };
+
+  const confirmPrescriptionAdd = () => {
+    if (rxConfirmProduct) {
+      addToCart(rxConfirmProduct._id);
+      setRxConfirmProduct(null);
+    }
   };
 
   // Render rating stars
@@ -515,7 +531,7 @@ const Products = () => {
                             </button> */}
                             <button 
                               className="add-to-cart-btn"
-                              onClick={() => addToCart(product._id)}
+                              onClick={() => handleAddToCartClick(product)}
                               disabled={product.stock === 0}
                             >
                               <i className="fas fa-cart-plus"></i>
@@ -593,7 +609,7 @@ const Products = () => {
                           <div className="product-actions">
                             <button 
                               className="buy-now-btn"
-                              onClick={() => addToCart(product._id)}
+                              onClick={() => handleAddToCartClick(product)}
                               disabled={product.stock === 0}
                             >
                               <i className="fas fa-shopping-cart"></i>
@@ -702,6 +718,29 @@ const Products = () => {
           </div>
         </div>
       </div>
+
+      {rxConfirmProduct && (
+        <div className="rx-confirm-overlay" onClick={() => setRxConfirmProduct(null)}>
+          <div className="rx-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <div className="rx-confirm-icon">
+              <i className="fas fa-prescription"></i>
+            </div>
+            <h3>Thuốc kê đơn</h3>
+            <p>
+              <strong>{rxConfirmProduct.name}</strong> là thuốc cần kê đơn bác sĩ. Vui lòng chỉ mua khi đã có chỉ định
+              và chuẩn bị tải ảnh đơn thuốc trong giỏ hàng trước khi thanh toán.
+            </p>
+            <div className="rx-confirm-actions">
+              <button type="button" className="rx-confirm-cancel" onClick={() => setRxConfirmProduct(null)}>
+                Hủy
+              </button>
+              <button type="button" className="rx-confirm-ok" onClick={confirmPrescriptionAdd}>
+                Tôi đã hiểu, thêm vào giỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
