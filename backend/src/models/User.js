@@ -50,7 +50,13 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: null
-  }
+  },
+
+  isVerified: Boolean,
+
+  verifyCode: String,
+
+  verifyExpire: Date
 }, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema)

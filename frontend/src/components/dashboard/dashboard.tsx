@@ -6,6 +6,7 @@ import { getAllOrders, getStats } from '../../api/orderApi';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
 import { getAllProducts } from '../../api/productApi';
+import { getReports } from '../../api/reportApi';
 
 const AdminDashboard = () => {
   const [productReport, setProductReport] = useState<any>([]);
@@ -13,6 +14,11 @@ const AdminDashboard = () => {
   
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [totalOrders, setTotalOrders] = useState<number>(0);
+  const [monthReports, setMonthReports] = useState<any>([]);
+  const [reportToday, setReportToday] = useState<any>([]);
+  const [productReport, setProductReport] = useState<any>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  // const newestOrder = orders.slice(-5).reverse();
 
   const { user } = useAuthContext();
   const notify = useNotify();
@@ -132,12 +138,12 @@ const AdminDashboard = () => {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-card-icon primary">💰</div>
-                <div className="stat-card-value">{formatPrice(totalRevenue)}</div>
+                <div className="stat-card-value">{formatPrice(monthReports.totalRevenue)}</div>
                 <div className="stat-card-label">Tổng Doanh Thu Tháng Này</div>
               </div>
               <div className="stat-card">
                 <div className="stat-card-icon success">📦</div>
-                <div className="stat-card-value">{formatNumber(totalOrders)}</div>
+                <div className="stat-card-value">{formatNumber(monthReports.totalOrders)}</div>
                 <div className="stat-card-label">Tổng Đơn Hàng Tháng này</div>
               </div>
             </div>

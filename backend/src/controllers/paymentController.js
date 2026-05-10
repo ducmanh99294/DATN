@@ -166,7 +166,12 @@ exports.vnpayReturn = async (req, res) => {
 
     if (payment.status === "SUCCESS") {
       await session.commitTransaction();
-      return res.redirect("https://datn-z8rb.vercel.app/payment-success");
+      let realMongoId = orderId;
+      if (payment.type === "medicine") {
+          const savedOrder = await Order.findOne({ paymentId: payment._id });
+          if (savedOrder) realMongoId = savedOrder._id.toString();
+      }
+      return res.redirect(`https://datn-z8rb.vercel.app/checkout/success/${realMongoId}`);
     }
 
     // FAIL
@@ -249,7 +254,7 @@ if (payment.type === "medicine") {
 
     if (!existed) {
 
-      // 🔥 Lấy lại cart giống createOrder
+      // Lấy lại cart giống createOrder
       const cart = await Cart.findOne({ user: payment.user }).session(session);
       if (!cart) throw new Error("Cart is empty");
 
@@ -261,7 +266,7 @@ if (payment.type === "medicine") {
         throw new Error("Cart is empty");
       }
 
-      // 🔥 Tạo order
+      // Tạo order
       const order = await Order.create([{
         user: payment.user,
         shippingAddress: payment.metadata?.shippingAddress,
@@ -271,8 +276,8 @@ if (payment.type === "medicine") {
         totalPrice: payment.amount,
         paymentId: payment._id,
       }], { session });
-
-      // 🔥 Tạo order items giống createOrder
+      console.log(JSON.stringify(order[0], null, 2));
+      // Tạo order items giống createOrder
       for (const item of cartItems) {
         const price = item.product.price || 0;
 
@@ -284,7 +289,7 @@ if (payment.type === "medicine") {
         }], { session });
       }
 
-      // 🔥 Clear cart
+      // Clear cart
       await CartItem.deleteMany({ cart: cart._id }).session(session);
     }
   } catch (e) {
@@ -293,10 +298,16 @@ if (payment.type === "medicine") {
 }
 
     await session.commitTransaction();
-
     console.log("Thanh toán thành công:", orderId);
 
-    return res.redirect("https://datn-z8rb.vercel.app/payment-success");
+    let realMongoId = orderId;
+
+    const savedOrder = await Order.findOne({ paymentId: payment._id });
+    if (savedOrder) {     
+      realMongoId = savedOrder._id.toString();  
+    }
+
+    return res.redirect(`https://datn-z8rb.vercel.app/checkout/success/${realMongoId}`);
 
   } catch (err) {
     await session.abortTransaction();

@@ -6,12 +6,20 @@ import AdminDashboard from './dashboard';
 import AdminProduct from './productAdmin';
 import AdminNews from './newsAdmin';
 import AdminManagerUser from './userAdmin';
+import { useAuthContext } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useNotify } from '../../hooks/useNotification';
+import { getReports } from '../../api/reportApi';
 
 
 const Home: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeNav, setActiveNav] = useState('dashboard');
-
+  const [reportToday, setReportToday] = useState<any>([]);
+  const { user } = useAuthContext();
+  const notify = useNotify();
+  const navigate = useNavigate();
+  
   const dashboardStats = {
     totalRevenue: 38450000,
     totalOrders: 1247,
@@ -31,6 +39,29 @@ const Home: React.FC = () => {
     { id: 'employees', label: 'Tin tức', icon: '👨‍💼', },
   ];
 
+  useEffect(() => {
+    if (!user) return;
+    
+    if (user.role !== "admin") {
+      notify.warning("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+      return;
+    }
+
+    fetchReportToday();
+  }, [user?.role]);
+  
+  const fetchReportToday = async () => {
+    try {
+      const data = await getReports(
+        `?type=today`
+      );
+      setReportToday(data.stats || []);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -97,29 +128,29 @@ const Home: React.FC = () => {
               <div className="stat-item">
                 <div className="stat-icon orders">📦</div>
                 <div className="stat-info">
-                  <div className="stat-value">{dashboardStats.todayOrders}</div>
+                  <div className="stat-value">{reportToday.totalOrders}</div>
                   <div className="stat-label">Đơn hôm nay</div>
                 </div>
               </div>
               <div className="stat-item">
                 <div className="stat-icon revenue">💰</div>
                 <div className="stat-info">
-                  <div className="stat-value">{formatPrice(dashboardStats.todayRevenue)}</div>
+                  <div className="stat-value">{formatPrice(reportToday.totalRevenue)}</div>
                   <div className="stat-label">Doanh thu hôm nay</div>
                 </div>
               </div>
               <div className="stat-item">
                 <div className="stat-icon customers">👥</div>
                 <div className="stat-info">
-                  <div className="stat-value">{dashboardStats.pendingOrders}</div>
+                  <div className="stat-value">{reportToday.processingOrders}</div>
                   <div className="stat-label">Đơn chờ xử lý</div>
                 </div>
               </div>
               <div className="stat-item">
                 <div className="stat-icon products">⚠️</div>
                 <div className="stat-info">
-                  <div className="stat-value">{dashboardStats.lowStockProducts}</div>
-                  <div className="stat-label">SP sắp hết hàng</div>
+                  <div className="stat-value">{reportToday.completedOrders}</div>
+                  <div className="stat-label">Đơn đã hoàn thành</div>
                 </div>
               </div>
             </div>

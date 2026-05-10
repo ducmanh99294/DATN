@@ -1,0 +1,169 @@
+.checkout-success-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Nội dung bắt đầu từ trên xuống, không căn giữa màn hình tuyệt đối */
+  width: 100%;
+  min-height: calc(100vh - 100px); /* Trừ đi chiều cao header/footer nếu có */
+  padding: 40px 20px;
+  background-color: transparent;
+}
+
+.success-step {
+  width: 100%;
+  max-width: 650px; /* Bóp chiều ngang lại để nó không bị bè ra hai bên */
+  background-color: #1a2238; /* Màu nền hộp (tùy chỉnh theo biến màu của bạn) */
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Căn giữa nội dung bên trong */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.success-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.success-icon {
+  background-color: #10b981; /* Xanh lá */
+  color: white;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 36px;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+/* 4. Text Tiêu đề và Thông báo */
+.success-step h2 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.success-message {
+  text-align: center;
+  color: #a0aec0; /* Màu text xám nhạt */
+  line-height: 1.6;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
+.success-message strong {
+  color: #60a5fa; /* Làm nổi bật mã đơn hàng */
+}
+
+.order-timeline {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2); /* Nền tối hơn hộp chính 1 chút */
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.view-order-btn, 
+.continue-shopping-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.view-order-btn {
+  background-color: transparent;
+  color: #60a5fa;
+  border: 1px solid #60a5fa;
+}
+
+.view-order-btn:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+.continue-shopping-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.continue-shopping-btn:hover {
+  background-color: #2563eb;
+}
+
+/* 7. Tracking Info (QR Code và Support) - Ép nó nằm dưới cùng, cân đối */
+.tracking-info {
+  display: flex;
+  flex-direction: row; /* Xếp ngang thay vì dọc */
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.qr-tracking, .support-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.support-info h5 {
+  color: white;
+  margin: 0;
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media (max-width: 600px) {
+  .success-actions {
+    flex-direction: column; /* Trên điện thoại thì nút xếp dọc dọc */
+  }
+  
+  .success-step{
+      width: 100%;
+      max-width: 650px;
+      background-color: #1a2238;
+      border-radius: 16px;
+      padding: 20px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .tracking-info {
+    flex-direction: column; /* Tracking info cũng xếp dọc */
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .success-message {
+    text-align: center;
+    color: #a0aec0;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    width: 100%;
+  }
+}
