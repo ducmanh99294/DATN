@@ -1321,6 +1321,19 @@
   cursor: pointer;
 }
 
+.cart-container .rx-preview-thumb {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.cart-container .rx-preview-thumb img {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  border: 1px solid var(--border-color);
+}
+
 .cart-container .prescription-guidelines {
   background: var(--bg-main);
   border-radius: var(--radius-md);

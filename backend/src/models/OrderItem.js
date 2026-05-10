@@ -15,7 +15,12 @@ const orderItemSchema = new mongoose.Schema({
 
   quantity: Number,
   price: Number,
-  note: String
+  note: String,
+
+  prescriptionImage: {
+    type: String,
+    default: null,
+  },
 
 }, { timestamps: true });
 

@@ -337,6 +337,48 @@
   margin-bottom: 10px;
 }
 
+.revenue-chart {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px;
+}
+
+.revenue-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.revenue-value {
+  font-size: 0.75rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.revenue-bar {
+  width: 100%;
+  max-width: 38px;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #14b8a6 0%, #0ea5e9 100%);
+  transition: all 0.3s ease;
+}
+
+.revenue-bar:hover {
+  filter: brightness(1.1);
+}
+
+.revenue-label {
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+}
+
 /* Recent Activity */
 .activity-list {
   display: flex;
@@ -392,6 +434,13 @@
 .activity-badge.success { background: rgba(40, 167, 69, 0.1); color: #28A745; }
 .activity-badge.warning { background: rgba(255, 193, 7, 0.1); color: #FFC107; }
 .activity-badge.info { background: rgba(23, 162, 184, 0.1); color: #17A2B8; }
+
+.no-orders {
+  color: #475569;
+  text-align: center;
+  padding: 14px;
+  font-size: 0.9rem;
+}
 
 /* Tables Section */
 .tables-section {

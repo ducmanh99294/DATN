@@ -56,4 +56,37 @@ app.get('/', (req, res) => {
   res.send('Backend is running')
 })
 
+const multer = require('multer')
+
+// Lỗi từ multer / Cloudinary (upload_stream) — trả JSON để frontend hiển thị đúng
+app.use((err, req, res, next) => {
+  if (!err) return next()
+
+  if (!req.path.startsWith('/api')) {
+    return res.status(500).send('Server error')
+  }
+
+  console.error('[api error]', req.method, req.path, err.message || err)
+
+  if (err instanceof multer.MulterError) {
+    const msg =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'File quá lớn (tối đa 10MB)'
+        : err.message
+    return res.status(400).json({ message: msg })
+  }
+
+  if (err.http_code) {
+    const code = Number(err.http_code)
+    const status = code >= 400 && code < 600 ? code : 400
+    return res.status(status).json({
+      message: err.message || 'Lỗi dịch vụ lưu ảnh (Cloudinary)',
+    })
+  }
+
+  return res.status(500).json({
+    message: err.message || 'Upload thất bại',
+  })
+})
+
 module.exports = app

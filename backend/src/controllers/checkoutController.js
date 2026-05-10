@@ -22,6 +22,14 @@ exports.checkout = async (req, res) => {
     return res.status(400).json({ message: "Cart is empty" });
   }
 
+  for (const item of cartItems) {
+    if (item.product.prescriptionRequired && !item.prescriptionImage) {
+      return res.status(400).json({
+        message: `Sản phẩm "${item.product.name}" cần đơn thuốc. Vui lòng tải ảnh đơn trong giỏ hàng.`,
+      });
+    }
+  }
+
   // 1️⃣ Create order
   const order = await Order.create({
     user: req.user.id,
@@ -30,6 +38,7 @@ exports.checkout = async (req, res) => {
   });
 
   let totalPrice = 0;
+  const prescriptionUploads = [];
 
   // 2️⃣ Create order items
   for (const item of cartItems) {
@@ -43,11 +52,20 @@ exports.checkout = async (req, res) => {
       price,
       color: item.color,
       material: item.material,
-      note: item.note
+      note: item.note,
+      prescriptionImage: item.prescriptionImage || undefined,
     });
+
+    if (item.prescriptionImage) {
+      prescriptionUploads.push({
+        product: item.product._id,
+        imageUrl: item.prescriptionImage,
+      });
+    }
   }
 
   order.totalPrice = totalPrice;
+  order.prescriptionUploads = prescriptionUploads;
   await order.save();
 
   // 3️⃣ Create payment (deposit)

@@ -7,15 +7,27 @@ const upload = require("../middlewares/upload");
 const passport = require("../controllers/passport");
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 
+function requireGoogleOAuth(req, res, next) {
+  if (!passport.isGoogleOAuthConfigured) {
+    return res.status(503).json({
+      message:
+        "Google OAuth chưa cấu hình. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào file .env.",
+    });
+  }
+  next();
+}
+
 // Redirect sang Google
 router.get(
   "/google",
+  requireGoogleOAuth,
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 // Callback từ Google
 router.get(
   "/google/callback",
+  requireGoogleOAuth,
   (req, res, next) => {
     // Nếu Google báo về là user đã bấm "Hủy" (Cancel)
     if (req.query.error === "access_denied") {

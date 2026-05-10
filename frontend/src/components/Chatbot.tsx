@@ -27,6 +27,15 @@ const Chat: React.FC = () => {
   const { socket } = useSocket();
   const notify = useNotify();
   const { addToCart } = useCart();
+  const [rxChatProduct, setRxChatProduct] = useState<any>(null);
+
+  const handleChatAddToCart = (p: any) => {
+    if (p.prescriptionRequired) {
+      setRxChatProduct(p);
+      return;
+    }
+    addToCart(p._id);
+  };
 
   useEffect(() => {
     if (!socket) return;
@@ -119,7 +128,7 @@ const Chat: React.FC = () => {
                         <h4>{p.name}</h4>
                         <p>{p.price}đ</p>
                         <button onClick={() => navigate("/products")}>Xem chi tiết</button>
-                        <button onClick={() => addToCart(p._id)}>Thêm vào giỏ hàng</button>
+                        <button onClick={() => handleChatAddToCart(p)}>Thêm vào giỏ hàng</button>
                       </div>
                     ))}
                   </div>
@@ -150,6 +159,33 @@ const Chat: React.FC = () => {
               Gửi
             </button>
           </div>
+
+          {rxChatProduct && (
+            <div className="chat-rx-overlay" onClick={() => setRxChatProduct(null)}>
+              <div className="chat-rx-dialog" onClick={(e) => e.stopPropagation()}>
+                <h4>Thuốc kê đơn</h4>
+                <p>
+                  <strong>{rxChatProduct.name}</strong> cần đơn bác sĩ. Sau khi thêm vào giỏ, hãy tải ảnh đơn trong trang
+                  giỏ hàng.
+                </p>
+                <div className="chat-rx-btns">
+                  <button type="button" onClick={() => setRxChatProduct(null)}>
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => {
+                      addToCart(rxChatProduct._id);
+                      setRxChatProduct(null);
+                    }}
+                  >
+                    Thêm vào giỏ
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
