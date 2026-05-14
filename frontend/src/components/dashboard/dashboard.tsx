@@ -9,9 +9,6 @@ import { getAllProducts } from '../../api/productApi';
 import { getReports } from '../../api/reportApi';
 
 const AdminDashboard = () => {
-  const [productReport, setProductReport] = useState<any>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [monthReports, setMonthReports] = useState<any>([]);

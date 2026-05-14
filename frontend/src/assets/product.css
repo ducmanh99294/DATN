@@ -1269,13 +1269,13 @@
 .products-container .rx-confirm-dialog h3 {
   margin: 0 0 12px;
   font-size: 1.25rem;
-  color: var(--text-primary);
+  color: #1e293b;
 }
 
 .products-container .rx-confirm-dialog p {
   margin: 0 0 24px;
   line-height: 1.55;
-  color: var(--text-secondary);
+  color: #1e293b;
   font-size: 0.95rem;
 }
 

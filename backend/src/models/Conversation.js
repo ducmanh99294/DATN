@@ -1,9 +1,31 @@
-// models/Conversation.js
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const conversationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  isClosed: { type: Boolean, default: false },
-}, { timestamps: true });
 
-export default mongoose.model("Conversation", conversationSchema);
+  participants: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    }
+  ],
+
+  lastMessage: {
+    type: String,
+    default: ""
+  },
+
+  lastMessageAt: {
+    type: Date
+  },
+
+  isClosed: {
+    type: Boolean,
+    default: false
+  }
+
+}, {
+  timestamps: true
+});
+
+module.exports = mongoose.model("Conversation", conversationSchema);

@@ -623,11 +623,15 @@
 .home-modern .doctors-section {
   width:100%;  
   margin-bottom: 32px;
+  max-height: 1050px;
+  min-height: 500px
 }
 
 .home-modern .doctors-grid {
   display: flex;              /* đổi từ grid → flex */
   overflow-x: auto;           /* cuộn ngang */
+  overflow-y: hidden;
+  width:100%;
   gap: 20px;
   padding-bottom: 10px;
   scroll-behavior: smooth; 
@@ -690,6 +694,128 @@
   font-weight: 500;
   margin-bottom: 8px;
   font-size: 0.9rem;
+}
+
+.home-modern .doctor-select {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 60px;
+
+  padding: 40px 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.home-modern .doctor-select-left {
+  width: 550px;
+  min-width: 550px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-modern .doctor-select-avatar {
+  width: 100%;
+  height: 650px;
+
+  object-fit: cover;
+
+  border-radius: 32px;
+
+  border: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* ===== RIGHT CONTENT ===== */
+.home-modern .doctor-select-right {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-modern .doctor-select-badge {
+  width: fit-content;
+
+  padding: 8px 16px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+
+  color: #6cd4f1;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  margin-bottom: 20px;
+}
+
+.home-modern .doctor-select-name {
+  font-size: 52px;
+  font-weight: 800;
+
+  line-height: 1.1;
+
+  color: white;
+
+  margin-bottom: 16px;
+}
+
+.home-modern .doctor-select-specialty {
+  font-size: 18px;
+  color: rgba(255,255,255,0.75);
+
+  margin-bottom: 12px;
+}
+
+.home-modern .doctor-select-rating {
+  margin: 16px 0;
+}
+
+.home-modern .doctor-select-meta {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+
+  margin-top: 24px;
+}
+
+.home-modern .doctor-select-meta span {
+  font-size: 16px;
+  color: white;
+
+  line-height: 1.6;
+}
+
+.home-modern .doctor-status {
+  width: fit-content;
+
+  padding: 8px 16px;
+
+  border-radius: 999px;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-modern .doctor-status.available {
+  background: rgba(34,197,94,0.15);
+  color: #22c55e;
+}
+
+.home-modern .doctor-status.busy {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
 }
 
 .rating {
@@ -1212,6 +1338,25 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+
+  .home-modern .doctor-select {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .home-modern .doctor-select-left {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .home-modern .doctor-select-avatar {
+    height: 400px;
+  }
+
+  .home-modern .doctor-select-name {
+    font-size: 36px;
+  }
+
     .content-wrapper {
     flex-direction: column; /* Quay dọc khi màn hình nhỏ */
   }
