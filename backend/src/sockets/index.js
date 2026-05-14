@@ -2,6 +2,8 @@ const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const cookie = require("cookie");
 const User = require("../models/User");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 const chatController = require("../controllers/chatController");
 
 let io;
@@ -93,12 +95,46 @@ const initSocket = (server) => {
       socket.join(`chat_${conversationId}`);
     });
 
-    socket.on("send_chat_message", ({ conversationId, message }) => {
+    socket.on("send_chat_message", async ({ conversationId, message }) => {
+      try {
+        await Message.create({
+          conversationId,
+          sender: socket.userId,
+          message
+        });
+
+        await Conversation.findByIdAndUpdate(conversationId, {
+          lastMessage: message,
+          lastMessageAt: new Date()
+        });
+      } catch (error) {
+        console.error("Lỗi lưu tin nhắn socket:", error);
+      }
+
       io.to(`chat_${conversationId}`).emit("receive_chat_message", {
         sender: socket.userId,
-        message
+        message,
+        conversationId
       });
     });
+
+    socket.on("typing", (data) => {
+
+    socket.to( `chat_${data.conversationId}`)
+        .emit("user_typing", {
+          userName: data.userName  
+        });
+    });
+
+    socket.on(
+      "stop_typing",
+      (data) => {
+
+        socket.to( `chat_${data.conversationId}`)
+          .emit("user_stop_typing");
+
+      }
+    );
 
     socket.on("disconnect", () => {
       // Giữ kết nối đóng yên lặng, tránh spam log terminal

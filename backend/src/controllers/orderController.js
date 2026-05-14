@@ -24,6 +24,14 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
+    for (const item of cartItems) {
+      if (item.product.prescriptionRequired && !item.prescriptionImage) {
+        return res.status(400).json({
+          message: `Sản phẩm "${item.product.name}" cần đơn thuốc. Vui lòng tải ảnh đơn trong giỏ hàng.`,
+        });
+      }
+    }
+
     // Create order
     const order = await Order.create({
       type: "medicine",
@@ -35,6 +43,7 @@ exports.createOrder = async (req, res) => {
     });
 
     let totalPrice = 0;
+    const prescriptionUploads = [];
 
     // Create order items
     for (const item of cartItems) {
@@ -46,11 +55,20 @@ exports.createOrder = async (req, res) => {
         product: item.product._id,
         quantity: item.quantity,
         price,
+        prescriptionImage: item.prescriptionImage || undefined,
       });
+
+      if (item.prescriptionImage) {
+        prescriptionUploads.push({
+          product: item.product._id,
+          imageUrl: item.prescriptionImage,
+        });
+      }
     }
 
     // Update total
     order.totalPrice = totalPrice;
+    order.prescriptionUploads = prescriptionUploads;
     await order.save();
 
     // Create payment record (để theo dõi thanh toán, đặc biệt cho bank)

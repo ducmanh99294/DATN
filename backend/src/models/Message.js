@@ -1,16 +1,31 @@
-// models/Message.js
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema({
-  conversation: {
+
+  conversationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Conversation",
+    required: true
   },
-  sender: {
-    type: String,
-    enum: ["user", "admin"],
-  },
-  content: String,
-}, { timestamps: true });
 
-export default mongoose.model("Message", messageSchema);
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
+  message: {
+    type: String,
+    required: true
+  },
+
+  seen: {
+    type: Boolean,
+    default: false
+  }
+
+}, {
+  timestamps: true
+});
+
+module.exports = mongoose.model("Message", messageSchema);

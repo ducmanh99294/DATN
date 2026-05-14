@@ -25,3 +25,9 @@ export const clearCartApi = () => {
 export const getCart = () => {
   return apiGet(`/api/carts`);
 };
+
+export const uploadCartItemPrescription = (itemId: string, file: File) => {
+  const fd = new FormData();
+  fd.append("prescription", file);
+  return apiPost(`/api/carts/item/${itemId}/prescription`, fd);
+};

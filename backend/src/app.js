@@ -9,7 +9,6 @@ const productRoutes = require('./routes/productRoutes')
 const orderRoutes = require('./routes/orderRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 const checkoutRoutes = require('./routes/checkoutRoutes')
-const designRequestRoutes = require('./routes/designRequestRoutes')
 const doctorAvailabilityRoutes = require('./routes/DoctorAvailabilityRoutes')
 const timeSlotRoutes = require('./routes/timeSlotRoutes')
 const appointmentRoutes = require('./routes/appointmentRoutes')
@@ -38,7 +37,6 @@ app.use("/api/contacts", contactRoutes);
 app.use("/api/carts", cartRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/design-requests", designRequestRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/doctor-availability", doctorAvailabilityRoutes);
@@ -51,9 +49,44 @@ app.use("/api/news", newsRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/chatbot", chatRoutes);
 app.use("/api/reports", reportRoutes);
+const testRoutes = require("./routes/test");
 
+app.use("/api", testRoutes);
 app.get('/', (req, res) => {
   res.send('Backend is running')
+})
+
+const multer = require('multer')
+
+// Lỗi từ multer / Cloudinary (upload_stream) — trả JSON để frontend hiển thị đúng
+app.use((err, req, res, next) => {
+  if (!err) return next()
+
+  if (!req.path.startsWith('/api')) {
+    return res.status(500).send('Server error')
+  }
+
+  console.error('[api error]', req.method, req.path, err.message || err)
+
+  if (err instanceof multer.MulterError) {
+    const msg =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'File quá lớn (tối đa 10MB)'
+        : err.message
+    return res.status(400).json({ message: msg })
+  }
+
+  if (err.http_code) {
+    const code = Number(err.http_code)
+    const status = code >= 400 && code < 600 ? code : 400
+    return res.status(status).json({
+      message: err.message || 'Lỗi dịch vụ lưu ảnh (Cloudinary)',
+    })
+  }
+
+  return res.status(500).json({
+    message: err.message || 'Upload thất bại',
+  })
 })
 
 module.exports = app

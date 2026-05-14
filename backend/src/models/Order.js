@@ -43,7 +43,18 @@ const orderSchema = new mongoose.Schema({
     default: Date.now
   },
   dateConfirmed: Date,
-  reason: String, 
+  reason: String,
+
+  /** Ảnh đơn thuốc đã tải (theo từng sản phẩm), copy từ giỏ khi đặt hàng */
+  prescriptionUploads: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+      imageUrl: { type: String, required: true },
+    },
+  ],
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);

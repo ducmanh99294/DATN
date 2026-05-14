@@ -1,5 +1,6 @@
 const Cart = require("../models/Cart");
 const CartItem = require("../models/CartItem");
+const Product = require("../models/Product");
 
 /**
  * 🛒 GET USER CART
@@ -121,4 +122,45 @@ exports.clearCart = async (req, res) => {
 
   await CartItem.deleteMany({ cart: cart._id });
   res.json({ message: "Cart cleared" });
+};
+
+/**
+ * 📎 Upload đơn thuốc (ảnh) cho dòng giỏ hàng — lưu URL Cloudinary
+ */
+exports.uploadPrescription = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    if (!req.file?.path) {
+      return res.status(400).json({ message: "Chưa có file ảnh đơn thuốc" });
+    }
+
+    const item = await CartItem.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ message: "Cart item not found" });
+    }
+
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart || item.cart.toString() !== cart._id.toString()) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const product = await Product.findById(item.product);
+    if (!product?.prescriptionRequired) {
+      return res.status(400).json({ message: "Sản phẩm này không yêu cầu đơn thuốc" });
+    }
+
+    item.prescriptionImage = req.file.path;
+    await item.save();
+
+    const populated = await CartItem.findById(item._id).populate({
+      path: "product",
+      populate: { path: "category", select: "name _id" },
+    });
+
+    res.json(populated);
+  } catch (err) {
+    console.error("uploadPrescription:", err);
+    res.status(500).json({ message: err.message || "Upload thất bại" });
+  }
 };

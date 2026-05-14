@@ -1232,6 +1232,85 @@
   }
 }
 
+/* Modal xác nhận thuốc kê đơn trước khi thêm giỏ */
+.products-container .rx-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.products-container .rx-confirm-dialog {
+  background: white;
+  border-radius: var(--radius-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.products-container .rx-confirm-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+}
+
+.products-container .rx-confirm-dialog h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.products-container .rx-confirm-dialog p {
+  margin: 0 0 24px;
+  line-height: 1.55;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.products-container .rx-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.products-container .rx-confirm-cancel,
+.products-container .rx-confirm-ok {
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.products-container .rx-confirm-cancel {
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.products-container .rx-confirm-ok {
+  background: var(--accent);
+  color: white;
+}
+
+.products-container .rx-confirm-ok:hover {
+  filter: brightness(0.95);
+}
+
 @media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;

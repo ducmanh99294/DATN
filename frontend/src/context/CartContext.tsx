@@ -13,6 +13,7 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   applyDiscount: (code: string) => void;
   clearCart: () => void;
+  refreshCart: () => Promise<void>;
   getTotalItems: () => number;
   getSubtotal: () => number;
   getTotal: () => number;
@@ -23,6 +24,7 @@ export interface CartItem {
   productId: Product;
   price: number;
   quantity: number;
+  prescriptionImage?: string | null;
 }
 
 interface SavedItem {
@@ -130,6 +132,7 @@ const mapBackendCartToState = (data: any): CartState => {
       productId: item.product,
       price: item.product.price,
       quantity: item.quantity,
+      prescriptionImage: item.prescriptionImage ?? null,
     })),
   };
 };
@@ -226,6 +229,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshCart = async () => {
+    if (!user) return;
+    try {
+      const data = await getCart();
+      dispatch({ type: 'LOAD_CART', payload: mapBackendCartToState(data) });
+    } catch {
+      notify.error('Không tải được giỏ hàng', 'Thông báo');
+    }
+  };
 
   const getTotalItems = () => {
     return state.items.reduce((total:any, item:any) => total + item.quantity, 0);
@@ -249,6 +261,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateQuantity,
       applyDiscount,
       clearCart,
+      refreshCart,
       getTotalItems,
       getSubtotal,
       getTotal

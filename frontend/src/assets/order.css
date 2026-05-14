@@ -466,6 +466,19 @@
   font-size: 0.85rem;
 }
 
+.orders-container .prescription-view-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.orders-container .prescription-view-link:hover {
+  text-decoration: underline;
+}
+
 .orders-container .more-items {
   display: flex;
   align-items: center;

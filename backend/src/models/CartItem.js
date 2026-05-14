@@ -19,7 +19,12 @@ const cartItemSchema = new mongoose.Schema({
     min: 1
   },
 
-  note: String
+  note: String,
+
+  prescriptionImage: {
+    type: String,
+    default: null,
+  },
 
 }, { timestamps: true });
 

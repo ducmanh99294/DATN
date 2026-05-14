@@ -34,20 +34,29 @@ import { getDoctor } from '../api/doctorApi';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import { confirmAppointmentApi, getDoctorAppointments, getMyAppointment } from '../api/appointmentApi';
+import { createConversation, getConversations, getMessages } from "../api/chatApi";
 import { useNotification } from '../context/NotificationContext';
 import { getAllNews } from '../api/newsApi';
 import bg from '../assets/image/bg.png'; 
 import slide1 from '../assets/image/slidebar1.png'; 
 import slide2 from '../assets/image/slidebar2.png'; 
 import slide3 from '../assets/image/slidebar3.png'; 
+import gsap from 'gsap';
+import { useChatStore } from '../hooks/useChat';
 
 const Home = () => {
+  const doctorSelectRef = useRef<HTMLDivElement | null>(null);
+  const infoRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const heroRef = useRef(null);
+
   const { user,doctor } = useAuthContext();
   const notify = useNotification();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSpecialty, setActiveSpecialty] = useState('all');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [doctors, setDoctors] = useState<any[]>([])
+  const [IndexDoctor, setIndexDoctor] = useState<number>(0)
   const [news, setNews] = useState<any[]>([])
   const [appointments, setAppointments] = useState<any[]>([])
   const [doctorLoading, setDoctorLoading] = useState(false);
@@ -55,8 +64,8 @@ const Home = () => {
   const [appoinmentLoading, setAppoinmentLoading] = useState(false);
   const [randomDoctors, setRandomDoctors] = useState<any[]>([]);
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
+  const {addConversation} = useChatStore();
   // Dữ liệu slider
 
 const slides = [
@@ -100,12 +109,14 @@ const slides = [
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 3000);
+    if (isHovering || slides.length === 0) return;
 
-    return () => clearInterval(interval);
-  }, [slides.length]);
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }, [isHovering, slides.length]);
 
   useEffect(()=>{
       fetchNews();
@@ -134,7 +145,6 @@ const slides = [
           setDoctorLoading(false);
         }
       }
-
     const fetchNews = async () => {
       try {
         setNewsLoading(true)
@@ -259,54 +269,189 @@ const slides = [
     setSearchQuery(query)
     navigate(`/products?search=${encodeURIComponent(query)}`);
   }
-  // -----------------------ANIMATION------------------------
-  useEffect(() => {
-  const container = scrollRef.current;
-  if (!container) return;
+  const selectedDoctor = randomDoctors[IndexDoctor]
 
-  const interval = setInterval(() => {
-    container.scrollBy({
-      left: 320, // = width card + gap
-      behavior: "smooth"
-    });
+  const handleChat = async (doctor: any) => {
+    try {
+      // lấy danh sách conversation trước
+      const conversations = await getConversations();
 
-    // Nếu scroll tới cuối → quay lại đầu
-    if (
-      container.scrollLeft + container.clientWidth >=
-      container.scrollWidth - 5
-    ) {
-      container.scrollTo({
-        left: 0,
-        behavior: "smooth"
-      });
+      // kiểm tra đã có chat với doctor chưa
+      const existingConversation = conversations.find(
+        (c: any) => c.doctorId === doctor.userId._id || c.members?.includes(doctor.userId._id)
+      );
+
+      // nếu chưa có thì tạo mới
+      let conversationId;
+
+      if (!existingConversation) {
+        const conversation = await createConversation(doctor.userId._id);
+        const privateChat: any = {
+        _id: conversation._id,
+        type: "private",
+        name: doctor.userId.fullName
+          ? decodeURIComponent(doctor.userId.fullName)
+          : "Bác sĩ",
+        lastMessage:
+          conversation.lastMessage ||
+          "Bắt đầu trò chuyện"
+      };
+        addConversation(privateChat)
+        // conversationId = newConversation._id;
+      } else {
+        conversationId = existingConversation._id;
+      }
+
+      // lấy tin nhắn của conversation
+      await getMessages(conversationId);
+    } catch (e) {
+      console.log(e);
     }
-  }, 3000);
+  };
+  // -----------------------ANIMATION------------------------
+useEffect(() => {
+  if (!doctorSelectRef.current) return;
 
-  return () => clearInterval(interval);
-}, []);
+  const tl = gsap.timeline();
+
+  tl.to(doctorSelectRef.current, {
+    opacity: 0,
+    y: -20,
+    duration: 0.25,
+    ease: "power2.in",
+  });
+
+  tl.fromTo(
+    doctorSelectRef.current,
+    {
+      opacity: 0,
+      y: 20,
+    },
+    {
+      opacity: 1,
+      y: 0,
+      duration: 4.6,
+      ease: "power3.out",
+    }
+  );
+
+  tl.fromTo(
+    infoRef.current,
+    {
+      opacity: 0,
+      x: 40,
+    },
+    {
+      opacity: 1,
+      x: 0,
+      duration: 3.6,
+      ease: "power3.out",
+    },
+    // "-=0.4"
+  );
+}, [selectedDoctor]);
 
 useEffect(() => {
-  if (isHovering) return;
-
-  const container = scrollRef.current;
-  if (!container) return;
+  if (!randomDoctors?.length) return;
 
   const interval = setInterval(() => {
-    container.scrollBy({
-      left: 320,
-      behavior: "smooth"
-    });
-
-    if (
-      container.scrollLeft + container.clientWidth >=
-      container.scrollWidth - 5
-    ) {
-      container.scrollTo({ left: 0 });
-    }
-  }, 3000);
+    setIndexDoctor((prev) =>
+      prev === randomDoctors.length - 1
+        ? 0
+        : prev + 1
+    );
+  }, 5000);
 
   return () => clearInterval(interval);
-}, [isHovering]);
+}, [randomDoctors]);
+
+// useEffect(() => {
+//   if (!scrollRef.current) return;
+
+//   const container = scrollRef.current;
+
+//   let animation: any;
+
+//   if (!isHovering) {
+//     animation = gsap.to(container, {
+//       scrollLeft: container.scrollWidth,
+//       duration: 20,
+//       ease: "none",
+//       repeat: -1,
+//       modifiers: {
+//         scrollLeft: (value) => {
+//           const maxScroll =
+//             container.scrollWidth -
+//             container.clientWidth;
+
+//           return `${parseFloat(value) % maxScroll}`;
+//         },
+//       },
+//     });
+//   }
+
+//   return () => {
+//     if (animation) animation.kill();
+//   };
+// }, [isHovering]);
+
+const handleSlideHover = (el: any, isHovering: any) => {
+  if (!el) return;
+
+  const content = el.querySelector(".slide-content");
+
+  gsap.to(el, {
+    scale: isHovering ? 1.04 : 1,
+    width: isHovering ? "102%" : "100%",
+    height: isHovering ? "600px" : "100%",
+    duration: 0.4,
+    ease: "power3.out",
+  });
+
+  gsap.to(content, {
+    y: isHovering ? -10 : 0,
+    duration: 0.4,
+    ease: "power3.out",
+  });
+};
+
+const expandHero = () => {
+  if (!heroRef.current) return;
+
+  gsap.to(heroRef.current, {
+    height: "500px",
+    duration: 0.6,
+    ease: "power3.out",
+  });
+
+  gsap.to(
+    heroRef.current.querySelector(".hero-overlay"),
+    {
+      opacity: 0.25,
+      duration: 0.6,
+      ease: "power3.out",
+    }
+  );
+};
+
+const resetHero = () => {
+  if (!heroRef.current) return;
+
+  gsap.to(heroRef.current, {
+    height: "420px",
+    duration: 0.6,
+    ease: "power3.out",
+  });
+
+  gsap.to(
+    heroRef.current.querySelector(".hero-overlay"),
+    {
+      opacity: 0.5,
+      duration: 0.6,
+      ease: "power3.out",
+    }
+  );
+};
 
   return (
     <div className="home-modern">
@@ -319,54 +464,89 @@ useEffect(() => {
           {/* Main Content Area */}
           <main className="main-content">
             {/* Hero Search Section */}
-            <section 
-              className="hero-section" 
-              style={{ "--bg-url": `url(${bg})` }}
-            >-
-              <div className="hero-content">
-                <h1 className="hero-title">
-                  Tìm <span className="highlight">bác sĩ</span> và 
-                  <span className="highlight"> đặt lịch</span> dễ dàng
-                </h1>
-                <p className="hero-subtitle">
-                  Kết nối với hơn 500 bác sĩ chuyên khoa và 30+ dịch vụ y tế chất lượng cao
-                </p>
-                
-                <form className="search-form" onSubmit={handleSearch}>
-                  <div className="search-input-wrapper">
-                    <FaSearch className="search-icon" />
-                    <input
-                      type="text"
-                      placeholder="Tìm bác sĩ, chuyên khoa, triệu chứng..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="search-input"
-                    />
-                    <button type="submit" className="search-btn">
-                      Tìm kiếm
-                    </button>
-                  </div>
-                  <div className="search-tags">
-                    <span>Phổ biến:</span>
-                    <button type="button" className="tag" onClick={() => addSearchQuerry('Omega')}>Omega</button>
-                    <button type="button" className="tag" onClick={() => addSearchQuerry('Vitamin')}>Vitamin</button>
-                    <button type="button" className="tag" onClick={() => addSearchQuerry('Men vi sinh')}>Men vi sinh</button>
-                  </div>
-                </form>
+<section
+  className="hero-section"
+  ref={heroRef}
+  style={{ "--bg-url": `url(${bg})` }}
+>
+  <div className="hero-overlay"></div>
 
-                <div className="hero-stats">
-                  {stats.map((stat, index) => (
-                    <div className="stat-item" key={index}>
-                      <div className="stat-icon">{stat.icon}</div>
-                      <div className="stat-content">
-                        <div className="stat-value">{stat.value}</div>
-                        <div className="stat-label">{stat.label}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+  <div className="hero-content">
+    <h1 className="hero-title">
+      Tìm <span className="highlight">bác sĩ</span> và
+      <span className="highlight"> đặt lịch</span> dễ dàng
+    </h1>
+
+    <p className="hero-subtitle">
+      Kết nối với hơn 500 bác sĩ chuyên khoa
+      và 30+ dịch vụ y tế chất lượng cao
+    </p>
+
+    <form
+      className="search-form"
+      onSubmit={handleSearch}
+    >
+      <div className="search-input-wrapper">
+        <FaSearch className="search-icon" />
+
+        <input
+          type="text"
+          placeholder="Tìm bác sĩ, chuyên khoa, triệu chứng..."
+          value={searchQuery}
+          onChange={(e) =>
+            setSearchQuery(e.target.value)
+          }
+          onFocus={expandHero}
+          onBlur={() => {
+            if (!searchQuery) resetHero();
+          }}
+          className="search-input"
+        />
+
+        <button
+          type="submit"
+          className="search-btn"
+        >
+          Tìm kiếm
+        </button>
+      </div>
+
+      <div className="search-tags">
+        <span>Phổ biến:</span>
+
+        <button
+          type="button"
+          className="tag"
+          onClick={() =>
+            addSearchQuerry("Omega")
+          }
+        >
+          Omega
+        </button>
+
+        <button
+          type="button"
+          className="tag"
+          onClick={() =>
+            addSearchQuerry("Vitamin")
+          }
+        >
+          Vitamin
+        </button>
+
+        <button
+          type="button"
+          className="tag"
+          onClick={() =>
+            addSearchQuerry("Men vi sinh")
+          }
+        >
+          Men vi sinh
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
 
             {/* Specialty Filter */}
             <section className="specialty-section">
@@ -399,29 +579,47 @@ useEffect(() => {
 
             {/* Slider Section */}
             <section className="slider-section">
-              <div className="slider-container">
+              <div className="slider-container" >
                 <div className="slider" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                   {slides.map((slide) => (
-                <div 
-                  className="slide" 
-                  key={slide.id}
-                  style={{
-                    backgroundImage: `
-                      linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5)),
-                      url(${slide.image})
-                    `,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center"
-                  }}
-                >
-                      <div className="slide-content">
-                        <h3 className="slide-title">{slide.title}</h3>
-                        <p className="slide-description">{slide.description}</p>
-                        <button className="slide-cta">
-                          {slide.cta} <FaArrowRight />
-                        </button>
-                      </div>
-                    </div>
+ <div
+    className="slide"
+    key={slide.id}
+    onMouseEnter={(e) => {
+      setIsHovering(true);
+      handleSlideHover(e.currentTarget, true);
+    }}
+    onMouseLeave={(e) => {
+      setIsHovering(false);
+      handleSlideHover(e.currentTarget, false);
+    }}
+    style={{
+      backgroundImage: `
+        linear-gradient(
+          rgba(0,0,0,0.2),
+          rgba(0,0,0,0.5)
+        ),
+        url(${slide.image})
+      `,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    }}
+  >
+    <div className="slide-content">
+      <h3 className="slide-title">
+        {slide.title}
+      </h3>
+
+      <p className="slide-description">
+        {slide.description}
+      </p>
+
+      <button className="slide-cta">
+        {slide.cta}
+        <FaArrowRight />
+      </button>
+    </div>
+  </div>
                   ))}
                 </div>
                 <button className="slider-nav prev" onClick={prevSlide}>
@@ -454,60 +652,125 @@ useEffect(() => {
                 </button>
               </div>
               <div>
-                {newsLoading ? (
+                {doctorLoading ? (
                   <div className="loading-state">
                     <i className="fas fa-spinner fa-spin"></i>
                     <p>Đang tải bác sĩ...</p>
                   </div>
                 ) : (
-              <div 
-                className="doctors-grid" 
-                ref={scrollRef}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-              >
-                {doctors && doctors.length > 0 ? randomDoctors.map((doctor) => (
-                  <div className="doctor-card" key={doctor._id}>
-                    <div className="doctor-header">
-                      <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />
-                      <div className="doctor-info">
-                        <h3 className="doctor-name">{doctor?.userId?.fullName}</h3>
-                        <div className="doctor-specialty">{doctor?.specialtyId?.name}</div>
-                        {renderRating(doctor.rating)}
-                      </div>
-                      <div className={`availability ${doctor.isActive ? 'available' : 'busy'}`}>
-                        {doctor.isActive ? 'hoạt động' : 'Bận'}
-                      </div>
-                    </div>
+                  <>                             
+                <div className="doctor-select" >
+                  <div className="doctor-select-left" ref={doctorSelectRef}>
+                    <img
+                      src={selectedDoctor?.userId?.image}
+                      alt={selectedDoctor?.userId?.fullName}
+                      className="doctor-select-avatar"
+                    />
+                  </div>
+
+                  <div className="doctor-select-right" ref={infoRef}>
+                    <span className="doctor-select-badge">
+                      Đang hiển thị
+                    </span>
+
+                    <h2 className="doctor-select-name">
+                      {selectedDoctor?.userId?.fullName}
+                    </h2>
+
+                    <p className="doctor-select-specialty">
+                      {selectedDoctor?.specialtyId?.name}
+                    </p>
+
+                    <p className="doctor-select-specialty">
+                      {selectedDoctor?.userId?.email}
+                    </p>
+
+                    <p className="doctor-select-specialty">
+                      {selectedDoctor?.userId?.phone}
+                    </p>
                     
-                    <div className="doctor-details">
-                      <div className="detail-item">
-                        <FaClock className="detail-icon" />
-                        <span>Kinh nghiệm: {doctor.experienceYears}</span>
-                      </div>
-                      <div className="detail-item">
-                        <MdEventAvailable className="detail-icon" />
-                        {/* <span>Đã khám: {doctor.appointments.toLocaleString()}</span> */}
-                      </div>
+                    <div className="doctor-select-rating">
+                      {renderRating(selectedDoctor?.rating)}
                     </div>
-                    
-                    <div className="doctor-actions">
-                      <button className="action-btn primary" onClick={() => handleBookAppointment()}>
-                        <FaCalendarCheck />
-                        Đặt lịch ngay
-                      </button>
-                      <button className="action-btn secondary">
-                        <FaCommentMedical />
-                        Tư vấn
-                      </button>
+
+                    <div className="doctor-select-meta">
+                      <span>
+                        Kinh nghiệm:
+                        {selectedDoctor?.experienceYears} năm
+                      </span>
+                      <span>
+                        Bằng cấp: {selectedDoctor?.qualifications?.length > 0
+                          ? selectedDoctor.qualifications
+                              .map((quali: any) => quali.name || quali)
+                              .join(", ")
+                          : "Chưa cập nhật"}
+                      </span>
+                      <span
+                        className={`doctor-status ${
+                          selectedDoctor?.isActive
+                            ? "available"
+                            : "busy"
+                        }`}
+                      >
+                        {selectedDoctor?.isActive
+                          ? "Hoạt động"
+                          : "Bận"}
+                      </span>
                     </div>
                   </div>
-                )) : 
-                  <div className="loading-state">
-                    <p>Không tìm thấy danh sách bác sĩ</p>
-                  </div>
-                  }
-              </div>
+                </div>
+                <div 
+                  className="doctors-grid" 
+                  ref={scrollRef}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                >
+
+                  {doctors && doctors.length > 0 ? randomDoctors.map((doctor) => (
+                    <div className="doctor-card" key={doctor._id}>
+                      <div className="doctor-header">
+                        <img src={doctor?.userId?.image} alt={doctor.name} className="doctor-avatar" />
+                        <div className="doctor-info">
+                          <h3 className="doctor-name">{doctor?.userId?.fullName}</h3>
+                          <div className="doctor-specialty">{doctor?.specialtyId?.name}</div>
+                          {renderRating(doctor.rating)}
+                        </div>
+                        <div className={`availability ${doctor.isActive ? 'available' : 'busy'}`}>
+                          {doctor.isActive ? 'hoạt động' : 'Bận'}
+                        </div>
+                      </div>
+                      
+                      <div className="doctor-details">
+                        <div className="detail-item">
+                          <FaClock className="detail-icon" />
+                          <span>Kinh nghiệm: {doctor.experienceYears}</span>
+                        </div>
+                        <div className="detail-item">
+                          <MdEventAvailable className="detail-icon" />
+                          {/* <span>Đã khám: {doctor.appointments.toLocaleString()}</span> */}
+                        </div>
+                      </div>
+                      
+                      <div className="doctor-actions">
+                        <button className="action-btn primary" onClick={() => handleBookAppointment()}>
+                          <FaCalendarCheck />
+                          Đặt lịch ngay
+                        </button>
+                        <button className="action-btn secondary" onClick={() => handleChat(doctor)}>
+                          <FaCommentMedical />
+                          Tư vấn
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                  : 
+                    <div className="loading-state">
+                      <p>Không tìm thấy danh sách bác sĩ</p>
+                    </div>
+                    }
+                </div>
+              </>
+
                 )}             
               </div>
 
@@ -564,8 +827,7 @@ useEffect(() => {
           </main>
 
           {/* Sidebar */}
-          <aside className="sidebar">
-            {/* User Info Card (if logged in) */}
+          {/* <aside className="sidebar">
             {user && (
               <div className="sidebar-card user-card">
                 <div className="user-header">
@@ -589,9 +851,8 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
-            {/* Upcoming Appointments */}
             {user && appointments.length > 0 && (
               <div className="sidebar-card appointments-card">
                 <div className="card-header">
@@ -632,7 +893,7 @@ useEffect(() => {
             )}
 
             {/* Quick Actions */}
-            <div className="sidebar-card quick-actions-card">
+            {/* <div className="sidebar-card quick-actions-card">
               <h3>Thao tác nhanh</h3>
               <div className="quick-actions">
                 <button className="quick-action"  onClick={() => {navigate("/orders")}}>
@@ -652,10 +913,10 @@ useEffect(() => {
                   <span>Bảo hiểm y tế</span>
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Emergency Contact */}
-            <div className="sidebar-card emergency-card">
+            {/* <div className="sidebar-card emergency-card">
               <h3>
                 <FaHeartbeat className="emergency-icon" />
                 Cấp cứu 24/7
@@ -668,10 +929,10 @@ useEffect(() => {
                   Gọi cấp cứu
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Health Tips */}
-            <div className="sidebar-card tips-card">
+            {/* <div className="sidebar-card tips-card">
               <h3>Mẹo sức khỏe hôm nay</h3>
               <div className="health-tip">
                 <div className="tip-icon">💧</div>
@@ -680,8 +941,9 @@ useEffect(() => {
                   <p>Uống 2 lít nước mỗi ngày giúp cơ thể hoạt động tốt và da đẹp hơn</p>
                 </div>
               </div>
-            </div>
-          </aside>
+            </div> */}
+
+          {/* </aside> */}
         </div>
       </div>
     </div>

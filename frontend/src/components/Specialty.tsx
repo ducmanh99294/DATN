@@ -4,6 +4,7 @@ import '../assets/specialty.css';
 import type { Doctor } from './BookingFlow';
 import { getSpeciallyBySlug } from '../api/specialyApi';
 import { useNotify } from '../hooks/useNotification';
+import { useAuthContext } from '../context/AuthContext';
 
 interface Specialty {
   _id: string;
@@ -111,8 +112,22 @@ useEffect(() => {
     setFilteredDoctors(filtered);
   }, [doctors, filterExperience, filterRating, filterAvailability, sortBy]);
 
+  const { user } = useAuthContext();
+
   const handleBookAppointment = (doctor: Doctor) => {
     navigate(`/booking?doctor=${doctor._id}`);
+  };
+
+  const handleConsultDoctor = async (doctor: Doctor) => {
+    if (!user) {
+      notify.info('Vui lòng đăng nhập để sử dụng tính năng này.', 'Thông báo');
+      navigate('/login');
+      return;
+    }
+
+    setShowDoctorModal(false);
+    const name = encodeURIComponent(doctor.userId.fullName || 'Bác sĩ');
+    navigate(`?consultDoctorId=${doctor.userId._id}&consultDoctorName=${name}`, { replace: true });
   };
 
   const handleViewDoctorProfile = (doctor: Doctor) => {
@@ -231,13 +246,20 @@ useEffect(() => {
                   className="btn-book"
                   onClick={() => {
                     setShowDoctorModal(false);
-                    handleBookAppointment(selectedDoctor);
+                    handleBookAppointment(selectedDoctor as Doctor);
                   }}
                 >
                   <i className="fas fa-calendar-check"></i>
                   Đặt lịch ngay
                 </button>
-                <button className="btn-chat">
+                <button
+                  className="btn-chat"
+                  onClick={() => {
+                    if (selectedDoctor) {
+                      handleConsultDoctor(selectedDoctor);
+                    }
+                  }}
+                >
                   <i className="fas fa-comment-medical"></i>
                   Tư vấn
                 </button>

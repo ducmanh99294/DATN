@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/cart.css';
 import { useCart, type CartItem } from '../context/CartContext';
 import { useAuthContext } from '../context/AuthContext';
+import { uploadCartItemPrescription } from '../api/cartApi';
+import { useNotify } from '../hooks/useNotification';
 
 interface CartSummary {
   subtotal: number;
@@ -15,13 +17,27 @@ interface CartSummary {
 
 const Cart = () => {
   const navigate = useNavigate();
-  const {state,loading,updateQuantity,removeFromCart} = useCart();
-  const {user} = useAuthContext();
+  const { state, loading, updateQuantity, removeFromCart, refreshCart } = useCart();
+  const { user } = useAuthContext();
+  const notify = useNotify();
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
   const [currentPrescriptionItem, setCurrentPrescriptionItem] = useState<CartItem | null>(null);
+  const [rxFile, setRxFile] = useState<File | null>(null);
+  const [rxPreview, setRxPreview] = useState<string | null>(null);
+  const [rxUploading, setRxUploading] = useState(false);
+
+  const closePrescriptionModal = useCallback(() => {
+    setShowPrescriptionModal(false);
+    setCurrentPrescriptionItem(null);
+    setRxFile(null);
+    setRxPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
 
   useEffect(() => {
     
@@ -105,8 +121,46 @@ const Cart = () => {
 
   // Xử lý upload đơn thuốc
   const handleUploadPrescription = (item: CartItem) => {
+    setRxPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setRxFile(null);
     setCurrentPrescriptionItem(item);
     setShowPrescriptionModal(true);
+  };
+
+  const handleRxFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) {
+      notify.error('Vui lòng chọn file ảnh (JPG, PNG, ...)', 'Thông báo');
+      return;
+    }
+    setRxFile(f);
+    setRxPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
+  };
+
+  const submitPrescriptionUpload = async () => {
+    if (!currentPrescriptionItem) return;
+    if (!rxFile) {
+      notify.warning('Vui lòng chọn ảnh đơn thuốc', 'Thông báo');
+      return;
+    }
+    try {
+      setRxUploading(true);
+      await uploadCartItemPrescription(currentPrescriptionItem._id, rxFile);
+      await refreshCart();
+      notify.success('Đã tải lên đơn thuốc', 'Thông báo');
+      closePrescriptionModal();
+    } catch {
+      notify.error('Tải đơn thuốc thất bại. Kiểm tra kết nối hoặc cấu hình Cloudinary.', 'Thông báo');
+    } finally {
+      setRxUploading(false);
+    }
   };
 
   // Xử lý thanh toán
@@ -124,14 +178,18 @@ const Cart = () => {
     // }
 
     // Kiểm tra thuốc kê đơn
-    const prescriptionRequiredItems = state.items.filter(
-      item => selectedItems.includes(item._id) && 
-      item.productId.prescriptionRequired 
-      // && !item.hasPrescription
+    const missingRx = state.items.filter(
+      item =>
+        selectedItems.includes(item._id) &&
+        item.productId.prescriptionRequired &&
+        !item.prescriptionImage
     );
 
-    if (prescriptionRequiredItems.length > 0) {
-      alert('Vui lòng tải lên đơn thuốc cho các sản phẩm yêu cầu kê đơn');
+    if (missingRx.length > 0) {
+      notify.warning(
+        'Vui lòng tải ảnh đơn thuốc cho tất cả thuốc kê đơn trước khi thanh toán.',
+        'Thông báo'
+      );
       return;
     }
 
@@ -154,7 +212,7 @@ const Cart = () => {
     if (!showPrescriptionModal || !currentPrescriptionItem) return null;
 
     return (
-      <div className="modal-overlay" onClick={() => setShowPrescriptionModal(false)}>
+      <div className="modal-overlay" onClick={closePrescriptionModal}>
         <div className="modal-content" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <h3>
@@ -163,7 +221,7 @@ const Cart = () => {
             </h3>
             <button 
               className="close-btn"
-              onClick={() => setShowPrescriptionModal(false)}
+              onClick={closePrescriptionModal}
             >
               <i className="fas fa-times"></i>
             </button>
@@ -182,10 +240,20 @@ const Cart = () => {
             <div className="upload-area">
               <div className="upload-box">
                 <i className="fas fa-cloud-upload-alt"></i>
-                <h4>Kéo thả hoặc click để tải lên</h4>
-                <p>Hỗ trợ định dạng JPG, PNG, PDF (tối đa 10MB)</p>
-                <input type="file" accept="image/*,.pdf" className="file-input" />
+                <h4>Chọn ảnh đơn thuốc</h4>
+                <p>JPG, PNG, WebP — tối đa 10MB</p>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="file-input"
+                  onChange={handleRxFileChange}
+                />
               </div>
+              {rxPreview && (
+                <div className="rx-preview-thumb">
+                  <img src={rxPreview} alt="Xem trước đơn thuốc" />
+                </div>
+              )}
             </div>
 
             <div className="prescription-guidelines">
@@ -217,13 +285,28 @@ const Cart = () => {
           <div className="modal-footer">
             <button 
               className="cancel-btn"
-              onClick={() => setShowPrescriptionModal(false)}
+              onClick={closePrescriptionModal}
+              disabled={rxUploading}
             >
               Hủy
             </button>
-            <button className="upload-btn">
-              <i className="fas fa-upload"></i>
-              Tải lên đơn thuốc
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={submitPrescriptionUpload}
+              disabled={rxUploading || !rxFile}
+            >
+              {rxUploading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  Đang tải...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-upload"></i>
+                  Tải lên đơn thuốc
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -342,10 +425,19 @@ const Cart = () => {
 
                       {item.productId.prescriptionRequired && (
                         <div className="prescription-status">
-                          {item.productId.hasPrescription ? (
+                          {item.prescriptionImage ? (
                             <span className="status success">
                               <i className="fas fa-check-circle"></i>
                               Đã có đơn thuốc
+                              <a
+                                href={item.prescriptionImage}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="upload-prescription-btn"
+                                style={{ marginLeft: 8 }}
+                              >
+                                Xem ảnh
+                              </a>
                             </span>
                           ) : (
                             <span className="status warning">
