@@ -497,7 +497,7 @@
 
 .doctor-card-footer {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
   padding: 20px;
   background: var(--bg-main);
@@ -505,6 +505,7 @@
 }
 
 .btn-profile,
+.btn-chat,
 .btn-book {
   padding: 10px;
   border-radius: var(--radius-md);
@@ -520,6 +521,16 @@
 }
 
 .btn-profile {
+  background: white;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+&:hover {
+  background: var(--primary);
+  color: white;
+}
+}
+
+.btn-chat {
   background: white;
   color: var(--primary);
   border: 1px solid var(--primary);

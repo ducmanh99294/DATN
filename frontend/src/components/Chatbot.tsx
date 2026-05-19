@@ -7,6 +7,7 @@ import "../assets/chatbot.css";
 import { useCart } from "../context/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChatStore } from "../hooks/useChat";
+import { useNotification } from "../context/NotificationContext";
 
 // 1. Sửa lại Interface: message không còn bắt buộc (vì có lúc chỉ gửi ảnh/sản phẩm)
 interface Message {
@@ -37,6 +38,7 @@ const Chat: React.FC = () => {
   const notify = useNotify();
   const { addToCart } = useCart();
   const [rxChatProduct, setRxChatProduct] = useState<any>(null);
+  const [deleteChat,setDeleteChat] = useState<any>(false);
   const typingTimeoutRef =useRef<any>(null);
   const {
     conversations,
@@ -462,11 +464,12 @@ const handleDeleteChat = async (conversation: string) => {
     removeConversation(conversation);
 
     setSelectedChat(null);
+    notify.success("Đã xóa cuộc trò chuyện", "Thông báo")
   } catch (e) {
     console.log(e)
+    notify.error("Có lỗi xảy ra", "Thông báo")
   }
 }  
-
 
 return (
   <div className="chat-container">
@@ -501,7 +504,7 @@ return (
                {selectedChat?.type !== "ai" && 
                <button
                 className="backBtn"
-                onClick={() => handleDeleteChat(selectedChat._id)}
+                onClick={() => setDeleteChat(true)}
               >
                 <i className="fas fa-trash"></i>
               </button>
@@ -551,7 +554,7 @@ return (
                   {c.type === "ai"
                     ? "🤖"
                     : <img
-                      src={c.avatar}
+                      src={c.avatar|| c.image}
                       alt={c.name}
                       className="avatarImg"
                     />
@@ -799,6 +802,38 @@ return (
 
         )}
 
+{deleteChat && selectedChat && (
+  <div className="delete-chat-overlay">
+    <div className="delete-chat-modal">
+      <div className="delete-chat-icon">
+        ⚠️
+      </div>
+
+      <h3>Xác nhận xóa cuộc trò chuyện</h3>
+
+      <p>
+        Bạn có chắc muốn xóa cuộc trò chuyện này không?
+        Toàn bộ tin nhắn sẽ bị xóa và không thể khôi phục.
+      </p>
+
+      <div className="delete-chat-actions">
+        <button
+          className="cancel-btn"
+          onClick={() => setDeleteChat(false)}
+        >
+          Hủy
+        </button>
+
+        <button
+          className="delete-btn"
+          onClick={()=>handleDeleteChat(selectedChat._id)}
+        >
+          Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </div>
 
     )}

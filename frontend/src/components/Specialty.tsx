@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../assets/specialty.css';
-import type { Doctor } from './BookingFlow';
 import { getSpeciallyBySlug } from '../api/specialyApi';
 import { useNotify } from '../hooks/useNotification';
 import { useAuthContext } from '../context/AuthContext';
+import { createConversation, getConversations, getMessages } from '../api/chatApi';
+import { useChatStore } from '../hooks/useChat';
 
 interface Specialty {
   _id: string;
@@ -35,17 +36,19 @@ const Specialty = () => {
   const navigate = useNavigate();
   
   const [specialty, setSpecialty] = useState<Specialty | null>(null);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [filterExperience, setFilterExperience] = useState<string>('all');
   const [filterRating, setFilterRating] = useState<number>(0);
   const [filterAvailability, setFilterAvailability] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('experience');
   const notify = useNotify();
+  const {addConversation} = useChatStore();
+
   useEffect(() => {
   if (!slug) return;
   const fetchData = async () => {
@@ -114,25 +117,62 @@ useEffect(() => {
 
   const { user } = useAuthContext();
 
-  const handleBookAppointment = (doctor: Doctor) => {
+  const handleBookAppointment = (doctor: any) => {
     navigate(`/booking?doctor=${doctor._id}`);
   };
 
-  const handleConsultDoctor = async (doctor: Doctor) => {
-    if (!user) {
-      notify.info('Vui lòng đăng nhập để sử dụng tính năng này.', 'Thông báo');
-      navigate('/login');
-      return;
-    }
-
-    setShowDoctorModal(false);
-    const name = encodeURIComponent(doctor.userId.fullName || 'Bác sĩ');
-    navigate(`?consultDoctorId=${doctor.userId._id}&consultDoctorName=${name}`, { replace: true });
-  };
-
-  const handleViewDoctorProfile = (doctor: Doctor) => {
+  const handleViewDoctorProfile = (doctor: any) => {
     setSelectedDoctor(doctor);
     setShowDoctorModal(true);
+  };
+
+  const handleChat = async (doctor: any) => {
+      if(!user) {
+        notify.info("Vui lòng đăng nhập để sử dụng tính năng này", "thông báo")
+        navigate("/login");
+        return;
+      }
+      try {
+        // lấy danh sách conversation trước
+        const conversations = await getConversations();
+        // kiểm tra đã có chat với doctor chưa
+        const existingConversation = conversations.find((c: any) =>
+          c.participants?.some(
+            (p: any) =>
+              (p._id || p) === doctor.userId._id
+          )
+        );
+  
+        // nếu chưa có thì tạo mới
+        let conversationId;
+  
+        if (!existingConversation) {
+          const conversation = await createConversation(doctor.userId._id);
+          const privateChat: any = {
+          _id: conversation._id,
+          type: "private",
+          name: doctor.userId.fullName
+            ? decodeURIComponent(doctor.userId.fullName)
+            : "Bác sĩ",
+          avatar: doctor.userId.image,
+          lastMessage:
+            conversation.lastMessage ||
+            "Bắt đầu trò chuyện"
+        };
+
+          addConversation(privateChat)
+          conversationId = conversation._id;
+          notify.success("Đã tạo cuộc trò chuyện thành công", "Thông báo")
+        } else {
+          conversationId = existingConversation._id;
+          notify.info("Bạn đã có cuộc trò chuyện với người này", "Thông báo")
+        }
+  
+        // lấy tin nhắn của conversation
+        await getMessages(conversationId);
+      } catch (e) {
+        console.log(e);
+      }
   };
 
   const formatPrice = (price: number) => {
@@ -199,7 +239,7 @@ useEffect(() => {
                   Học vấn & Chứng chỉ
                 </h3>
                 <ul>
-                  {selectedDoctor.qualifications.map((qual, index) => (
+                  {selectedDoctor.qualifications.map((qual:any, index:any) => (
                     <li key={index}>
                       <i className="fas fa-check-circle"></i>
                       {qual}
@@ -246,7 +286,7 @@ useEffect(() => {
                   className="btn-book"
                   onClick={() => {
                     setShowDoctorModal(false);
-                    handleBookAppointment(selectedDoctor as Doctor);
+                    handleBookAppointment(selectedDoctor as any);
                   }}
                 >
                   <i className="fas fa-calendar-check"></i>
@@ -256,7 +296,7 @@ useEffect(() => {
                   className="btn-chat"
                   onClick={() => {
                     if (selectedDoctor) {
-                      handleConsultDoctor(selectedDoctor);
+                      handleChat(selectedDoctor);
                     }
                   }}
                 >
@@ -335,7 +375,7 @@ useEffect(() => {
               <i className="fas fa-calendar-alt"></i>
             </div>
             <div className="stat-info">
-              <div className="stat-value">{doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.experienceYears || 0), 0) / doctors.length) : 0}+</div>
+              <div className="stat-value">{doctors.length > 0 ? Math.round(doctors.reduce((sum: any, d) => sum + (d.experienceYears || 0), 0) / doctors.length) : 0}+</div>
               <div className="stat-label">Số năm kinh nghiệm trung bình</div>
             </div>
           </div>
@@ -477,7 +517,7 @@ useEffect(() => {
                       </div>
 
                       <div className="doctor-qualifications">
-                        {doctor.qualifications.slice(0, 2).map((qual, index) => (
+                        {doctor.qualifications.slice(0, 2).map((qual: any, index: any) => (
                           <div key={index} className="qualification">
                             <i className="fas fa-check"></i>
                             {qual}
@@ -493,6 +533,13 @@ useEffect(() => {
                       >
                         <i className="fas fa-user-md"></i>
                         Xem hồ sơ
+                      </button>                      
+                      <button 
+                        className="btn-chat"
+                        onClick={() => handleChat(doctor)}
+                      >
+                        <i className="fas fa-comment-medical"></i>
+                        Tư vấn
                       </button>
                       <button 
                         className="btn-book"
@@ -501,6 +548,7 @@ useEffect(() => {
                         <i className="fas fa-calendar-check"></i>
                         Đặt lịch
                       </button>
+
                     </div>
                   </div>
                 ))}
