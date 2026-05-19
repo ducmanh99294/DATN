@@ -155,17 +155,19 @@ exports.login = async (req, res) => {
   user.lastLogin = new Date();
   await user.save();
 
-  res.cookie("accessToken", accessToken, {
+  const cookieOptions = {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax"
-  });
+    secure: process.env.NODE_ENV === "production",
+    sameSite:
+      process.env.NODE_ENV === "production"
+        ? "none"
+        : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  };
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax"
-  }); 
+  res.cookie("accessToken", accessToken, cookieOptions);
+
+  res.cookie("refreshToken", refreshToken, cookieOptions); 
 
   res.json({
     message: "Login success",
@@ -189,17 +191,20 @@ exports.refreshToken = async (req, res) => {
 
       const newAccessToken = generateAccessToken(user);
 
-      res.cookie("accessToken", newAccessToken, {
+      const cookieOptions = {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
-      });
+        secure: process.env.NODE_ENV === "production",
+        sameSite:
+          process.env.NODE_ENV === "production"
+            ? "none"
+            : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      };
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      });
+      res.cookie("accessToken", newAccessToken, cookieOptions);
+
+      res.cookie("refreshToken", refreshToken, cookieOptions);
+      
       res.json({ message: "Token refreshed" });
     }
   );
