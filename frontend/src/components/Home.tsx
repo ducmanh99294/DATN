@@ -272,6 +272,12 @@ const slides = [
   const selectedDoctor = randomDoctors[IndexDoctor]
 
   const handleChat = async (doctor: any) => {
+    if(!user) {
+      notify.info("Vui lòng đăng nhập để sử dụng tính năng này", "thông báo")
+      navigate("/login");
+      return;
+    }
+
     try {
       // lấy danh sách conversation trước
       const conversations = await getConversations();
@@ -292,14 +298,17 @@ const slides = [
         name: doctor.userId.fullName
           ? decodeURIComponent(doctor.userId.fullName)
           : "Bác sĩ",
+        avatar: doctor.userId.image,
         lastMessage:
           conversation.lastMessage ||
           "Bắt đầu trò chuyện"
       };
         addConversation(privateChat)
-        // conversationId = newConversation._id;
+        conversationId = conversation._id;
+        notify.success("Đã tạo cuộc trò chuyện thành công", "Thông báo")
       } else {
         conversationId = existingConversation._id;
+        notify.info("Bạn đã có cuộc trò chuyện với người này", "Thông báo")
       }
 
       // lấy tin nhắn của conversation
@@ -853,7 +862,7 @@ const resetHero = () => {
               </div>
             )} */}
 
-            {user && appointments.length > 0 && (
+            {/* {user && appointments.length > 0 && (
               <div className="sidebar-card appointments-card">
                 <div className="card-header">
                   <h3>
@@ -867,7 +876,7 @@ const resetHero = () => {
                   {appointments.map((appointment) => (
                     <div className="appointment-item" key={appointment._id}>
                       <div className="appointment-header">
-                        {/* <h4>{appointment.doctorId.userId.fullName}</h4> */}
+                        <h4>{appointment.doctorId.userId.fullName}</h4>
                         <span className={`status ${appointment.status}`}>
                           {status[appointment.status]?.label || appointment.status}
                         </span>
@@ -890,7 +899,7 @@ const resetHero = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Quick Actions */}
             {/* <div className="sidebar-card quick-actions-card">

@@ -1177,7 +1177,7 @@ const Account = () => {
                   </button>
                 </div>
                 
-                <div className="danger-action">
+                {/* <div className="danger-action">
                   <div className="action-info">
                     <h4>Tải xuống dữ liệu</h4>
                     <p>Tải xuống tất cả dữ liệu cá nhân của bạn</p>
@@ -1186,7 +1186,7 @@ const Account = () => {
                     <i className="fas fa-download"></i>
                     Tải dữ liệu
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

@@ -49,6 +49,9 @@ exports.createConversation = async (req, res) => {
 
     }
 
+    conversation = await Conversation.findById(conversation._id)
+      .populate("participants", "fullName image");
+
     res.json(conversation);
 
   } catch (error) {

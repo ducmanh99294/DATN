@@ -252,14 +252,16 @@
 
 /* Article Card */
 .article-card {
-  background: white;
+  background: #1e293b;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   transition: var(--transition);
   cursor: pointer;
+  margin-bottom: 25px;
 &:hover {
+  background: #273449;
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: var(--primary-light);
@@ -505,7 +507,7 @@
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  background: white;
+  background: #1e293b;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
 }
@@ -935,7 +937,7 @@
 .article-content h3 {
   font-size: 1.4rem;
   margin: 25px 0 15px;
-  color: #1e293b;
+  color:  #e2e8f0;
 }
 
 .article-content p {

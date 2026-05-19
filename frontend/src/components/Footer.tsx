@@ -22,7 +22,7 @@ import {
   FaStethoscope,
   FaHospital
 } from 'react-icons/fa';
-import { MdHealthAndSafety, MdLocalHospital } from 'react-icons/md';
+import { MdHealthAndSafety } from 'react-icons/md';
 import { getAllSpecially } from '../api/specialyApi';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,8 +50,13 @@ const Footer = () => {
   };
 
   // Xử lý click các liên kết nhanh
-  const handleQuickLinkClick = (slug: string) => {
+  const handleSpeciallyQuick = (slug: string) => {
     navigate(`/specialty/${slug}`)
+    // Ở đây bạn sẽ thêm logic điều hướng thực tế
+  };
+
+  const handleMenuQuick = (link: string) => {
+    navigate(`/${link}`)
     // Ở đây bạn sẽ thêm logic điều hướng thực tế
   };
 
@@ -72,35 +77,6 @@ const Footer = () => {
       setSpeciallyLoading(false)
     }
   }
-  // Dữ liệu các khoa/phòng
-  const departments = [
-    { name: 'Khoa Nội tổng quát', link: '#', icon: <FaUserMd /> },
-    { name: 'Khoa Nhi', link: '#', icon: <FaHeartbeat /> },
-    { name: 'Khoa Sản - Phụ khoa', link: '#', icon: <MdLocalHospital /> },
-    { name: 'Khoa Da liễu', link: '#', icon: <FaStethoscope /> },
-    { name: 'Khoa Mắt', link: '#', icon: <FaHospital /> },
-    { name: 'Khoa Răng Hàm Mặt', link: '#', icon: <FaFileMedical /> },
-  ];
-
-  // Dữ liệu dịch vụ
-  const services = [
-    { name: 'Khám tổng quát', link: '#' },
-    { name: 'Xét nghiệm tại nhà', link: '#' },
-    { name: 'Tư vấn trực tuyến', link: '#' },
-    { name: 'Tiêm chủng', link: '#' },
-    { name: 'Cấp cứu 24/7', link: '#' },
-    { name: 'Phẫu thuật ngoại trú', link: '#' },
-  ];
-
-  // Dữ liệu chính sách
-  const policies = [
-    { name: 'Chính sách bảo mật', link: '#' },
-    { name: 'Điều khoản sử dụng', link: '#' },
-    { name: 'Chính sách thanh toán', link: '#' },
-    { name: 'Chính sách đặt lịch', link: '#' },
-    { name: 'Chính sách đổi trả thuốc', link: '#' },
-    { name: 'Câu hỏi thường gặp', link: '#' },
-  ];
 
   return (
     <footer className="footer">
@@ -189,7 +165,7 @@ const Footer = () => {
 
             {/* Cột 2: Khoa & Dịch vụ */}
             <div className="footer-col">
-              <h4 className="footer-title">Khoa & Dịch vụ</h4>
+              <h4 className="footer-title">Khoa</h4>
               {speciallyLoading ? (
                   <div className="loading-state">
                     <i className="fas fa-spinner fa-spin"></i>
@@ -200,7 +176,7 @@ const Footer = () => {
                   <li key={index}>
                     <button 
                       className="footer-link"
-                      onClick={() => handleQuickLinkClick(dept.slug)}
+                      onClick={() => handleSpeciallyQuick(dept.slug)}
                     >
                       <span className="link-icon">{dept.icon}</span>
                       {dept.name}
@@ -211,23 +187,6 @@ const Footer = () => {
                 }
               </ul>
               )}
-
-              
-              <div className="services-list">
-                <h5>Dịch vụ nổi bật</h5>
-                <ul>
-                  {services.map((service, index) => (
-                    <li key={index}>
-                      <button 
-                        className="service-link"
-                        onClick={() => handleQuickLinkClick(service.name)}
-                      >
-                        {service.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
             {/* Cột 3: Liên kết nhanh */}
@@ -237,7 +196,7 @@ const Footer = () => {
                 <li>
                   <button 
                     className="footer-link"
-                    onClick={() => handleQuickLinkClick('Trang chủ')}
+                    onClick={() => handleMenuQuick('')}
                   >
                     Trang chủ
                   </button>
@@ -245,61 +204,28 @@ const Footer = () => {
                 <li>
                   <button 
                     className="footer-link"
-                    onClick={() => handleQuickLinkClick('Giới thiệu')}
+                    onClick={() => handleMenuQuick('products')}
                   >
-                    Giới thiệu
+                    Thuốc
                   </button>
                 </li>
                 <li>
                   <button 
                     className="footer-link"
-                    onClick={() => handleQuickLinkClick('Đội ngũ bác sĩ')}
+                    onClick={() => handleMenuQuick('news')}
                   >
-                    Đội ngũ bác sĩ
+                    Tin Tức
                   </button>
                 </li>
                 <li>
                   <button 
                     className="footer-link"
-                    onClick={() => handleQuickLinkClick('Nhà thuốc')}
-                  >
-                    <FaPills className="link-icon" /> Nhà thuốc
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="footer-link"
-                    onClick={() => handleQuickLinkClick('Chat với AI')}
-                  >
-                    <FaHeadset className="link-icon" /> Chat với AI
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="footer-link"
-                    onClick={() => handleQuickLinkClick('Đặt lịch khám')}
+                    onClick={() => handleMenuQuick('Booking')}
                   >
                     <FaClock className="link-icon" /> Đặt lịch khám
                   </button>
                 </li>
               </ul>
-
-              {/* Chính sách */}
-              <div className="policies">
-                <h5>Chính sách</h5>
-                <ul>
-                  {policies.slice(0, 4).map((policy, index) => (
-                    <li key={index}>
-                      <button 
-                        className="policy-link"
-                        onClick={() => handleQuickLinkClick(policy.name)}
-                      >
-                        {policy.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
             {/* Cột 4: Liên hệ */}
@@ -328,7 +254,7 @@ const Footer = () => {
                   <div>
                     <strong>Email:</strong>
                     <p>
-                      <a href="mailto:info@medicare.com">info@medicare.com</a>
+                      <a href="mailto:nguyenducmanh1809@gmail.com">nguyenducmanh1809@gmial.com</a>
                     </p>
                   </div>
                 </li>
@@ -373,27 +299,6 @@ const Footer = () => {
                     aria-label="YouTube"
                   >
                     <FaYoutube />
-                  </button>
-                </div>
-              </div>
-
-              {/* App download */}
-              <div className="app-download">
-                <h5>Tải ứng dụng MediCare</h5>
-                <div className="app-buttons">
-                  <button 
-                    className="app-btn app-store"
-                    onClick={() => handleQuickLinkClick('App Store')}
-                  >
-                    <span>Download on the</span>
-                    <strong>App Store</strong>
-                  </button>
-                  <button 
-                    className="app-btn google-play"
-                    onClick={() => handleQuickLinkClick('Google Play')}
-                  >
-                    <span>Get it on</span>
-                    <strong>Google Play</strong>
                   </button>
                 </div>
               </div>
