@@ -19,9 +19,20 @@ const messageSchema = new mongoose.Schema({
     required: true
   },
 
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product"
+  },
+
   seen: {
     type: Boolean,
     default: false
+  },
+
+  type: {
+    type: String,
+    enum: ["text", "product"],
+    default: "text"
   }
 
 }, {

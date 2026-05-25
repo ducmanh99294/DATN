@@ -16,6 +16,7 @@ export interface User {
   fullName: string;
   image?: string;
   password: string;
+  address: any;
   role?: 'patient' | 'doctor' | 'admin';
   createdAt: string;
   updatedAt: string;

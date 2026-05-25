@@ -529,48 +529,48 @@ const Register: React.FC<RegisterProps> = ({
     }
   };
 
-  if (!showOtpForm) {
+  if (showOtpForm) {
     return (
-<div className="register-container">
-  <div className="verify-message-container">
-    <h2>Xác Thực Email</h2>
-    <p>Vui lòng nhập mã OTP đã được gửi.</p>
-    
-    <div className="verify-details">
-      <div className="verify-detail-item">
-        <i className="fas fa-envelope"></i>
-        <span>Xác nhận đã được gửi đến: <strong>{formData.email}</strong></span>
-      </div>
-      
-      {/* Ô input nhập OTP riêng biệt */}
-      <div className="verify-input-group">
-        <input 
-          type="text"
-          className="verify-input"
-          maxLength={6}
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          placeholder="Nhập 6 số OTP"
-        />
-      </div>
-    </div>
+      <div className="register-container">
+        <div className="verify-message-container">
+          <h2>Xác Thực Email</h2>
+          <p>Vui lòng nhập mã OTP đã được gửi.</p>
+          
+          <div className="verify-details">
+            <div className="verify-detail-item">
+              <i className="fas fa-envelope"></i>
+              <span>Xác nhận đã được gửi đến: <strong>{formData.email}</strong></span>
+            </div>
+            
+            {/* Ô input nhập OTP riêng biệt */}
+            <div className="verify-input-group">
+              <input 
+                type="text"
+                className="verify-input"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Nhập 6 số OTP"
+              />
+            </div>
+          </div>
 
-    <div className="verify-actions">
-      <button 
-        className="verify-btn primary"      
-        onClick={handleVerifyOtp}
-        disabled={isLoading}
-      >
-        <i className="fas fa-sign-in-alt"></i>
-        Xác nhận ngay
-      </button>
-      <button className="verify-btn secondary" onClick={()=> {navigate('/login')}}>
-        <i className="fas fa-home"></i>
-        Về trang chủ
-      </button>
-    </div>
-  </div>
-</div>
+          <div className="verify-actions">
+            <button 
+              className="verify-btn primary"      
+              onClick={handleVerifyOtp}
+              disabled={isLoading}
+            >
+              <i className="fas fa-sign-in-alt"></i>
+              Xác nhận ngay
+            </button>
+            <button className="verify-btn secondary" onClick={()=> {navigate('/login')}}>
+              <i className="fas fa-home"></i>
+              Về trang chủ
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -7,15 +7,14 @@ import "../assets/chatbot.css";
 import { useCart } from "../context/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChatStore } from "../hooks/useChat";
-import { useNotification } from "../context/NotificationContext";
 
-// 1. Sửa lại Interface: message không còn bắt buộc (vì có lúc chỉ gửi ảnh/sản phẩm)
 interface Message {
   role: "user" | "assistant";
   type?: "text" | "image" | "product_list";
   message?: string; 
   image?: string;
   products?: any[];
+  createdAt?: any;
 }
 
 export interface Conversation {
@@ -165,7 +164,8 @@ const Chat: React.FC = () => {
           [selectedChat._id]: messages.map((msg: any) => ({
             role: msg.sender._id === user?._id ? "user" : "assistant",
             type: "text",
-            message: msg.message
+            message: msg.message,
+            createdAt: msg.createdAt
           }))
         }));
       } catch (error) {
@@ -196,7 +196,7 @@ const Chat: React.FC = () => {
 
       if (data.message.type === "product") {
 
-        setChatMessages((prev) => ({
+        setChatMessages((prev: any) => ({
 
           ...prev,
 
@@ -207,22 +207,23 @@ const Chat: React.FC = () => {
             {
               role: "assistant",
               type: "text",
-              message: data.message.message
+              message: data.message.message,
+              createdAt:data.message.createdAt || new Date().toISOString()
             },
 
             {
               role: "assistant",
               type: "product_list",
-              products: data.message.products
+              products: data.message.products,
+              createdAt: data.message.createdAt || new Date().toISOString()
             }
-
           ]
 
         }));
 
       } else {
 
-        setChatMessages((prev) => ({
+        setChatMessages((prev: any) => ({
 
           ...prev,
 
@@ -235,13 +236,11 @@ const Chat: React.FC = () => {
               type: "text",
               message:
                 data.message.message ||
-                "Xin lỗi, tôi không đọc được dữ liệu."
+                "Xin lỗi, tôi không đọc được dữ liệu.",
+              createdAt: data.message.createdAt || new Date().toISOString()
             }
-
           ]
-
         }));
-
       }
 
       setTypingUser("");
@@ -272,7 +271,8 @@ const Chat: React.FC = () => {
           {
             role,
             type: "text",
-            message: msg.message
+            message: msg.message,
+            createdAt: msg.createdAt || new Date().toISOString()
           }
         ]
       }));
@@ -410,7 +410,8 @@ const sendMessage = async () => {
   const newMessage: Message = {
     role: "user",
     type: "text",
-    message: input
+    message: input,
+    createdAt: new Date().toISOString()
   };
 
   const currentInput = input;
@@ -442,14 +443,15 @@ const sendMessage = async () => {
     }
   } else {
     const res = await ChatAi(currentInput);
-    setChatMessages((prev) => ({
+    setChatMessages((prev: any) => ({
       ...prev,
       [selectedChat._id]: [
         ...(prev[selectedChat._id] || []),
         {
           role: "assistant",
           type: "text",
-          message: res.reply
+          message: res.reply,
+          createdAt: new Date().toISOString()
         }
       ]
     }));
@@ -464,12 +466,68 @@ const handleDeleteChat = async (conversation: string) => {
     removeConversation(conversation);
 
     setSelectedChat(null);
+    setDeleteChat(false)
     notify.success("Đã xóa cuộc trò chuyện", "Thông báo")
   } catch (e) {
     console.log(e)
     notify.error("Có lỗi xảy ra", "Thông báo")
   }
 }  
+
+// format time
+const shouldShowTimeDivider = (
+  currentMsg: any,
+  previousMsg: any
+) => {
+  if (!previousMsg) return true;
+
+  const currentTime = new Date(
+    currentMsg.createdAt
+  );
+
+  const previousTime = new Date(
+    previousMsg.createdAt
+  );
+
+  const diffMinutes =
+    (currentTime.getTime() - previousTime.getTime()) /
+    (1000 * 60);
+
+  return diffMinutes > 15;
+};
+
+const formatDividerTime = (date: string) => {
+  const d = new Date(date);
+
+  const today = new Date();
+
+  const isToday =
+    d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear();
+
+  if (isToday) {
+    return d.toLocaleTimeString(
+      "vi-VN",
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
+  }
+
+  return d.toLocaleString(
+    "vi-VN",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
+};
+
 
 return (
   <div className="chat-container">
@@ -612,76 +670,82 @@ return (
                 </div>
 
               ) : (
-                (chatMessages[selectedChat?._id] || []).map((msg, i) => (
+(chatMessages[selectedChat?._id] || []).map((msg, i) => (
+  <React.Fragment key={i}>
 
-                  <div
-                    key={i}
-                    className={`message ${
-                      msg.role === "user"
-                        ? "userMessage"
-                        : "aiMessage"
-                    }`}
+    {shouldShowTimeDivider(
+      msg,
+      chatMessages[selectedChat?._id]?.[i - 1]
+    ) && (
+      <div className="chat-time-divider">
+        <span>
+          {formatDividerTime(
+            msg.createdAt
+          )}
+        </span>
+      </div>
+    )}
+
+    <div
+      className={`message ${
+        msg.role === "user"
+          ? "userMessage"
+          : "aiMessage"
+      }`}
+    >
+      <div className="message-content">
+
+        {/* TEXT */}
+        {(!msg.type ||
+          msg.type === "text") &&
+          msg.message}
+
+        {/* PRODUCT LIST */}
+        {msg.type === "product_list" &&
+          msg.products && (
+            <div className="productList">
+              {msg.products.map((p: any) => (
+                <div
+                  className="card"
+                  key={p._id}
+                >
+                  <img
+                    src={
+                      p.images?.[0] ||
+                      "/default-placeholder.png"
+                    }
+                    alt={p.name}
+                  />
+
+                  <h4>{p.name}</h4>
+
+                  <p>{p.price}đ</p>
+
+                  <button
+                    onClick={() =>
+                      navigate("/products")
+                    }
                   >
+                    Xem chi tiết
+                  </button>
 
-                    {/* TEXT */}
-                    {(!msg.type ||
-                      msg.type === "text") &&
-                      msg.message}
+                  <button
+                    onClick={() =>
+                      handleChatAddToCart(p)
+                    }
+                  >
+                    Thêm vào giỏ
+                  </button>
+                </div>
+              ))}
+            </div>
+        )}
 
-                    {/* PRODUCT LIST */}
-                    {msg.type === "product_list" &&
-                      msg.products && (
+      </div>
+    </div>
 
-                        <div className="productList">
-
-                          {msg.products.map(
-                            (p: any) => (
-
-                              <div
-                                className="card"
-                                key={p._id}
-                              >
-
-                                <img
-                                  src={
-                                    p.images?.[0] ||
-                                    "/default-placeholder.png"
-                                  }
-                                  alt={p.name}
-                                />
-
-                                <h4>{p.name}</h4>
-
-                                <p>{p.price}đ</p>
-
-                                <button
-                                  onClick={() =>
-                                    navigate("/products")
-                                  }
-                                >
-                                  Xem chi tiết
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    handleChatAddToCart(p)
-                                  }
-                                >
-                                  Thêm vào giỏ
-                                </button>
-
-                              </div>
-
-                            )
-                          )}
-
-                        </div>
-
-                      )}
-
-                  </div>
-
-                ))
+  </React.Fragment>
+))
               )}
               {/* TYPING */}
               {typingUser && (
@@ -802,36 +866,56 @@ return (
 
         )}
 
-{deleteChat && selectedChat && (
-  <div className="delete-chat-overlay">
-    <div className="delete-chat-modal">
-      <div className="delete-chat-icon">
-        ⚠️
-      </div>
+        {deleteChat && selectedChat && (
+          <div className="delete-chat-overlay">
+            <div className="delete-chat-modal">
+              <div className="delete-chat-icon">
+                ⚠️
+              </div>
 
-      <h3>Xác nhận xóa cuộc trò chuyện</h3>
+              <h3>Xác nhận xóa cuộc trò chuyện</h3>
 
-      <p>
-        Bạn có chắc muốn xóa cuộc trò chuyện này không?
-        Toàn bộ tin nhắn sẽ bị xóa và không thể khôi phục.
-      </p>
+              <p>
+                Bạn có chắc muốn xóa cuộc trò chuyện này không?
+                Toàn bộ tin nhắn sẽ bị xóa và không thể khôi phục.
+              </p>
 
-      <div className="delete-chat-actions">
-        <button
-          className="cancel-btn"
-          onClick={() => setDeleteChat(false)}
-        >
-          Hủy
-        </button>
+              <div className="delete-chat-actions">
+                <button
+                  className="cancel-btn"
+                  onClick={() => setDeleteChat(false)}
+                >
+                  Hủy
+                </button>
 
-        <button
-          className="delete-btn"
-          onClick={()=>handleDeleteChat(selectedChat._id)}
-        >
-          Xóa
-        </button>
-      </div>
-    </div>
+                <button
+                  className="delete-btn"
+                  onClick={()=>handleDeleteChat(selectedChat._id)}
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+{!user && (
+  <div className="login-required">
+    <span className="login-icon">🔒</span>
+
+    <h3>Đăng nhập để tiếp tục</h3>
+
+    <p>
+      Vui lòng đăng nhập để sử dụng tính năng trò chuyện
+      với bác sĩ.
+    </p>
+
+    <button
+      className="login-btn"
+      onClick={() => navigate("/login")}
+    >
+      Đăng nhập ngay
+    </button>
   </div>
 )}
       </div>

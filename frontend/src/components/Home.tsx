@@ -558,7 +558,7 @@ const resetHero = () => {
 </section>
 
             {/* Specialty Filter */}
-            <section className="specialty-section">
+            {/* <section className="specialty-section">
               <div className="section-header">
                 <h2 className="section-title">
                   <FaStethoscope className="title-icon" />
@@ -584,7 +584,7 @@ const resetHero = () => {
                   </button>
                 ))}
               </div>
-            </section>
+            </section> */}
 
             {/* Slider Section */}
             <section className="slider-section">

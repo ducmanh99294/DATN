@@ -116,3 +116,55 @@ exports.deleteSpecialty = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.suggestSpecialty = async (req,res)=>{
+  try{
+
+    const { symptoms, description } = req.body;
+
+    const text = `${symptoms} ${description}`.toLowerCase();
+
+    const specialties = await Specialty.find();
+
+    const results = specialties.map(item=>{
+      let score=0;
+      let matched=[];
+
+      item.keywords.forEach(keyword=>{
+        if(
+          text.includes(
+            keyword.toLowerCase()
+          )
+        ){
+          score++;
+          matched.push(keyword);
+        }
+      });
+
+      return{
+        id:item._id,
+        name:item.name,
+        score,
+        matched
+      };
+    }); 
+
+    const sorted = results
+      .filter(x=>x.score>0)
+      .sort(
+        (a,b)=>b.score-a.score
+      )
+      .slice(0,3);
+
+    res.json({
+      suggestions:sorted
+    });
+
+  } catch(error) {
+
+    res.status(500).json({
+      message:error.message
+    });
+
+  }
+};

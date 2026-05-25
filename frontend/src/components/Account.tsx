@@ -48,6 +48,14 @@ const Account = () => {
     phone: '',
     gender: '',
     email: '',
+    address:{
+      fullName: "",
+      phone: "",
+      district: "",
+      ward: "",
+      address: "",
+      isDefault: false
+    }
     });
 
 
@@ -76,7 +84,17 @@ const Account = () => {
         name: user.fullName || '',
         phone: user.phone || '',
         email: user.email || '',
-        gender: user.gender || ''
+        gender: user.gender || '',
+
+        address:{
+          fullName:user?.address?.fullName || "",
+          phone:user?.address?.phone || "",
+          district:user?.address?.district || "",
+          ward:user?.address?.ward || "",
+          address:user?.address?.address || "",
+          isDefault:
+          user?.address?.isDefault || false
+        }
     });
     setAvatarPreview(user.image || '');
   }, [user]);
@@ -148,6 +166,19 @@ const Account = () => {
     }));
   };
   
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setProfileForm((prev: any) => ({
+      ...prev,
+
+      address:{
+      ...prev.address,
+      [name]:value
+      }
+    }));
+  };
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordForm(prev => ({
@@ -213,7 +244,8 @@ const Account = () => {
         profileForm.name,
         profileForm.phone,
         profileForm.email,
-        profileForm.gender
+        profileForm.gender,
+        profileForm.address
       );
 
       // nếu có avatar thì update tiếp
@@ -232,6 +264,7 @@ const Account = () => {
         email: profileForm.email,
         gender: profileForm.gender,
         image: avatarPreview,
+        address: profileForm.address
       }));
     } catch (error) {
       console.error(error);
@@ -312,7 +345,16 @@ const Account = () => {
       name: user.fullName || '',
       phone: user.phone || '',
       email: user.email || '',
-      gender: user.gender || ''
+      gender: user.gender || '',
+
+      address:{
+        fullName:user?.address?.fullName || "",
+        phone:user?.address?.phone || "",
+        district:user?.address?.district || "",
+        ward:user?.address?.ward || "",
+        address:user?.address?.address || "",
+        isDefault:user?.address?.isDefault || false
+      }
     });
     setAvatarPreview(user.image || '');
     setAvatarFile(null);
@@ -528,6 +570,83 @@ const Account = () => {
               />
             </div>
 
+<div className="address-section">
+
+<h4>
+<i className="fas fa-map-marker-alt"></i>
+Địa chỉ giao hàng
+</h4>
+
+<div className="form-group">
+
+<label>Người nhận</label>
+
+<input
+name="fullName"
+value={profileForm.address.fullName}
+onChange={handleAddressChange}
+placeholder="Nguyễn Văn A"
+/>
+
+</div>
+
+
+<div className="form-group">
+
+<label>Số điện thoại</label>
+
+<input
+name="phone"
+value={profileForm.address.phone}
+onChange={handleAddressChange}
+placeholder="0123456789"
+/>
+
+</div>
+
+
+<div className="form-group">
+
+<label>Quận/Huyện</label>
+
+<input
+name="district"
+value={profileForm.address.district}
+onChange={handleAddressChange}
+placeholder="Hải Châu"
+/>
+
+</div>
+
+
+<div className="form-group">
+
+<label>Phường/Xã</label>
+
+<input
+name="ward"
+value={profileForm.address.ward}
+onChange={handleAddressChange}
+placeholder="Hòa Thuận Tây"
+/>
+
+</div>
+
+
+<div className="form-group">
+
+<label>Địa chỉ chi tiết</label>
+
+<input
+name="address"
+value={profileForm.address.address}
+onChange={handleAddressChange}
+placeholder="123 Nguyễn Văn Linh"
+/>
+
+</div>
+
+</div>
 
             <div className="form-actions">
               <button 
@@ -610,34 +729,53 @@ const Account = () => {
                 </div>
                 </div>
                 
-                                <div className="detail-row">
-                <div className="detail-label">
-                    <i className="fas fa-user-tag"></i>
-                    Giới tính:
-                </div>
-                <div className="detail-value">
-                    <span className={`role-badge ${user.role}`}>
-                    {user.gender?.toLocaleLowerCase() === 'male' || 'nam' ? 'Nam' : user.gender?.toLocaleLowerCase() === 'female' || 'nữ' ? 'Nữ' : 'Khác'}
-                    </span>
-                </div>
+                <div className="detail-row">
+                  <div className="detail-label">
+                      <i className="fas fa-user-tag"></i>
+                      Giới tính:
+                  </div>
+                  <div className="detail-value">
+                      <span className={`role-badge ${user.role}`}>
+                      {user.gender?.toLocaleLowerCase() === 'male' || 'nam' ? 'Nam' : user.gender?.toLocaleLowerCase() === 'female' || 'nữ' ? 'Nữ' : 'Khác'}
+                      </span>
+                  </div>
                 </div>
 
                 <div className="detail-row">
-                <div className="detail-label">
-                    <i className="fas fa-calendar-alt"></i>
-                    Tham gia:
+                  <div className="detail-label">
+                  <i className="fas fa-map-marker-alt"></i>
+                  Địa chỉ:
+                  </div>
+                  <div className="detail-value">
+                  {
+                  user?.address ?
+                    `${user.address.address},
+                    ${user.address.ward},
+                    ${user.address.district}`
+                    :
+                    <span className="detail-value-warning">
+                    Chưa cập nhật địa chỉ
+                    </span>
+                  }
+                  </div>
                 </div>
-                <div className="detail-value">{user.createdAt.slice(0,10)}</div>
+
+                <div className="detail-row">
+                  <div className="detail-label">
+                      <i className="fas fa-calendar-alt"></i>
+                      Tham gia:
+                  </div>
+                  <div className="detail-value">{user.createdAt.slice(0,10)}</div>
                 </div>
                 
                 <div className="detail-row">
-                <div className="detail-label">
-                    <i className="fas fa-sign-in-alt"></i>
-                    Đăng nhập cuối:
-                </div>
-                <div className="detail-value">
-                    {user.updatedAt.slice(0,10)}
-                </div>
+                  <div className="detail-label">
+                      <i className="fas fa-sign-in-alt"></i>
+                      Đăng nhập cuối:
+                  </div>
+                  <div className="detail-value">
+                      {user.updatedAt.slice(0,10)}
+                  </div>
                 </div>
             </div>
             </div>

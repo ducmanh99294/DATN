@@ -50,7 +50,7 @@ function App() {
   }, [user.user?._id, user.user?.role]);
 
   return (
-    <div className="App">
+    <div className={`App ${hideHeaderFooter ? "no-padding" : ""}`}>
       {!hideHeaderFooter && <Header />}
       
       <Routes>

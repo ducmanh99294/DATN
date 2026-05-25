@@ -38,14 +38,15 @@ const orderSchema = new mongoose.Schema({
     ward: String,
     address: String,
   },
+
   date: {
     type: Date,
     default: Date.now
   },
+  
   dateConfirmed: Date,
   reason: String,
 
-  /** Ảnh đơn thuốc đã tải (theo từng sản phẩm), copy từ giỏ khi đặt hàng */
   prescriptionUploads: [
     {
       product: {

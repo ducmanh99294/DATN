@@ -59,20 +59,39 @@ exports.getDoctorProfileByUserId = async (req, res) => {
 };
 
 //get doctor by specialty
-exports.getDoctorsBySpecialty = async (req, res) => {
+exports.getDoctorsBySpecialty = async (req,res) => {
   try {
-    const specialty = await Specialty.findOne({ name: req.params.name });
-    if (!specialty) {
-      return res.status(404).json({ message: 'Specialty not found' });
-    }
-    const doctors = await DoctorProfile.find({ specialtyId: specialty._id })
+    const doctors =
+      await DoctorProfile.find({
+        specialtyId: req.params.specialtyId
+      })
       .populate('userId', 'fullName email phone image')
-      .populate('specialtyId', 'name');
+      .populate('specialtyId','name');
+
     res.json(doctors);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+
+  } catch(error){
+    console.log(error);
+    res.status(500).json({
+      message:error.message
+    });
   }
 };
+// exports.getDoctorsBySpecialty = async (req, res) => {
+//   try {
+//     const specialty = await Specialty.findOne({ name: req.params.name });
+//     if (!specialty) {
+//       return res.status(404).json({ message: 'Specialty not found' });
+//     }
+//     const doctors = await DoctorProfile.find({ specialtyId: specialty._id })
+//       .populate('userId', 'fullName email phone image')
+//       .populate('specialtyId', 'name');
+//     res.json(doctors);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//     console.log(error)
+//   }
+// };
 
 // Update doctor profile
 exports.updateDoctorProfile = async (req, res) => {

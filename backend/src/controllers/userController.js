@@ -35,7 +35,7 @@ exports.register = async (req, res) => {
       email,
       password,
       phone,
-      andress,
+      address,
       dateOfBirth,
       gender
     } = req.body;
@@ -58,7 +58,7 @@ exports.register = async (req, res) => {
         email,
         password: hashed,
         phone,
-        andress,
+        address,
         dateOfBirth,
         gender,
         otp
@@ -113,7 +113,7 @@ exports.verifyEmail = async (req, res) => {
       email: data.email,
       password: data.password,
       phone: data.phone,
-      andress: data.andress,
+      address: data.address,
       dateOfBirth: data.dateOfBirth,
       gender: data.gender,
       role: "patient"
@@ -226,15 +226,42 @@ exports.logout = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const { fullName, phone, email, gender } = req.body;
+  try {
+    const {fullName,phone,email,gender,address} = req.body;
 
-  const user = await User.findByIdAndUpdate(
-    req.user.id,
-    { fullName, phone, email, gender },
-    { new: true }
-  );
-
-  res.json(user);
+    const user =
+      await User.findByIdAndUpdate(
+        req.user.id,
+        {
+          fullName,
+          phone,
+          email,
+          gender,
+          address: {
+            fullName:address?.fullName || "",
+            phone: address?.phone || "",
+            district: address?.district || "",
+            ward:address?.ward || "",
+            address: address?.address || "",
+            isDefault: address?.isDefault ?? true
+          }
+        },
+        {
+          new: true,
+          runValidators: true
+        }
+      );
+    return res.json({
+      success:true,
+      user
+    });
+  } catch(error){
+    console.log(error);
+    return res.status(500).json({
+      success:false,
+      message:error.message
+    });
+  }
 };
 
 exports.updateAvatar = async (req, res) => {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../assets/product.css';
 import { getAllProducts } from '../api/productApi';
 import { getCategories } from '../api/categoryApi';
 import { useCart } from '../context/CartContext';
+import { useNotify } from '../hooks/useNotification';
 
 interface Category {
   _id: string;
@@ -63,7 +64,6 @@ const Products = () => {
     category: "all",
     search: "",
   });
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
@@ -114,7 +114,7 @@ const Products = () => {
   // Handle search from Home page
    const handleSearch = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
+    setPage(1);
   };
 
   const categoryOptions = [
@@ -524,10 +524,15 @@ const Products = () => {
                           <div className="image-overlay">
                             {/* <button 
                               className="quick-view-btn"
-                              onClick={() => handleQuickView(product)}
-                            >
-                              <i className="fas fa-eye"></i>
-                              Xem nhanh
+                               onClick={async () => {
+                                  const link =
+                                    `${window.location.origin}/api/products/${product._id}`;
+                                    await navigator.clipboard.writeText(link);
+                                    notify.success("Đã sao chép liên kết sản phẩm");
+                                }}
+                              >
+                              <i className="fas fa-share"></i>
+                              Chia sẻ
                             </button> */}
                             <button 
                               className="add-to-cart-btn"
@@ -615,13 +620,13 @@ const Products = () => {
                               <i className="fas fa-shopping-cart"></i>
                               Mua ngay
                             </button>
-                            <button 
+                            {/* <button 
                               className="details-btn"
                               onClick={() => navigate(`/product/${product._id}`)}
                             >
                               <i className="fas fa-info-circle"></i>
                               Chi tiết
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>
@@ -632,13 +637,12 @@ const Products = () => {
                   {totalPages > 1 && (
                     <div className="pagination">
                       <button 
-                        className={`page-btn ${currentPage === 1 ? 'disabled' : ''}`}
-                        onClick={() => setCurrentPage(prev => prev - 1)} disabled={currentPage === 1}
+                        className={`page-btn ${page === 1 ? 'disabled' : ''}`}
+                        onClick={() => setPage(prev =>  Math.max(prev - 1, 1))} disabled={page === 1}
                       >
                         <i className="fas fa-chevron-left"></i>
                         Trước
                       </button>
-                      
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
                         if (totalPages <= 5) {
@@ -663,9 +667,9 @@ const Products = () => {
                       })}
                       
                       <button 
-                        className={`page-btn ${currentPage === totalPages ? 'disabled' : ''}`}
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, currentPage))}
-                        disabled={currentPage === totalPages}
+                        className={`page-btn ${page === totalPages ? 'disabled' : ''}`}
+                        onClick={() => {setPage(prev => Math.max(prev + 1, 1))}}
+                        disabled={page === totalPages}
                       >
                         Sau
                         <i className="fas fa-chevron-right"></i>
