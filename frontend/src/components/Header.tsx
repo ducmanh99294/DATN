@@ -80,7 +80,7 @@ const Header: React.FC = () => {
     socket.on("notification", (data) => {
       setNotifications(prev => [data, ...prev]);
     });
-
+ 
     return () => {
       socket.off("notification");
     };

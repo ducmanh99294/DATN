@@ -13,6 +13,10 @@ export const likeNews = async (id: string) => {
   return await apiPost(`/api/news/${id}/like`, {});
 };
 
+export const updateViewNews = async (id: string) => {
+  return await apiPut(`/api/news/view/${id}`, {});
+};
+
 // admin
 export const createNews = async (data: any) => {
   return await apiPost(`/api/news`, data);

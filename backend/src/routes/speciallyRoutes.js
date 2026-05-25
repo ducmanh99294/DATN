@@ -10,13 +10,15 @@ const {
   getSpecialtyById,
   updateSpecialty,
   deleteSpecialty,
-  getSpecialtyBySlug
+  getSpecialtyBySlug,
+  suggestSpecialty
 } = require('../controllers/specialyController');
 
 // Public
 router.get('/', getAllSpecialties);
 router.get('/:id', getSpecialtyById);
 router.get('/slug/:slug', getSpecialtyBySlug);
+router.post('/suggest', suggestSpecialty);
 
 // Admin only
 router.post('/', auth, admin, createSpecialty);

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../assets/news.css';
 import { useAuthContext } from '../context/AuthContext';
 import { useNotify } from '../hooks/useNotification';
-import { getAllNews, getNewsBySlug } from '../api/newsApi';
+import { getAllNews, getNewsBySlug, updateViewNews } from '../api/newsApi';
 import { getCategories } from '../api/categoryApi';
 import { getDoctor } from '../api/doctorApi';
 import { getAllFaqs, type FaqItem } from '../api/faqApi';
@@ -18,7 +18,7 @@ const DEFAULT_FAQS: FaqItem[] = [
 
 
 const News = () => {
-  
+  const timerRef = useRef<any>(null);
   const [news, setNews] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -152,7 +152,7 @@ const News = () => {
     }
   };
 
-  // Handle article click
+  // xem chi tiet
   const handleArticleClick = async (article: any) => {
     try {
       const data = await getNewsBySlug(article.slug)
@@ -165,7 +165,44 @@ const News = () => {
     }
   };
 
-  // Handle close modal
+  // tăng view
+  useEffect(() => {
+    if (!selectedArticle?._id) return;
+
+    if (!user) {
+      notify.info(
+        "Vui lòng đăng nhập để xem chi tiết",
+        "Thông báo"
+      );
+      return;
+    }
+
+    // reset nếu đổi bài
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // bắt đầu đếm 60 giây
+    timerRef.current = setTimeout(async () => {
+      try {
+        await updateViewNews(selectedArticle._id);
+
+        console.log("Đã tính lượt xem");
+
+      } catch (err) {
+        console.log(err);
+      }
+    }, 60000);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+
+  }, [selectedArticle?._id, user]);
+  
+  // dong' 
   const handleCloseModal = () => {
     setShowDetailModal(false);
     setSelectedArticle(null);

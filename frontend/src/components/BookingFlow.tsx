@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import '../assets/bookingFlow.css';
 import { useAuthContext, type User } from '../context/AuthContext';
-import { getDoctor } from '../api/doctorApi';
+import { getDoctor, getDoctorBySpecialty } from '../api/doctorApi';
 import { getSlotsByDoctorAndDateApi, holdSlot, releaseSlot } from '../api/timeSlotApi';
 import { createAppoinmentApi } from '../api/appointmentApi';
 import { getPaymentUrl } from '../api/paymentApi';
 import { useNotify } from '../hooks/useNotification';
 import { useRef } from "react";
+import { getAllSpecially, suggestSpecialty } from '../api/specialyApi';
 
 interface BookingData {
   patientId: string;
@@ -55,14 +56,17 @@ const BookingFlow = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [suggestedSymptoms, setSuggestedSymptoms] = useState<string[]>([]);
-  const [suggestedDiseases, setSuggestedDiseases] = useState<string[]>([]);
+  // const [suggestedDiseases, setSuggestedDiseases] = useState<string[]>([]);
   const [doctors, setDoctors] = useState<any[]>([])
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const dateOptionsRef = useRef<HTMLDivElement>(null);
   const [cooldown, setCooldown] = useState(0);
   const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
-
+  const [analyzingDoctors, setAnalyzingDoctors] = useState(false);
+  const [suggest, setSuggest] = useState<any>(null);
+  const [specialties, setSpecialties] = useState<any[]>([]);
+  const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   //loading
   const [loadingDay, setLoadingDay] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,48 +90,60 @@ const BookingFlow = () => {
   ];
 
   // Database triệu chứng - bệnh
-  const diseaseDatabase = [
-    {
-      name: 'Cảm cúm',
-      symptoms: ['Sốt cao', 'Ho khan', 'Đau đầu', 'Mệt mỏi', 'Đau họng', 'Đau cơ', 'Ớn lạnh']
-    },
-    {
-      name: 'Viêm họng',
-      symptoms: ['Đau họng', 'Sốt cao', 'Ho khan', 'Khó thở', 'Đau đầu']
-    },
-    {
-      name: 'Viêm phổi',
-      symptoms: ['Sốt cao', 'Ho khan', 'Khó thở', 'Đau ngực', 'Mệt mỏi', 'Ớn lạnh']
-    },
-    {
-      name: 'COVID-19',
-      symptoms: ['Sốt cao', 'Ho khan', 'Mệt mỏi', 'Mất vị giác', 'Mất khứu giác', 'Khó thở']
-    },
-    {
-      name: 'Rối loạn tiêu hóa',
-      symptoms: ['Đau bụng', 'Buồn nôn', 'Tiêu chảy', 'Chán ăn']
-    },
-    {
-      name: 'Đau nửa đầu',
-      symptoms: ['Đau đầu', 'Chóng mặt', 'Buồn nôn', 'Hoa mắt']
-    }
-  ];
-  useEffect(()=>{
-    const fetchDoctor = async () => {
-      try{
-        setLoading(true)
-        const data = await getDoctor();
-        setDoctors(data);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-  fetchDoctor();
-  }
-,[])
+  // const diseaseDatabase = [
+  //   {
+  //     name: 'Cảm cúm',
+  //     symptoms: ['Sốt cao', 'Ho khan', 'Đau đầu', 'Mệt mỏi', 'Đau họng', 'Đau cơ', 'Ớn lạnh']
+  //   },
+  //   {
+  //     name: 'Viêm họng',
+  //     symptoms: ['Đau họng', 'Sốt cao', 'Ho khan', 'Khó thở', 'Đau đầu']
+  //   },
+  //   {
+  //     name: 'Viêm phổi',
+  //     symptoms: ['Sốt cao', 'Ho khan', 'Khó thở', 'Đau ngực', 'Mệt mỏi', 'Ớn lạnh']
+  //   },
+  //   {
+  //     name: 'COVID-19',
+  //     symptoms: ['Sốt cao', 'Ho khan', 'Mệt mỏi', 'Mất vị giác', 'Mất khứu giác', 'Khó thở']
+  //   },
+  //   {
+  //     name: 'Rối loạn tiêu hóa',
+  //     symptoms: ['Đau bụng', 'Buồn nôn', 'Tiêu chảy', 'Chán ăn']
+  //   },
+  //   {
+  //     name: 'Đau nửa đầu',
+  //     symptoms: ['Đau đầu', 'Chóng mặt', 'Buồn nôn', 'Hoa mắt']
+  //   }
+  // ];
 
+  useEffect(()=>{
+    fetchSpecialties();
+    fetchDoctor();
+    }
+  ,[])
+
+  const fetchDoctor = async () => {
+    try{
+      setLoading(true)
+      const data = await getDoctor();
+      setDoctors(data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const fetchSpecialties = async () => {
+    try {
+      const data = await getAllSpecially();
+      setSpecialties(data);
+    } catch (error) {
+      console.error("Lỗi load chuyên khoa:", error);
+    }
+  };
+  
 useEffect(() => {
   const interval = setInterval(() => {
     const savedEnd = localStorage.getItem("slotCooldownEnd");
@@ -194,38 +210,53 @@ useEffect(() => {
 }, [formData.slotId]);
 
   // Tìm triệu chứng gợi ý khi nhập
-  useEffect(() => {
-    if (symptom.trim()) {
-      const suggestions = symptomDatabase.filter(symptom =>
-        symptom.toLowerCase().includes(symptom.toLowerCase())
-      ).slice(0, 5);
-      setSuggestedSymptoms(suggestions);
-      
-      // Tìm bệnh liên quan
-      findRelatedDiseases();
-    } else {
-      setSuggestedSymptoms([]);
-      setSuggestedDiseases([]);
-    }
-  }, [symptom]);
+const removeVietnamese = (str: string) => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+};
+
+useEffect(() => {
+
+  if (!symptom.trim()) {
+    setSuggestedSymptoms([]);
+    return;
+  }
+
+  const suggestions = symptomDatabase
+    .filter(item =>
+      removeVietnamese(item)
+        .includes(
+          removeVietnamese(symptom)
+        )
+    )
+    .filter(item =>
+      !formData.symptoms.includes(item)
+    )
+    .slice(0, 5);
+
+  setSuggestedSymptoms(suggestions);
+
+}, [symptom, formData.symptoms]);
 
   // Tìm bệnh liên quan đến triệu chứng
-  const findRelatedDiseases = () => {
-    const currentSymptoms = formData.symptoms;
-    if (currentSymptoms.length === 0) return;
+  // const findRelatedDiseases = () => {
+  //   const currentSymptoms = formData.symptoms;
+  //   if (currentSymptoms.length === 0) return;
     
-    const relatedDiseases = diseaseDatabase
-      .filter(disease => 
-        disease.symptoms.some(symptom => 
-          currentSymptoms.some(s => s.includes(symptom) || symptom.includes(s))
-        )
-      )
-      .map(disease => disease.name)
-      .slice(0, 3);
+  //   const relatedDiseases = diseaseDatabase
+  //     .filter(disease => 
+  //       disease.symptoms.some(symptom => 
+  //         currentSymptoms.some(s => s.includes(symptom) || symptom.includes(s))
+  //       )
+  //     )
+  //     .map(disease => disease.name)
+  //     .slice(0, 3);
     
-    setSuggestedDiseases(relatedDiseases);
-    setFormData(prev => ({ ...prev, suspectedDiseases: relatedDiseases }));
-  };
+  //   setSuggestedDiseases(relatedDiseases);
+  //   setFormData(prev => ({ ...prev, suspectedDiseases: relatedDiseases }));
+  // };
 
   // Thêm triệu chứng
   const addSymptom = (symptom: string) => {
@@ -281,8 +312,44 @@ useEffect(() => {
   const weekDays = generateWeekDays();
 
   // Chuyển bước tiếp theo
-  const nextStep = () => {
-    if (validateCurrentStep()) {
+  const nextStep = async () => {
+    if (!validateCurrentStep()) return;
+    
+    if (currentStep ===1) {
+      try {
+        setCurrentStep(2);
+        setAnalyzingDoctors(true);
+
+        const res = await suggestSpecialty({
+          symptoms: formData.symptoms,
+          description
+        });
+
+        const specialties = res?.suggestions || [];
+        setSuggest(specialties[0] || null);
+        const specialtyId = specialties?.[0]?.id;
+        setSelectedSpecialty(specialtyId)
+
+        if (!specialtyId) {
+          notify.warning("Không tìm thấy chuyên khoa phù hợp");
+          return;
+        }
+
+        const doctorData =await getDoctorBySpecialty(specialtyId);
+        setDoctors(doctorData);
+
+      } catch (e) {
+        console.log(e);
+        notify.error(
+          "Có lỗi xảy ra",
+          "Thông báo"
+        );
+      } finally {
+        setAnalyzingDoctors(false);
+      }
+      return
+    }
+    {
       if (currentStep < 4) {
         setCurrentStep(currentStep + 1);
         window.scrollTo(0, 0);
@@ -291,7 +358,6 @@ useEffect(() => {
           setShowPaymentModal(true);
           return;
         }
-
         completeBooking();
       }
     }
@@ -374,7 +440,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
       );
     }
 
-    // 🟢 giữ slot mới
+    // giữ slot mới
     const res = await holdSlot(slot._id);
 
     if (!res.success) {
@@ -382,7 +448,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
       return;
     }
 
-    // ✅ set state
+    // set state
     setFormData(prev => ({
       ...prev,
       slotId: slot._id,
@@ -390,7 +456,6 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
 
     setSelectedTime(slot.startTime);
 
-    // 🔥 set cooldown SAU KHI thành công
     const end = Date.now() + 30000;
     setCooldownEnd(end);
     localStorage.setItem("slotCooldownEnd", end.toString());
@@ -455,7 +520,6 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
       console.log(e)
     }
   };
-console.log(cooldown)
   // Format giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ';
@@ -576,27 +640,6 @@ console.log(cooldown)
           </div>
         )}
 
-        {suggestedDiseases.length > 0 && (
-          <div className="disease-suggestions">
-            <div className="disease-header">
-              <i className="fas fa-info-circle"></i>
-              <h4>Có thể bạn đang gặp:</h4>
-            </div>
-            <div className="disease-tags">
-              {suggestedDiseases.map((disease, index) => (
-                <div key={index} className="disease-tag">
-                  <i className="fas fa-exclamation-triangle"></i>
-                  <span>{disease}</span>
-                </div>
-              ))}
-            </div>
-            <p className="disease-note">
-              <i className="fas fa-lightbulb"></i>
-              Đây chỉ là gợi ý dựa trên triệu chứng. Hãy tham khảo ý kiến bác sĩ để có chẩn đoán chính xác.
-            </p>
-          </div>
-        )}
-
         <div className="notes-section">
           <h4>
             <i className="fas fa-edit"></i>
@@ -623,16 +666,74 @@ console.log(cooldown)
           <i className="fas fa-user-md"></i>
           Chọn bác sĩ phù hợp
         </h3>
-        <p>Dựa trên triệu chứng của bạn, chúng tôi gợi ý những bác sĩ chuyên khoa phù hợp</p>
+        {
+          suggest ? (
+            <p>
+              Với triệu chứng{" "}
+              <strong>
+                {suggest.matched.join(", ")},
+              </strong>{" "}
+              chúng tôi đề xuất chuyên khoa{" "}
+              <strong>
+                {suggest.name}
+              </strong>{" "}
+              phù hợp để bạn tham khảo.
+            </p>
+          ) : (
+            <p>
+              Bạn có thể tìm bác sĩ phù hợp để khám hoặc tư vấn
+            </p>
+          )
+        }
+    </div>
+<div className="specialty-filter">
+
+  <button
+    className={`filter-btn ${
+      selectedSpecialty==="all"
+      ? "active"
+      : ""
+    }`}
+    onClick={()=>
+      setSelectedSpecialty(
+        "all"
+      )
+    }
+  >
+      Tất cả
+  </button>
+
+  {specialties.map(item=>(
+    <button
+      key={item._id}
+      className={`filter-btn ${
+        selectedSpecialty===item._id? "active" : ""
+      }`}
+      onClick={()=>setSelectedSpecialty(item._id)
+      }
+    >
+      {item.name}
+    </button>
+
+  ))}
+
+</div>
+      {analyzingDoctors && (
+      <div className="analyzing-container">
+
+      <div className="spinner">
+        <i className="fas fa-spinner fa-spin"></i>
       </div>
 
-      <div className="specialty-filter">
-        <button className="filter-btn active">Tất cả</button>
-        <button className="filter-btn">Tim mạch</button>
-        <button className="filter-btn">Nhi khoa</button>
-        <button className="filter-btn">Tâm lý</button>
-        <button className="filter-btn">Thần kinh</button>
-      </div>
+      <h3>
+        Hệ thống đang phân tích triệu chứng
+      </h3>
+
+      <p>
+        Đang tìm bác sĩ phù hợp...
+      </p>
+
+    </div>)}
       {loading ? (
         <>
         loading...
@@ -648,7 +749,7 @@ console.log(cooldown)
                 onClick={() => selectDoctor(doctor)}
               >
                 <div className="doctor-header">
-                  <img src={doctor.image} alt={doctor?.userId?.fullName} className="doctor-avatar" />
+                  <img src={doctor.userId.image} alt={doctor?.userId?.fullName} className="doctor-avatar" />
                   <div className="doctor-main-info">
                     <h4>{doctor?.userId?.fullName}</h4>
                     <div className="doctor-specialty">{doctor.specialtyId.name}</div>
@@ -708,8 +809,8 @@ console.log(cooldown)
                         alert(`Thông tin chi tiết về ${doctor.userId.fullName}`);
                       }}
                     >
-                      <i className="fas fa-eye"></i>
-                      Xem hồ sơ
+                      <i className="fas fa-message"></i>
+                      Tư vấn
                     </button>
                     <button 
                       className={`select-doctor-btn ${formData.doctorId?._id === doctor._id ? 'selected' : ''}`}
@@ -742,6 +843,7 @@ console.log(cooldown)
 
     </div>
   );
+
   const renderTimeStep = () => (
     <div className="step-content time-step">
       <div className="step-header">
@@ -755,7 +857,7 @@ console.log(cooldown)
       {formData.doctorId && (
         <div className="selected-doctor-info">
           <div className="doctor-summary">
-            <img src={formData.doctorId.image} alt={formData.doctorId.userId.fullName} />
+            <img src={formData.doctorId.userId.image} alt={formData.doctorId.userId.fullName} />
             <div className="summary-info">
               <h4>{formData.doctorId.userId.fullName}</h4>
               <div className="summary-specialty">{formData.doctorId.specialtyId.name}</div>

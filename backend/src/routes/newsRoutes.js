@@ -11,7 +11,7 @@ router.get("/", newsController.getAllNews);
 router.get("/slug/:slug", newsController.getNewsBySlug);
 router.get("/:id", newsController.getAllNewsById);
 router.post("/:id/like", newsController.likeNews);
-
+router.put("/view/:id", auth ,newsController.increaseView);
 // admin
 router.post("/import", auth, admin, newsController.importNews);
 

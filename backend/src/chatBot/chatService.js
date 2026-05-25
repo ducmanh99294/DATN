@@ -127,7 +127,7 @@ module.exports = async function chatService(userId, message) {
     let savedSpecialtyName = "";
 
     // 3. TÌM THEO CHUYÊN KHOA (Khi khách hỏi chung chung như "uống thuốc gì")
-if (finalKeywords.length === 0 && userHealthContexts.has(userId)) {
+    if (finalKeywords.length === 0 && userHealthContexts.has(userId)) {
       const memory = userHealthContexts.get(userId);
       savedSpecialtyName = memory.specialtyName;
       

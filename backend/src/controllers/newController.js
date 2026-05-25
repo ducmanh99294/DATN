@@ -1,4 +1,5 @@
 const News = require("../models/News");
+const NewsView = require("../models/NewsView");
 const Category = require("../models/Category");
 const slugify = require("slugify");
 
@@ -249,6 +250,67 @@ exports.likeNews = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.increaseView = async (req, res) => {
+  try {
+    const userId = req.user.id; // lấy từ middleware auth
+    const newsId = req.params.id;
+
+    // kiểm tra bài viết tồn tại
+    const news = await News.findById(newsId);
+
+    if (!news) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bài viết"
+      });
+    }
+
+    // kiểm tra đã xem trong 8h chưa
+    const viewed = await NewsView.findOne({
+      userId,
+      newsId
+    });
+
+    if (viewed) {
+      return res.status(200).json({
+        success: true,
+        counted: false,
+        message: "Đã tính lượt xem trước đó"
+      });
+    }
+
+    // tăng view
+    await News.findByIdAndUpdate(
+      newsId,
+      {
+        $inc: {
+          views: 1
+        }
+      }
+    );
+
+    // lưu lịch sử xem
+    await NewsView.create({
+      userId,
+      newsId
+    });
+
+    return res.status(200).json({
+      success: true,
+      counted: true,
+      message: "Đã tăng lượt xem"
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

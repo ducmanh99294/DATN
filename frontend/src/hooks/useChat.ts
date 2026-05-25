@@ -6,6 +6,12 @@ interface ChatStore {
 
   selectedChat: Conversation | null;
   
+  sharedProduct: any | null;
+
+  setSharedProduct: (
+    product: any | null
+  ) => void;
+
   setConversations: (
     conversations: any[]
   ) => void;
@@ -35,6 +41,11 @@ export const useChatStore =
 
     selectedChat: null,
 
+    sharedProduct: null,
+
+    setSharedProduct: (product) =>
+    set({ sharedProduct: product }),
+
     setConversations: (conversations) =>
       set({ conversations }),
 
@@ -57,10 +68,7 @@ export const useChatStore =
           )
       })),
 
-    updateLastMessage: (
-      id,
-      message
-    ) =>
+    updateLastMessage: (id,message) =>
       set((state) => {
 
         const aiChat =
@@ -108,4 +116,6 @@ export const useChatStore =
 
         };
       })
+
+    
   }));

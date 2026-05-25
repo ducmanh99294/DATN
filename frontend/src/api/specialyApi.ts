@@ -17,6 +17,10 @@ export const createSpecially = async (shippingAddress: any,note: string) => {
   return await apiPost("/api/specially",{shippingAddress, note});
 };
 
+export const suggestSpecialty = async (data: any) => {
+  return await apiPost("/api/specially/suggest", data);
+};
+
 export const updateSpecially = async (id: string, status: string) => {
   return await apiPut(`/api/specially/${id}`,{status});
 };

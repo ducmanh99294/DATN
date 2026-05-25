@@ -16,6 +16,10 @@ html, body {
   min-height: 100vh;
 }
 
-.App{ /* Thay bằng class thực tế đang bọc trang Home của bạn */
-  padding-top: 70px; /* Bằng với chiều cao 70px của header */
+.App{ 
+  padding-top: 70px; 
+}
+
+.App.no-padding {
+  padding-top: 0;
 }

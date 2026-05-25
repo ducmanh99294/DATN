@@ -23,8 +23,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '$2b$10$B7YsNyJD5RNz9v/rZUSuO.ezgzYZRzvj/bDwY.EG.ejSrQlrdz2rm'
   },
-  andress:{
-    type: String,
+  address:{
+    fullName:String,
+    phone:String,
+    district:String,
+    ward:String,
+    address:String, 
+    isDefault: {
+      type: Boolean,
+      default: false
+    }
   },
   gender:{
     type: String,
