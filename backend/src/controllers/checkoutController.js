@@ -4,9 +4,7 @@ const Cart = require("../models/Cart");
 const CartItem = require("../models/CartItem");
 const Payment = require("../models/Payment");
 
-/**
- * 🧾 CHECKOUT (CREATE ORDER + PAYMENT)
- */
+// CHECKOUT (CREATE ORDER + PAYMENT)
 exports.checkout = async (req, res) => {
   const { shippingAddress, paymentMethod, depositPercent = 30 } = req.body;
 

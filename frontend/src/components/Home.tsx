@@ -43,6 +43,7 @@ import slide2 from '../assets/image/slidebar2.png';
 import slide3 from '../assets/image/slidebar3.png'; 
 import gsap from 'gsap';
 import { useChatStore } from '../hooks/useChat';
+import { getAllSpecially } from '../api/specialyApi';
 
 const Home = () => {
   const doctorSelectRef = useRef<HTMLDivElement | null>(null);
@@ -63,6 +64,7 @@ const Home = () => {
   const [newsLoading, setNewsLoading] = useState(false);
   const [appoinmentLoading, setAppoinmentLoading] = useState(false);
   const [randomDoctors, setRandomDoctors] = useState<any[]>([]);
+  const [specialty, setSpecialty] = useState<any>(null);
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
   const {addConversation} = useChatStore();
@@ -95,18 +97,82 @@ const slides = [
   }
 ];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getAllSpecially();
+        if (!data) return;
+        const formatted = [
+          ...data.map((s:any) => ({
+              id: s._id,
+              name: s.name,
+              slug: s.slug,
+              ...getSpecialtyStyle(s._id)
+            })
+          )
+        ];
+        setSpecialty(formatted);
+      } catch (error) {
+        notify.error("Có lỗi xảy ra vui lòng thử lại","Thông báo");
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
   // Dữ liệu chuyên khoa
-  const specialties = [
-    { id: 'all', name: 'Tất cả', icon: <MdHealthAndSafety />, color: '#0E7490' },
-    { id: 'cardiology', name: 'Tim mạch', icon: <FaHeartbeat />, color: '#DC2626' },
-    { id: 'neurology', name: 'Thần kinh', icon: <FaBrain />, color: '#7C3AED' },
-    { id: 'dentistry', name: 'Răng hàm mặt', icon: <FaTooth />, color: '#0891B2' },
-    { id: 'pediatrics', name: 'Nhi khoa', icon: <FaBaby />, color: '#DB2777' },
-    { id: 'ophthalmology', name: 'Mắt', icon: <FaEye />, color: '#EA580C' },
-    { id: 'pulmonology', name: 'Hô hấp', icon: <GiLungs />, color: '#65A30D' },
-    { id: 'psychology', name: 'Tâm lý', icon: <MdPsychology />, color: '#9333EA' },
-    { id: 'surgery', name: 'Ngoại khoa', icon: <FaProcedures />, color: '#0284C7' }
+  const specialtyStyles = [
+    {
+      icon: <MdHealthAndSafety />,
+      color: "#0E7490"
+    },
+    {
+      icon: <FaHeartbeat />,
+      color: "#DC2626"
+    },
+    {
+      icon: <FaBrain />,
+      color: "#7C3AED"
+    },
+    {
+      icon: <FaTooth />,
+      color: "#0891B2"
+    },
+    {
+      icon: <FaBaby />,
+      color: "#DB2777"
+    },
+    {
+      icon: <FaEye />,
+      color: "#EA580C"
+    },
+    {
+      icon: <GiLungs />,
+      color: "#65A30D"
+    },
+    {
+      icon: <MdPsychology />,
+      color: "#9333EA"
+    },
+    {
+      icon: <FaProcedures />,
+      color: "#0284C7"
+    }
   ];
+
+  const getSpecialtyStyle = (
+    id: string
+  ) => {
+
+    let hash = 0;
+
+    for (let i = 0; i < id.length; i++) {
+      hash += id.charCodeAt(i);
+    }
+
+    return specialtyStyles[
+      hash % specialtyStyles.length
+    ];
+  };
 
   useEffect(() => {
     if (isHovering || slides.length === 0) return;
@@ -184,40 +250,12 @@ const slides = [
     fetchAppointments();
   }, [user, doctor?._id]);
 
-  // Dữ liệu stats
-  const stats = [
-    { label: "Bác sĩ", value: "500+", icon: <FaUserMd /> },
-    { label: "Chuyên khoa", value: "30+", icon: <FaStethoscope /> },
-    { label: "Bệnh nhân", value: "50.000+", icon: <FaHeartbeat /> },
-    { label: "Đánh giá", value: "4.9/5", icon: <FaStar /> }
-  ];
-
   // Xử lý tìm kiếm
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
     }
-  };
-
-  // Trạng thái lịch hẹn
-    const status: Record<string,{ label: string; className: string }> = {
-    pending: {
-      label: 'Chờ xác nhận',
-      className: 'pending',
-    },
-    confirmed: {
-      label: 'Đã xác nhận',
-      className: 'confirmed',
-    },
-    completed: {
-      label: 'Hoàn thành',
-      className: 'completed',
-    },
-    cancelled: {
-      label: 'Đã hủy',
-      className: 'cancelled',
-    },
   };
 
   // Xử lý slider
@@ -473,92 +511,92 @@ const resetHero = () => {
           {/* Main Content Area */}
           <main className="main-content">
             {/* Hero Search Section */}
-<section
-  className="hero-section"
-  ref={heroRef}
-  style={{ "--bg-url": `url(${bg})` }}
->
-  <div className="hero-overlay"></div>
+            <section
+              className="hero-section"
+              ref={heroRef}
+              style={{ "--bg-url": `url(${bg})` }}
+            >
+              <div className="hero-overlay"></div>
 
-  <div className="hero-content">
-    <h1 className="hero-title">
-      Tìm <span className="highlight">bác sĩ</span> và
-      <span className="highlight"> đặt lịch</span> dễ dàng
-    </h1>
+              <div className="hero-content">
+                <h1 className="hero-title">
+                  Tìm <span className="highlight">bác sĩ</span> và
+                  <span className="highlight"> đặt lịch</span> dễ dàng
+                </h1>
 
-    <p className="hero-subtitle">
-      Kết nối với hơn 500 bác sĩ chuyên khoa
-      và 30+ dịch vụ y tế chất lượng cao
-    </p>
+                <p className="hero-subtitle">
+                  Kết nối với hơn 500 bác sĩ chuyên khoa
+                  và 30+ dịch vụ y tế chất lượng cao
+                </p>
 
-    <form
-      className="search-form"
-      onSubmit={handleSearch}
-    >
-      <div className="search-input-wrapper">
-        <FaSearch className="search-icon" />
+                <form
+                  className="search-form"
+                  onSubmit={handleSearch}
+                >
+                  <div className="search-input-wrapper">
+                    <FaSearch className="search-icon" />
 
-        <input
-          type="text"
-          placeholder="Tìm bác sĩ, chuyên khoa, triệu chứng..."
-          value={searchQuery}
-          onChange={(e) =>
-            setSearchQuery(e.target.value)
-          }
-          onFocus={expandHero}
-          onBlur={() => {
-            if (!searchQuery) resetHero();
-          }}
-          className="search-input"
-        />
+                    <input
+                      type="text"
+                      placeholder="Tìm bác sĩ, chuyên khoa, triệu chứng..."
+                      value={searchQuery}
+                      onChange={(e) =>
+                        setSearchQuery(e.target.value)
+                      }
+                      onFocus={expandHero}
+                      onBlur={() => {
+                        if (!searchQuery) resetHero();
+                      }}
+                      className="search-input"
+                    />
 
-        <button
-          type="submit"
-          className="search-btn"
-        >
-          Tìm kiếm
-        </button>
-      </div>
+                    <button
+                      type="submit"
+                      className="search-btn"
+                    >
+                      Tìm kiếm
+                    </button>
+                  </div>
 
-      <div className="search-tags">
-        <span>Phổ biến:</span>
+                  <div className="search-tags">
+                    <span>Phổ biến:</span>
 
-        <button
-          type="button"
-          className="tag"
-          onClick={() =>
-            addSearchQuerry("Omega")
-          }
-        >
-          Omega
-        </button>
+                    <button
+                      type="button"
+                      className="tag"
+                      onClick={() =>
+                        addSearchQuerry("Omega")
+                      }
+                    >
+                      Omega
+                    </button>
 
-        <button
-          type="button"
-          className="tag"
-          onClick={() =>
-            addSearchQuerry("Vitamin")
-          }
-        >
-          Vitamin
-        </button>
+                    <button
+                      type="button"
+                      className="tag"
+                      onClick={() =>
+                        addSearchQuerry("Vitamin")
+                      }
+                    >
+                      Vitamin
+                    </button>
 
-        <button
-          type="button"
-          className="tag"
-          onClick={() =>
-            addSearchQuerry("Men vi sinh")
-          }
-        >
-          Men vi sinh
-        </button>
-      </div>
-    </form>
-  </div>
-</section>
+                    <button
+                      type="button"
+                      className="tag"
+                      onClick={() =>
+                        addSearchQuerry("Men vi sinh")
+                      }
+                    >
+                      Men vi sinh
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
 
             {/* Specialty Filter */}
-            {/* <section className="specialty-section">
+            <section className="specialty-section">
               <div className="section-header">
                 <h2 className="section-title">
                   <FaStethoscope className="title-icon" />
@@ -570,11 +608,13 @@ const resetHero = () => {
               </div>
               
               <div className="specialty-filter">
-                {specialties.map((spec) => (
+                {specialty && specialty.map((spec: any) => (
                   <button
                     key={spec.id}
                     className={`specialty-btn ${activeSpecialty === spec.id ? 'active' : ''}`}
-                    onClick={() => setActiveSpecialty(spec.id)}
+                    onClick={() => {setActiveSpecialty(spec.id)
+                      navigate(`/specialty/${spec.slug}`)
+                    }}
                     style={{ '--spec-color': spec.color } as React.CSSProperties}
                   >
                     <div className="spec-icon" style={{ color: spec.color }}>
@@ -584,7 +624,7 @@ const resetHero = () => {
                   </button>
                 ))}
               </div>
-            </section> */}
+            </section>
 
             {/* Slider Section */}
             <section className="slider-section">

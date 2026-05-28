@@ -10,6 +10,12 @@ const conversationSchema = new mongoose.Schema({
     }
   ],
 
+      type:{
+        type:String,
+        enum:["ai","private"],
+        default:"private"
+    },
+
   lastMessage: {
     type: String,
     default: ""
@@ -22,6 +28,54 @@ const conversationSchema = new mongoose.Schema({
   isClosed: {
     type: Boolean,
     default: false
+  },
+
+  context: {
+    symptoms: [{
+      type: String,
+      default: ""
+    }],
+
+    specialtyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Specialty",
+      default: null
+    },
+
+    specialtyName: {
+      type: String,
+      default: ""
+    },
+
+    doctorId:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"DoctorProfile"
+    },
+
+    slotId:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"TimeSlot"
+    },
+
+    waitingForSchedule: {
+      type: Boolean,
+      default: false
+    },
+
+    waitingBooking: {
+      type: Boolean,
+      default: false
+    },
+
+    lastQuestion: {
+      type: String,
+      default: ""
+    },
+
+    lastIntent:{
+      type:String,
+      default:null
+    },
   }
 
 }, {

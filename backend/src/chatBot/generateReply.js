@@ -1,11 +1,14 @@
-module.exports = async function generateReply(message, context) {
+async function generateReply(message, context) {
   let prompt = "";
   let systemInstruction = "";
-
-  // ==========================================
+    console.log(
+      "TYPE NHẬN ĐƯỢC:",
+      context?.type
+    );
   // 1. NẾU LÀ CÂU HỎI HƯỚNG DẪN SỬ DỤNG (FAQ)
-  // ==========================================
   if (context.type === "faq") {
+    console.log("Xử lý ngữ cảnh faq với dữ liệu:", context);
+
     systemInstruction = `
       Bạn là nhân viên chăm sóc khách hàng của website bệnh viện.
       Nhiệm vụ: Trả lời câu hỏi của khách hàng DỰA HOÀN TOÀN vào Tài liệu hướng dẫn bên dưới.
@@ -19,10 +22,54 @@ module.exports = async function generateReply(message, context) {
       Câu hỏi người dùng: ${message}
     `;
   } 
-  // ==========================================
-  // 2. NẾU LÀ ĐẶT LỊCH HOẶC HỎI TRIỆU CHỨNG (BOOKING / MEDICAL)
-  // ==========================================
-  else {
+  // 2. MEDICAL: Người dùng mô tả triệu chứng, cần gợi ý chuyên khoa
+  else if (context.type === "medical") {
+    console.log("Xử lý ngữ cảnh medical với dữ liệu:", context);
+
+    systemInstruction = `
+      Bạn là trợ lý AI của website đặt lịch khám bệnh.
+
+      Quy tắc:
+      - Trả lời ngắn gọn, tự nhiên như đang trò chuyện.
+      - Không chẩn đoán chắc chắn bệnh
+      - Chỉ gợi ý chuyên khoa phù hợp
+      - Giải thích ngắn gọn 3 lý do
+      - Đưa ra 3 cách giúp giảm triệu chứng tại nhà.
+      - Không nói về lịch khám nếu hệ thống chưa cung cấp
+      - Tự nhiên như đang trò chuyện
+      - phải bắt buộc trả lời theo mẫu sau:
+
+    BẮT BUỘC trả lời theo mẫu:
+    Nhận định:
+    [Một câu nhận định ngắn]
+
+    Có thể liên quan đến:
+    - ...
+    - ...
+    - ...
+
+    Bạn có thể thử:
+    - ...
+    - ...
+    - ...
+
+    Bạn có vẻ đang gặp vấn đề về:
+    [Tên chuyên khoa]
+    `;
+
+    prompt = `
+      Thông tin hệ thống:
+
+      - Triệu chứng: ${context.symptoms?.join(", ") || "không có"}
+      - Chuyên khoa phù hợp:
+      ${context.specialty?.name || "chưa xác định"}
+
+      Người dùng:
+      ${message}
+    `;
+  } 
+  // 3. BOOKING: Người dùng muốn đặt lịch, cần xác nhận thông tin lịch khám
+  else if (context.type === "booking") {
     const slotText = context.slot
       ? `${context.slot.date.toISOString().split("T")[0]} ${context.slot.startTime}`
       : "không có";
@@ -52,7 +99,7 @@ module.exports = async function generateReply(message, context) {
 };
 
 // Cập nhật lại hàm gọi API để nhận thêm systemInstruction
-async function rewriteWithAI(prompt, systemInstruction, retry = 0) {
+async function rewriteWithAI(prompt, systemInstruction="", retry = 0) {
   const apiKey = process.env.GROQ_API_KEY;
 
   try {
@@ -69,7 +116,7 @@ async function rewriteWithAI(prompt, systemInstruction, retry = 0) {
           messages: [
             {
               role: "system",
-              content: systemInstruction // 👈 Đưa System Prompt động vào đây
+              content: systemInstruction?.toString() || ""
             },
             {
               role: "user",
@@ -99,3 +146,8 @@ async function rewriteWithAI(prompt, systemInstruction, retry = 0) {
     return "AI đang bận, vui lòng thử lại sau.";
   }
 }
+
+module.exports = {
+  generateReply,
+  rewriteWithAI
+};
