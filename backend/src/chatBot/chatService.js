@@ -1,13 +1,10 @@
 const { detectIntent } = require("./detectIntent");
 const { handleBookingContext, handleMedicalContext, handleFAQContext } = require("./buildContext");
-const generateReply = require("./generateReply");
+const { generateReply } = require("./generateReply");
 const Product = require("../models/Product");
 const TimeSlot = require("../models/TimeSlot");
 const Appointment = require("../models/Appointment");
-
-// bộ nhớ tạm thời
-const pendingBookings = new Map();
-const userHealthContexts = new Map();
+const Conversation = require("../models/Conversation");
 
 // Hàm tách chuỗi
 function extractCoreKeywords(specialtyName) {
@@ -26,27 +23,41 @@ function extractCoreKeywords(specialtyName) {
 module.exports = async function chatService(userId, message) {
 
   const msgText = message.toLowerCase().trim();
+  let conversation = await Conversation.findOne({participants:userId}).populate("participants");
+  if(!conversation){
+    conversation = await Conversation.create({
+        participants:[userId],
+        context:{}
+    });
+  }
 
-  if (pendingBookings.has(userId)) {
-    const session = pendingBookings.get(userId);
+  if (!conversation.context) {
+    conversation.context = {};
+  }
 
-    // 🔥 1. KIỂM TRA "QUAY XE" / TỪ CHỐI / HỎI LỊCH KHÁC
-    // Bắt các từ khóa: không, ko, dấu hỏi (?), hôm nay, ngày mai, khác...
+  if (conversation.context.waitingBooking == true) {
+    const session = conversation.context;
+
+    // 1. KIỂM TRA "QUAY XE" / TỪ CHỐI / HỎI LỊCH KHÁC
     const isChangingMind = msgText.match(/không|ko|hủy|thôi|đừng|\?|hôm nay|ngày mai|sớm hơn|khác/);
 
     if (isChangingMind) {
-      // Ngoại lệ: Nếu khách chỉ gõ cụt lủn vài chữ (VD: "không", "ko", "hủy đi") -> Báo hủy ngay lập tức
       if (msgText.length <= 15 && msgText.match(/^(không|ko|hủy|thôi|đừng|no)/)) {
-        pendingBookings.delete(userId);
+        conversation.context.waitingBooking = false;
+        await conversation.save();
         return { type: "text", message: "Đã hủy thao tác đặt lịch. Bạn cần hỗ trợ gì thêm không?" };
       }
       
       // Ngược lại (VD: "có lịch hôm nay ko?", "bác sĩ khác được ko") 
-      // -> Bỏ qua lệnh chốt đơn, xóa bộ nhớ tạm để code trôi xuống dưới cho AI tự phân tích lại!
-      pendingBookings.delete(userId);
+      conversation.context.waitingBooking = false;
+
+      delete conversation.context.slotId;
+      delete conversation.context.doctorId;
+
+      await conversation.save();
     } 
     
-    // 🔥 2. NẾU AN TOÀN VÀ LÀ CÂU ĐỒNG Ý
+    // 2. NẾU AN TOÀN VÀ LÀ CÂU ĐỒNG Ý
     else if (msgText.match(/có|ok|okie|đồng ý|đặt|chốt|được|yes|vâng|dạ/)) {
       
       // 1. Khóa lịch (Update TimeSlot)
@@ -67,7 +78,13 @@ module.exports = async function chatService(userId, message) {
       });
       
       // Xóa bộ nhớ tạm
-      pendingBookings.delete(userId);
+      conversation.context.waitingBooking=false;
+
+      delete conversation.context.slotId;
+      delete conversation.context.doctorId;
+
+      await conversation.save();
+
       return { 
         type: "text", 
         message: `Đặt lịch thành công! Bạn đã đặt lịch khám với Bác sĩ vào ngày ${session.dateText}. Bạn có thể vào mục "Lịch khám của tôi" để xem chi tiết nhé.` 
@@ -75,10 +92,14 @@ module.exports = async function chatService(userId, message) {
     } 
     // Nếu chat tào lao (VD: "thời tiết nay đẹp nhỉ") -> Xóa phiên chờ, xuống cho AI xử lý
     else {
-      pendingBookings.delete(userId);
+      conversation.context.waitingBooking = false;
+
+      delete conversation.context.slotId;
+      delete conversation.context.doctorId;
+
+      await conversation.save();
     }
   }
-
   const nlpResult = await detectIntent(message); 
   const intent = nlpResult.intent;
   const entities = nlpResult.entities; 
@@ -101,20 +122,38 @@ module.exports = async function chatService(userId, message) {
   let context = {};
   
   if (intent === "MEDICAL") {
-    // LƯU VÀO BỘ NHỚ: Khách vừa báo triệu chứng gì, cất ngay vào bộ nhớ
-    context = await handleMedicalContext(entities); 
+    console.log("Vào MEDICAL");
+
+    context = await handleMedicalContext(entities);
+
+    context.type = "medical";
+
+    // thêm dòng này
+    context.symptoms = entities;
 
     if (context.specialty) {
-      userHealthContexts.set(userId, { 
-        specialtyId: context.specialty._id,
-        specialtyName: context.specialty.name 
-      });
-      console.log(`Đã lưu lịch sử khám: Khoa ${context.specialty.name}`);
+      conversation.context.specialtyId = context.specialty._id;
+      conversation.context.specialtyName = context.specialty.name;
+
+      conversation.context.symptoms = [
+        ...new Set([
+          ...(conversation.context.symptoms || []),
+          ...entities
+        ])
+      ];
+
+      conversation.context.lastIntent = "MEDICAL";
+
+      console.log(
+        `Đã lưu lịch sử khám: ${context.specialty.name}`
+      );
     }
 
-  } 
+    await conversation.save();
+  }
 
   if (intent === "PRODUCT") {
+    console.log("4. RƠI VÀO PRODUCT -> Sẽ bị return tại đây!");
     let finalKeywords = [...entities];
 
     // 1. Lọc bỏ các từ rác vô nghĩa
@@ -127,9 +166,8 @@ module.exports = async function chatService(userId, message) {
     let savedSpecialtyName = "";
 
     // 3. TÌM THEO CHUYÊN KHOA (Khi khách hỏi chung chung như "uống thuốc gì")
-    if (finalKeywords.length === 0 && userHealthContexts.has(userId)) {
-      const memory = userHealthContexts.get(userId);
-      savedSpecialtyName = memory.specialtyName;
+    if (finalKeywords.length === 0 && conversation.context.specialtyId) {
+      savedSpecialtyName = conversation.context.specialtyName;
       
       // Sử dụng hàm bóc tách để lấy từ khóa cốt lõi
       const coreKeywords = extractCoreKeywords(savedSpecialtyName);
@@ -178,29 +216,44 @@ module.exports = async function chatService(userId, message) {
 
   if( intent === "FAQ") {
     context = await handleFAQContext(message);
+    context.type = "faq";
   }
+
   else if (intent === "BOOKING") {
-    context = await handleBookingContext(entities, userId);
+    let bookingEntities = [...entities];
+    if(conversation.context.specialtyId && entities.length <= 1) {
+      bookingEntities.push(conversation.context.specialtyName);
+    }
+    context = await handleBookingContext(bookingEntities, userId, conversation.context);
+    context.type = "booking";
   }
 
   if (context.slot && context.doctor) {
-    pendingBookings.set(userId, {
-      slotId: context.slot._id,
-      doctorId: context.doctor._id,
-      specialtyId: context.specialty?._id, // Lấy ID chuyên khoa
-      price: context.doctor.price || 0,    // Lấy giá tiền
-      symptoms: entities.length > 0 ? entities.join(", ") : "Khám bệnh", // Lấy từ khóa AI tìm được làm triệu chứng
-      dateText: `${context.slot.date.toISOString().split("T")[0]} ${context.slot.startTime}`
-    });
+    conversation.context.slotId= context.slot._id;
+    conversation.context.doctorId= context.doctor._id;
+    conversation.context.specialtyId = context.specialty?._id;
+    conversation.context.waitingBooking= true;
+    conversation.context.lastIntent= "BOOKING";
+
+    await conversation.save();
   }
 
-  // 5. Gửi thông tin cho AI sinh câu trả lời cuối cùng
-  const reply = await generateReply(message, context);
-
-  return {
-    type: "text",
-    message: reply,
-    doctorId: context.doctor?._id,
-    slotId: context.slot?._id
-  };
+try {
+  console.log("gọi generateReply với message: ", message);
+  console.log("gọi generateReply với context: ", context);
+    const reply = await generateReply(message, context);
+    
+    return {
+      type: "text",
+      message: reply,
+      doctorId: context.doctor?._id,
+      slotId: context.slot?._id
+    };
+  } catch (error) {
+    console.error("LỖI NGAY TẠI BƯỚC GỌI GENERATE REPLY:", error);
+    return {
+      type: "text",
+      message: "Xin lỗi, hệ thống đang gặp lỗi khi tạo câu trả lời. Bạn vui lòng thử lại sau nhé."
+    };
+  }
 };

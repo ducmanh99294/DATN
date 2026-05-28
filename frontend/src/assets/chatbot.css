@@ -183,12 +183,12 @@
   border-bottom-right-radius:4px;
 }
 
-.aiMessage{
+/* .aiMessage{
   align-self:flex-start;
   background:white;
   border:1px solid #e5e7eb;
   border-bottom-left-radius:4px;
-}
+} */
 
 
 /* INPUT */
@@ -456,7 +456,9 @@
     padding:6px 14px;
     border-radius:999px;
 }
-
+.aiMessage{
+   white-space: pre-line;
+}
 .product-preview {
 display:flex;
 align-items:center;

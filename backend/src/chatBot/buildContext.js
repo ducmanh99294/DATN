@@ -2,8 +2,9 @@ const Specialty = require("../models/Speciatly");
 const Doctor = require("../models/Doctor");
 const TimeSlot = require("../models/TimeSlot");
 const {detectSpecialtyFromDB} = require("./detectIntent");
+const rewriteWithAI = require("./generateReply");
 
-async function handleBookingContext(entities, userId) {
+async function handleBookingContext(entities, userId, conversationContext) {
   let specialty = null;
   if (entities && entities.length > 0) {
     specialty = await Specialty.findOne({
@@ -12,7 +13,16 @@ async function handleBookingContext(entities, userId) {
     });
   }
 
-  if (!specialty) return { error: "no_specialty" };
+  if (!specialty && conversationContext?.specialtyId) { 
+    specialty = await Specialty.findById(conversationContext.specialtyId);
+  };
+
+  if(!specialty){
+    return {
+      type:"booking",
+      error:"no_specialty"
+    };
+  }
 
   const doctor = await Doctor.findOne({
     specialtyId: specialty._id
@@ -54,35 +64,89 @@ async function handleMedicalContext(entities) {
   let specialty = null;
 
   if (entities && entities.length > 0) {
-    const regexArray = entities.map(keyword => new RegExp(keyword, "i"));
+    const regexArray = entities.map(
+      keyword => new RegExp(keyword, "i")
+    );
 
     specialty = await Specialty.findOne({
       $or: [
         { name: { $in: regexArray } },
-        { keywords: { $in: regexArray } } // Tìm xem có từ nào khớp với mảng keywords trong DB không
+        { keywords: { $in: regexArray } }
       ]
     });
   }
 
+  // fallback AI
+  if (!specialty && entities?.length > 0) {
+
+    const specialties = await Specialty.find(
+      {},
+      "name description"
+    );
+
+    const prompt = `
+Người dùng có triệu chứng:
+${entities.join(", ")}
+
+Danh sách chuyên khoa:
+${specialties
+.map(
+(s,i)=>`${i+1}. ${s.name}: ${s.description}`
+)
+.join("\n")}
+
+Chỉ trả về tên chuyên khoa phù hợp nhất.
+`;
+
+    const aiResult =
+      await rewriteWithAI(
+        prompt,
+`
+Bạn là AI phân loại triệu chứng.
+
+- Chỉ trả về tên chuyên khoa
+- Không giải thích
+- Không thêm nội dung khác
+`
+      );
+
+    specialty =
+      await Specialty.findOne({
+        name:{
+          $regex: aiResult.trim(),
+          $options:"i"
+        }
+      });
+  }
+
   if (!specialty) {
     return {
-      type: "medical",
-      error: "no_specialty"
+      type:"medical",
+      symptoms: entities, // thêm
+      error:"no_specialty"
     };
   }
 
-  const doctor = await Doctor.findOne({ 
-    specialtyId: specialty._id
-  }).populate("userId");
+  const doctor =
+    await Doctor.findOne({
+      specialtyId:specialty._id
+    }).populate("userId");
 
-  const slot = await TimeSlot.findOne({
-    doctorId: doctor?._id,
-    status: "available",
-    date: { $gte: new Date() }
-  }).sort({ date: 1, startTime: 1 });
+  const slot =
+    await TimeSlot.findOne({
+      doctorId:doctor?._id,
+      status:"available",
+      date:{
+        $gte:new Date()
+      }
+    }).sort({
+      date:1,
+      startTime:1
+    });
 
   return {
-    type: "medical",
+    type:"medical",
+    symptoms: entities, // thêm
     specialty,
     doctor,
     slot
