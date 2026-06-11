@@ -499,7 +499,7 @@
 .home-modern .slide {
   width:100%;
   flex: 0 0 100%;
-  min-height: 300px;
+  min-height: 500px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1387,6 +1387,7 @@
     flex-direction: column;
     text-align: center;
     padding: 40px 24px;
+    min-height: 400px;
   }
   
   .home-modern .slide-content {

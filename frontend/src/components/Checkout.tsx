@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { createOrder } from '../api/orderApi';
 import { useNotify } from '../hooks/useNotification';
 import { getPaymentUrl } from '../api/paymentApi';
+import { useAuthContext } from '../context/AuthContext';
 
 export interface Address {
   _id: string;
@@ -66,6 +67,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const notify = useNotify();
+  const {user} = useAuthContext()
   // Addresses
   const [addresses, setAddresses] = useState<Address[]>([]);
 
@@ -78,7 +80,6 @@ const Checkout = () => {
     district: '',
     ward: '',
   });
-
   // Payment methods
   const [paymentMethods] = useState<PaymentMethod[]>([
     {
@@ -88,20 +89,20 @@ const Checkout = () => {
       description: 'Chỉ thanh toán khi nhận được hàng',
       isActive: true
     },
-    {
-      id: 'bank',
-      name: 'Chuyển khoản ngân hàng',
-      icon: 'fas fa-university',
-      description: 'Thanh toán qua tài khoản ngân hàng',
-      isActive: true
-    },
-    {
-      id: 'momo',
-      name: 'Ví MoMo',
-      icon: 'fas fa-mobile-alt',
-      description: 'Thanh toán nhanh chóng qua ví điện tử',
-      isActive: true
-    },
+    // {
+    //   id: 'bank',
+    //   name: 'Chuyển khoản ngân hàng',
+    //   icon: 'fas fa-university',
+    //   description: 'Thanh toán qua tài khoản ngân hàng',
+    //   isActive: true
+    // },
+    // {
+    //   id: 'momo',
+    //   name: 'Ví MoMo',
+    //   icon: 'fas fa-mobile-alt',
+    //   description: 'Thanh toán nhanh chóng qua ví điện tử',
+    //   isActive: true
+    // },
     {
       id: 'vnpay',
       name: 'VNPAY',
@@ -217,6 +218,17 @@ const Checkout = () => {
     { id: 3, name: 'Xác nhận đơn hàng', icon: 'fas fa-check-circle' },
   ];
 
+  useEffect(() => {
+    if (user && user.address) {
+      setNewAddress({
+        fullName: user.address.fullName || user.fullName || '', // Tuỳ cấu trúc DB của bạn
+        phone: user.address.phone || user.phone || '',
+        district: user.address.district || '',
+        ward: user.address.ward || '',
+        address: user.address.address || '' // Địa chỉ chi tiết
+      });
+    }
+  }, [user]);
   // Initialize
   useEffect(() => {
     // Set default address
@@ -286,6 +298,7 @@ const Checkout = () => {
       isDefault: addresses.length === 0,
     };
 
+    notify.success("Xác nhận địa chỉ thành công","Thông báo")
     setAddresses([...addresses, address]);
     setSelectedAddress(address);
     setShowAddressForm(false);

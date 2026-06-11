@@ -745,26 +745,20 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
 
   ))}
 
-</div>
-      {analyzingDoctors && (
-      <div className="analyzing-container">
-
+  </div>  
+    {analyzingDoctors ? (
+    <div className="analyzing-container">
       <div className="spinner">
         <i className="fas fa-spinner fa-spin"></i>
       </div>
-
-      <h3>
-        Hệ thống đang phân tích triệu chứng
-      </h3>
-
-      <p>
-        Đang tìm bác sĩ phù hợp...
-      </p>
-
-    </div>)}
-      {loading ? (
+      <h3>Hệ thống đang phân tích triệu chứng</h3>
+      <p>Đang tìm bác sĩ phù hợp...</p>
+    </div>)
+      : loading ? (
         <>
-        loading...
+        <div className="spinner">
+          <i className="fas fa-spinner fa-spin"></i>
+        </div>
         </>
       ) : (
         <div className="doctors-list">

@@ -31,14 +31,14 @@ router.get(
   (req, res, next) => {
     // Nếu Google báo về là user đã bấm "Hủy" (Cancel)
     if (req.query.error === "access_denied") {
-      return res.redirect(`http://localhost:5173/login?status=cancelled`);
+      return res.redirect(`https://datn-z8rb.vercel.app/login?status=cancelled`);
     }
     next(); 
   },
 
   passport.authenticate("google", { 
     session: false,
-    failureRedirect: "http://localhost:5173/login?status=failed" 
+    failureRedirect: "https://datn-z8rb.vercel.app/login?status=failed" 
   }),
 
   (req, res) => {
@@ -50,7 +50,7 @@ router.get(
       sameSite: "lax",
     });
 
-    res.redirect("http://localhost:5173");
+    res.redirect("https://datn-z8rb.vercel.app");
   }
 );
 
