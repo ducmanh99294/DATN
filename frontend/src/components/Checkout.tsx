@@ -110,13 +110,13 @@ const Checkout = () => {
       description: 'Thanh toán qua VNPAY, Internet Banking',
       isActive: true
     },
-    {
-      id: 'zalopay',
-      name: 'ZaloPay',
-      icon: 'fas fa-comment',
-      description: 'Thanh toán qua ví ZaloPay',
-      isActive: true
-    }
+    // {
+    //   id: 'zalopay',
+    //   name: 'ZaloPay',
+    //   icon: 'fas fa-comment',
+    //   description: 'Thanh toán qua ví ZaloPay',
+    //   isActive: true
+    // }
   ]);
 
   const [selectedPayment, setSelectedPayment] = useState<string>('cod');
