@@ -10,11 +10,11 @@ const conversationSchema = new mongoose.Schema({
     }
   ],
 
-      type:{
-        type:String,
-        enum:["ai","private"],
-        default:"private"
-    },
+  type:{
+    type:String,
+    enum:["ai","private"],
+    default:"private"
+  },
 
   lastMessage: {
     type: String,
@@ -29,6 +29,18 @@ const conversationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+
+  lastActiveAt: {
+    type: Date,
+    default: null
+  },
+
+  messages: [
+    {
+      role: { type: String, enum: ["user", "assistant"], required: true },
+      content: { type: String, required: true }
+    }
+  ],
 
   context: {
     symptoms: [{
@@ -57,7 +69,12 @@ const conversationSchema = new mongoose.Schema({
       ref:"TimeSlot"
     },
 
-    waitingForSchedule: {
+    availableSlots: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "TimeSlot" 
+    }],
+
+    waitingSlotSelection: { 
       type: Boolean,
       default: false
     },

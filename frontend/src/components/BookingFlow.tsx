@@ -8,6 +8,10 @@ import { getPaymentUrl } from '../api/paymentApi';
 import { useNotify } from '../hooks/useNotification';
 import { useRef } from "react";
 import { getAllSpecially, suggestSpecialty } from '../api/specialyApi';
+import { createConversation, getConversations, getMessages } from '../api/chatApi';
+import { useChatStore } from '../hooks/useChat';
+import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../context/SocketContext';
 
 interface BookingData {
   patientId: string;
@@ -56,7 +60,7 @@ const BookingFlow = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [suggestedSymptoms, setSuggestedSymptoms] = useState<string[]>([]);
-  // const [suggestedDiseases, setSuggestedDiseases] = useState<string[]>([]);
+  const [allKeywords, setAllKeywords] = useState<string[]>([]);
   const [doctors, setDoctors] = useState<any[]>([])
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -70,8 +74,11 @@ const BookingFlow = () => {
   //loading
   const [loadingDay, setLoadingDay] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { socket } = useSocket();
 
+  const {addConversation} = useChatStore();
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<BookingData>({
     patientId: user?._id || '',
     symptoms: [],
@@ -81,52 +88,40 @@ const BookingFlow = () => {
     price: 0,
     paymentMethod: ""
   });
-  // Danh sách triệu chứng mẫu
-  const symptomDatabase = [
-    'Sốt cao', 'Ho khan', 'Đau đầu', 'Mệt mỏi', 'Đau họng', 'Khó thở',
-    'Đau bụng', 'Buồn nôn', 'Chóng mặt', 'Đau ngực', 'Sổ mũi', 'Nghẹt mũi',
-    'Đau cơ', 'Ớn lạnh', 'Mất vị giác', 'Mất khứu giác', 'Tiêu chảy',
-    'Đau lưng', 'Đau khớp', 'Phát ban', 'Chán ăn', 'Mất ngủ', 'Hoa mắt'
-  ];
-
-  // Database triệu chứng - bệnh
-  // const diseaseDatabase = [
-  //   {
-  //     name: 'Cảm cúm',
-  //     symptoms: ['Sốt cao', 'Ho khan', 'Đau đầu', 'Mệt mỏi', 'Đau họng', 'Đau cơ', 'Ớn lạnh']
-  //   },
-  //   {
-  //     name: 'Viêm họng',
-  //     symptoms: ['Đau họng', 'Sốt cao', 'Ho khan', 'Khó thở', 'Đau đầu']
-  //   },
-  //   {
-  //     name: 'Viêm phổi',
-  //     symptoms: ['Sốt cao', 'Ho khan', 'Khó thở', 'Đau ngực', 'Mệt mỏi', 'Ớn lạnh']
-  //   },
-  //   {
-  //     name: 'COVID-19',
-  //     symptoms: ['Sốt cao', 'Ho khan', 'Mệt mỏi', 'Mất vị giác', 'Mất khứu giác', 'Khó thở']
-  //   },
-  //   {
-  //     name: 'Rối loạn tiêu hóa',
-  //     symptoms: ['Đau bụng', 'Buồn nôn', 'Tiêu chảy', 'Chán ăn']
-  //   },
-  //   {
-  //     name: 'Đau nửa đầu',
-  //     symptoms: ['Đau đầu', 'Chóng mặt', 'Buồn nôn', 'Hoa mắt']
-  //   }
-  // ];
 
   useEffect(()=>{
     fetchSpecialties();
     fetchDoctor();
     }
-  ,[])
+  ,[selectedSpecialty])
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("slot_updated", (data: any) => {
+      setTimeSlots(prev =>
+        prev.map(slot =>
+          slot._id === data.slotId
+            ? {
+                ...slot,
+                status: data.status,
+                lockedBy: data.lockedBy,
+                lockExpiresAt: data.lockExpiresAt
+              }
+            : slot
+        )
+      );
+    });
+
+    return () => {
+      socket.off("slot_updated");
+    };
+  }, []);
 
   const fetchDoctor = async () => {
+    if(!selectedSpecialty) return;
     try{
       setLoading(true)
-      const data = await getDoctor();
+      const data = await getDoctorBySpecialty(selectedSpecialty);
       setDoctors(data);
     } catch (e) {
       console.log(e);
@@ -135,14 +130,20 @@ const BookingFlow = () => {
     }
   }
 
-  const fetchSpecialties = async () => {
-    try {
-      const data = await getAllSpecially();
-      setSpecialties(data);
-    } catch (error) {
-      console.error("Lỗi load chuyên khoa:", error);
-    }
-  };
+const fetchSpecialties = async () => {
+  try {
+    const data = await getAllSpecially();
+    setSpecialties(data);
+
+    const keywords = [...new Set(
+      data.flatMap((s: any) => s.keywords || [])
+    )] as string[];
+
+    setAllKeywords(keywords);
+  } catch (error) {
+    console.error("Lỗi load chuyên khoa:", error);
+  }
+};
   
 useEffect(() => {
   const interval = setInterval(() => {
@@ -172,7 +173,7 @@ useEffect(() => {
 
   // Khởi tạo ngày
   useEffect(() => {
-    if (!formData.doctorId?._id) return;
+    if (!formData.doctorId?._id || !selectedDate) return;
 
     const fetchSlots = async () => {
       try {
@@ -224,7 +225,7 @@ useEffect(() => {
     return;
   }
 
-  const suggestions = symptomDatabase
+  const suggestions = allKeywords
     .filter(item =>
       removeVietnamese(item)
         .includes(
@@ -240,23 +241,52 @@ useEffect(() => {
 
 }, [symptom, formData.symptoms]);
 
-  // Tìm bệnh liên quan đến triệu chứng
-  // const findRelatedDiseases = () => {
-  //   const currentSymptoms = formData.symptoms;
-  //   if (currentSymptoms.length === 0) return;
-    
-  //   const relatedDiseases = diseaseDatabase
-  //     .filter(disease => 
-  //       disease.symptoms.some(symptom => 
-  //         currentSymptoms.some(s => s.includes(symptom) || symptom.includes(s))
-  //       )
-  //     )
-  //     .map(disease => disease.name)
-  //     .slice(0, 3);
-    
-  //   setSuggestedDiseases(relatedDiseases);
-  //   setFormData(prev => ({ ...prev, suspectedDiseases: relatedDiseases }));
-  // };
+  const handleChat = async (doctor: any) => {
+    if(!user) {
+      notify.info("Vui lòng đăng nhập để sử dụng tính năng này", "thông báo")
+      navigate("/login");
+      return;
+    }
+
+    try {
+      // lấy danh sách conversation trước
+      const conversations = await getConversations();
+
+      // kiểm tra đã có chat với doctor chưa
+      const existingConversation = conversations.find(
+        (c: any) => c.doctorId === doctor.userId._id || c.members?.includes(doctor.userId._id)
+      );
+
+      // nếu chưa có thì tạo mới
+      let conversationId;
+
+      if (!existingConversation) {
+        const conversation = await createConversation(doctor.userId._id);
+        const privateChat: any = {
+        _id: conversation._id,
+        type: "private",
+        name: doctor.userId.fullName
+          ? decodeURIComponent(doctor.userId.fullName)
+          : "Bác sĩ",
+        avatar: doctor.userId.image,
+        lastMessage:
+          conversation.lastMessage ||
+          "Bắt đầu trò chuyện"
+      };
+        addConversation(privateChat)
+        conversationId = conversation._id;
+        notify.success("Đã tạo cuộc trò chuyện thành công", "Thông báo")
+      } else {
+        conversationId = existingConversation._id;
+        notify.info("Bạn đã có cuộc trò chuyện với người này", "Thông báo")
+      }
+
+      // lấy tin nhắn của conversation
+      await getMessages(conversationId);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   // Thêm triệu chứng
   const addSymptom = (symptom: string) => {
@@ -315,7 +345,7 @@ useEffect(() => {
   const nextStep = async () => {
     if (!validateCurrentStep()) return;
     
-    if (currentStep ===1) {
+    if (currentStep === 1) {
       try {
         setCurrentStep(2);
         setAnalyzingDoctors(true);
@@ -413,21 +443,19 @@ useEffect(() => {
   };
 
 const handleProcessTimeSlot = async (slot: TimeSlot) => {
-  console.log(cooldown)
+  if (slot.status !== "available") {
+    notify.error("Khung giờ đang được đặt hoặc đang xử lí, vui lòng chọn khung giờ khác","thông báo");
+    return;
+  }
+
   if (cooldown > 0) {
     notify.warning(`Vui lòng đợi ${cooldown}s trước khi đổi khung giờ`);
     return;
   }
 
-  if (slot.status !== "available") {
-    notify.error("thông báo", "Khung giờ đang được đặt hoặc đang xử lí, vui lòng chọn khung giờ khác hoặc thử lại sau 5p");
-    return;
-  }
-
   try {
     setLoading(true);
-
-    // 🔴 release slot cũ
+    //  release slot cũ
     if (formData.slotId) {
       await releaseSlot(formData.slotId);
 
@@ -439,15 +467,8 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
         )
       );
     }
-
     // giữ slot mới
-    const res = await holdSlot(slot._id);
-
-    if (!res.success) {
-      notify.error("thông báo","Khung giờ đang được người khác chọn");
-      return;
-    }
-
+    await holdSlot(slot._id);
     // set state
     setFormData(prev => ({
       ...prev,
@@ -460,8 +481,8 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
     setCooldownEnd(end);
     localStorage.setItem("slotCooldownEnd", end.toString());
 
-  } catch (err) {
-    notify.error("Có lỗi xảy ra");
+  } catch (err: any) {
+    notify.error( err.message , "Có lỗi xảy ra");
     console.log(err);
   } finally {
     setLoading(false);
@@ -476,13 +497,19 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
     }
     try {
       if (formData.paymentMethod === "vnpay") {
-      const res = await getPaymentUrl({
-        type: "appointment",
-        amount: formData.doctorId.price,
-        orderInfo: `Dat lich voi ${formData.doctorId.userId.fullName}`,
-        slotId: formData.slotId,
-        doctorId: formData.doctorId._id,
-      });
+        const res = await getPaymentUrl({
+          type: "appointment",
+          amount: formData.doctorId.price,
+          metadata: {
+            doctorId: formData.doctorId._id,
+            patientId: formData.patientId,
+            specialtyId: formData.doctorId.specialtyId._id,
+            slotId: formData.slotId,
+            symptoms: formData.symptoms,
+            description: formData.description,
+            price: formData.doctorId.price
+          }
+        });
 
       // 🔥 redirect sang VNPay
       window.location.href = res.paymentUrl;
@@ -520,6 +547,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
       console.log(e)
     }
   };
+
   // Format giá tiền
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ';
@@ -804,10 +832,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
                   <div className="doctor-actions">
                     <button 
                       className="view-profile-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        alert(`Thông tin chi tiết về ${doctor.userId.fullName}`);
-                      }}
+                      onClick={() => {handleChat(doctor)}}
                     >
                       <i className="fas fa-message"></i>
                       Tư vấn
@@ -906,7 +931,7 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
         </h4>
         <p className="time-info">
           <i className="fas fa-info-circle"></i>
-          Mỗi khung giờ dài 30 phút. Giờ đã được đặt ký hiệu bằng
+          Khung giờ đang được đặt sẽ kí hiệu bằng màu
           <span className="booked-slot"></span>
         </p>
         {!selectedDate ? (
@@ -924,39 +949,110 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
                 <i className="fas fa-calendar-times"></i>
                 <p>Không có lịch khám cho ngày này</p>
               </div>
-            ) : (
-              <div className="time-slots-grid">
-                {timeSlots.map((slot, index) => (
-                  <button
-                    key={index}
+) : (
+  <div className="time-slots-sections">
+
+    {/* BUỔI SÁNG: 07:00 - 11:30 */}
+    {timeSlots.filter(s => {
+      const h = parseInt(s.startTime.split(":")[0]);
+      return h >= 7 && h < 12;
+    }).length > 0 && (
+      <div className="time-period">
+        <div className="period-label">
+          <i className="fas fa-sun"></i> Buổi sáng
+        </div>
+        <div className="time-slots-grid">
+          {timeSlots
+            .filter(s => {
+              const h = parseInt(s.startTime.split(":")[0]);
+              return h >= 7 && h < 12;
+            })
+            .map((slot, index) => (
+              <button
+                key={index}
                 className={`time-slot 
                   ${slot.status === 'booked' ? 'booked' : ''}
                   ${slot.status === 'pending' ? 'pending' : ''}
                   ${formData.slotId === slot._id ? 'selected' : ''}
                 `}
-                    // onClick={() => {!slot.appointmentId && 
-                    //     setFormData(prev => ({
-                    //       ...prev,
-                    //       slotId: slot._id,
-                    //     }))
-                    //     setSelectedTime(slot.startTime)
-                    //     setTimeSlots(prev =>
-                    //       prev.map(slot => ({
-                    //         ...slot,
-                    //         isSelected: slot.startTime === slot.startTime
-                    //       }))
-                    //     );
-                    //   }
-                    // }
-                    onClick={() => handleProcessTimeSlot(slot)}
-                    disabled={!!slot.appointmentId}
-                  >
-                    {slot.appointmentId && <i className="fas fa-ban"></i>}
-                    {slot.startTime}
-                  </button>
-                ))}
-              </div>
-            )}
+                onClick={() => handleProcessTimeSlot(slot)}
+                disabled={!!slot.appointmentId}
+              >
+                {slot.startTime}
+              </button>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* BUỔI CHIỀU: 12:00 - 17:30 */}
+    {timeSlots.filter(s => {
+      const h = parseInt(s.startTime.split(":")[0]);
+      return h >= 12 && h < 18;
+    }).length > 0 && (
+      <div className="time-period">
+        <div className="period-label">
+          <i className="fas fa-cloud-sun"></i> Buổi chiều
+        </div>
+        <div className="time-slots-grid">
+          {timeSlots
+            .filter(s => {
+              const h = parseInt(s.startTime.split(":")[0]);
+              return h >= 12 && h < 18;
+            })
+            .map((slot, index) => (
+              <button
+                key={index}
+                className={`time-slot 
+                  ${slot.status === 'booked' ? 'booked' : ''}
+                  ${slot.status === 'pending' ? 'pending' : ''}
+                  ${formData.slotId === slot._id ? 'selected' : ''}
+                `}
+                onClick={() => handleProcessTimeSlot(slot)}
+                disabled={!!slot.appointmentId}
+              >
+                {slot.startTime}
+              </button>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* BUỔI TỐI: 18:00 trở đi */}
+    {timeSlots.filter(s => {
+      const h = parseInt(s.startTime.split(":")[0]);
+      return h >= 18;
+    }).length > 0 && (
+      <div className="time-period">
+        <div className="period-label">
+          <i className="fas fa-moon"></i> Buổi tối
+        </div>
+        <div className="time-slots-grid">
+          {timeSlots
+            .filter(s => {
+              const h = parseInt(s.startTime.split(":")[0]);
+              return h >= 18;
+            })
+            .map((slot, index) => (
+              <button
+                key={index}
+                className={`time-slot 
+                  ${slot.status === 'booked' ? 'booked' : ''}
+                  ${slot.status === 'pending' ? 'pending' : ''}
+                  ${formData.slotId === slot._id ? 'selected' : ''}
+                `}
+                onClick={() => handleProcessTimeSlot(slot)}
+                disabled={!!slot.appointmentId}
+              >
+                {slot.startTime}
+              </button>
+            ))}
+        </div>
+      </div>
+    )}
+
+  </div>
+)}
           </>
         )}
 
@@ -1271,16 +1367,16 @@ const handleProcessTimeSlot = async (slot: TimeSlot) => {
                 </label>
 
                 <label className="payment-card">
-                  <input type="radio" name="payment" value="card" />
+                  <input type="radio" name="payment" value="vnpay" />
 
                   <div className="card-content" 
                   onClick={() => {
-                    setFormData(prev => ({ ...prev, paymentMethod: "card" }))
+                    setFormData(prev => ({ ...prev, paymentMethod: "vnpay" }))
                     setShowPaymentModal(false)
                   }
                   }>
                     <i className="fas fa-credit-card"></i>
-                    <span>Thẻ tín dụng / ghi nợ</span>
+                    <span>VNPay</span>
                   </div>
                 </label>
 

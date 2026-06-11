@@ -1,4 +1,5 @@
 const TimeSlot = require("../models/TimeSlot");
+const { emitSlotUpdate } = require("../sockets/index");
 
   const timeToMinutes = (time) => {
     const [h, m] = time.split(":").map(Number);
@@ -267,7 +268,7 @@ exports.holdSlot = async (req, res) => {
     console.log(id, userId);
 
     const now = new Date();
-    const expire = new Date(now.getTime() + 5 * 60 * 1000);
+    const expire = new Date(now.getTime() +  60 * 1000);
 
     const slot = await TimeSlot.findOneAndUpdate(
       {
@@ -288,15 +289,21 @@ exports.holdSlot = async (req, res) => {
     if (!slot) {
       return res.status(400).json({
         success: false,
-        message: "Slot đang được người khác giữ"
+        message: "Khung giờ đang được người khác đặt"
       });
     }
 
     res.json({ success: true, slot });
+    emitSlotUpdate({
+      slotId: slot._id,
+      status: slot.status,
+      lockedBy: slot.lockedBy,
+      lockExpiresAt: slot.lockExpiresAt
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message: "Giữ slot thất bại"
+      message: "Giữ Khung giờ thất bại"
     });
   }
 };
@@ -310,7 +317,7 @@ exports.releaseSlot = async (req, res) => {
     const slot = await TimeSlot.findOneAndUpdate(
       {
         _id: id,
-        lockedBy: userId, // ✅ chỉ người giữ mới được release
+        lockedBy: userId, //  chỉ người giữ mới được release
         status: "pending"
       },
       {
@@ -322,8 +329,18 @@ exports.releaseSlot = async (req, res) => {
     );
 
     if (!slot) {
-      return res.status(400).json({
-        message: "Không thể release slot"
+        const current = await TimeSlot.findById(id);
+
+  console.log("Release fail:", {
+    id,
+    userId,
+    currentStatus: current?.status,
+    lockedBy: current?.lockedBy
+  });
+
+      return res.json({
+        success: true,
+        message: "Slot đã được giải phóng"
       });
     }
 
@@ -332,7 +349,14 @@ exports.releaseSlot = async (req, res) => {
       data: slot
     });
 
+    emitSlotUpdate({
+      slotId: slot._id,
+      status: "available",
+      lockedBy: null,
+      lockExpiresAt: null
+    });
   } catch (err) {
     res.status(500).json({ message: "Release thất bại" });
+    console.log(err);
   }
 };

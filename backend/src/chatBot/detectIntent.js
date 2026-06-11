@@ -31,7 +31,7 @@ async function detectIntent(message) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant", // Model nhẹ, chạy cực nhanh
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: INTENT_PROMPT },
           { role: "user", content: message }
