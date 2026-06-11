@@ -186,81 +186,94 @@ const Header: React.FC = () => {
   //------------aniation--------------
   useEffect(() => {
     const isMobile = window.innerWidth <= 768;
-
-    // nếu mobile thì không chạy animation
-    if (isMobile)  {
+   // nếu mobile thì chạy animation riêng biệt
+    if (isMobile) {
       const trigger = ScrollTrigger.create({
         trigger: document.body,
-        start: "50px top",
+        start: "80px top",
 
         onEnter: () => {
-          gsap.to(headerRef.current, {
-            backgroundColor: "rgba(255, 255, 255, 0)",
-            duration: 0.4
-          });
+          if (headerRef.current) {
+            gsap.to(headerRef.current, {
+              background: "rgba(26, 34, 56, 0.0)", 
+              duration: 0.5,
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0)",
+            });
 
-          gsap.to(logoRef.current, {
-            scale: 1.2,
-            y: 5,
-            duration: 0.4,
-            ease: "power2.out"
-          });
+            // Ẩn chữ để tiết kiệm chỗ
+            gsap.to(headerRef.current.querySelectorAll('.user-name, .login-text'), {
+              width: 0, opacity: 0, display: "none", duration: 0.3
+            });
 
-          gsap.to(menuBtnRef.current, {
-            opacity: 1,
-            x: 40,
-            duration: 0.4
-          });
+            // Thu gọn nút avatar
+            gsap.to(headerRef.current.querySelectorAll('.user-btn, .login-btn'), {
+              gap: 0, padding: "8px", duration: 0.3
+            });
 
-          gsap.to(navRef.current, {
-            opacity: 0,
-            y: -10,
-            duration: 0.2
-          });
+            gsap.to(headerRef.current.querySelectorAll('.mobile-menu-toggle'), {
+              display: "block",
+              color: "white",
+              opacity: 1,
+            });
+          }
 
-          gsap.to(iconRef.current, {
-            opacity: 0,
-            y: -10,
-            duration: 0.2
-          });
+          if (logoRef.current) {
+            gsap.to(logoRef.current, { scale: 1.1, duration: 0.4 });
+          }
+
+          if (logoTitle.current) {
+            gsap.to(logoTitle.current, { opacity: 0, display: "none", duration: 0.3 });
+          }
+
+          if (navRef2.current) {
+            // Ẩn CẢ 3 nút: đặt lịch, giỏ hàng và thông báo khi cuộn xuống
+            gsap.to(navRef2.current.querySelectorAll('.cta-btn, .cart-btn, .notification-wrapper'), {
+              display: "none", 
+              opacity: 0, 
+              duration: 0.3
+            });
+          }
         },
 
         onLeaveBack: () => {
-          gsap.to(headerRef.current, {
-            backgroundColor: "#ffffff",
-            backdropFilter: "blur(0px)",
-            duration: 0.4
-          });
+          if (headerRef.current) {
+            gsap.to(headerRef.current, { 
+              background: "radial-gradient(circle, #1a2238 10%, #0E7490 50%, #1a2238 90%)", 
+              clearProps: "backdropFilter,boxShadow", 
+              duration: 0.5 
+            });
 
-          gsap.to(logoRef.current, {
-            scale: 1,
-            y: 0,
-            duration: 0.4
-          });
+            gsap.to(headerRef.current.querySelectorAll('.user-name, .login-text, .user-btn, .login-btn'), {
+              clearProps: "all", 
+              duration: 0.3
+            });
 
-          gsap.to(menuBtnRef.current, {
-            opacity: 1,
-            x: 40,
-            duration: 0.3
-          });
+            gsap.to(headerRef.current.querySelectorAll('.mobile-menu-toggle'), {
+              display: "block",
+              color: "white",
+              opacity: 1,
+            });
+          }
 
-          gsap.to(navRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.3
-          });
+          if (logoRef.current) {
+            gsap.to(logoRef.current, { clearProps: "all", duration: 0.4 });
+          }
 
-          gsap.to(iconRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.3
-          });
+          if (logoTitle.current) {
+            gsap.to(logoTitle.current, { clearProps: "all", duration: 0.3 });
+          }
+
+          if (navRef2.current) {
+            // Khôi phục lại hiển thị gốc của CẢ 3 nút khi cuộn lên đỉnh trang
+            gsap.to(navRef2.current.querySelectorAll('.cta-btn, .cart-btn, .notification-wrapper'), { 
+              clearProps: "all", 
+              duration: 0.3 
+            });
+          }   
         }
       });
-
       return () => trigger.kill();
     }
-
     const trigger = ScrollTrigger.create({
       trigger: document.body,
       start: "80px top",
@@ -647,16 +660,49 @@ const Header: React.FC = () => {
             )}
           </div>
 
-          <ul className="mobile-nav-list">
+<ul className="mobile-nav-list">
             {navItems.map(item => (
               <li key={item.id} className="mobile-nav-item">
                 <button
                   className={`mobile-nav-link ${activeNav === item.id ? 'active' : ''}`}
-                  onClick={() => handleNavClick(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (item.isDropdown) {
+                      // Nếu là menu có dropdown (Chuyên khoa), chỉ bật/tắt list con, không chuyển trang ngay
+                      setIsSpecialtiesOpen(!isSpecialtiesOpen);
+                    } else {
+                      // Các menu bình thường thì chuyển trang và đóng menu mobile
+                      handleNavClick(item.id);
+                    }
+                  }}
                 >
-                  <span className="mobile-nav-icon">{item.icon}</span>
-                  <span className="mobile-nav-label">{item.label}</span>
+                  <div className="mobile-nav-link-content" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="mobile-nav-icon">{item.icon}</span>
+                    <span className="mobile-nav-label">{item.label}</span>
+                  </div>
+                  {/* Có thể thêm icon mũi tên để báo hiệu đây là menu sổ xuống (tùy chọn) */}
+                  {/* {item.isDropdown && <span>{isSpecialtiesOpen ? '▲' : '▼'}</span>} */}
                 </button>
+
+                {/* Phần render danh sách chuyên khoa trên Mobile */}
+                {item.isDropdown && isSpecialtiesOpen && (
+                  <div className="mobile-specialty-dropdown" style={{ paddingLeft: '40px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                    {specialties.map((sp) => (
+                      <button
+                        key={sp._id}
+                        className="mobile-dropdown-item"
+                        style={{ textAlign: 'left', background: 'transparent', border: 'none', color: 'inherit', padding: '8px 0', fontSize: '14px' }}
+                        onClick={() => {
+                          navigate(`/specialty/${sp.slug}`);
+                          setIsSpecialtiesOpen(false); // Đóng menu con
+                          setIsMenuOpen(false); // Đóng luôn cả menu mobile ngoài cùng
+                        }}
+                      >
+                        {sp.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

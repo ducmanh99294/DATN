@@ -1398,4 +1398,48 @@
   .home-modern .quick-actions {
     grid-template-columns: 1fr;
   }
+
+.home-modern .search-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #3b4b5b;
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .home-modern .search-input {
+    flex: 1;
+    min-width: 0; 
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 10px 15px;
+    color: #fff;
+  }
+
+  .home-modern .search-btn {
+    flex-shrink: 0; 
+    white-space: nowrap;
+    background-color: #f26f21;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+
+  .home-modern .news-section{
+    margin-top: 70%;
+  }
+
+  .home-modern .doctor-card {
+    flex-shrink: 0; 
+    width: 360px;
+  }
+
+  .home-modern .hero-section {
+  padding:25px;
+  }
 }
