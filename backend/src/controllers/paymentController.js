@@ -246,56 +246,56 @@ exports.vnpayReturn = async (req, res) => {
       }
     }
     // MEDICINE
-if (payment.type === "medicine") {
-  try {
-    const existed = await Order.findOne({
-      paymentId: payment._id,
-    }).session(session);
+    if (payment.type === "medicine") {
+      try {
+        const existed = await Order.findOne({
+          paymentId: payment._id,
+        }).session(session);
 
-    if (!existed) {
+        if (!existed) {
 
-      // Lấy lại cart giống createOrder
-      const cart = await Cart.findOne({ user: payment.user }).session(session);
-      if (!cart) throw new Error("Cart is empty");
+          // Lấy lại cart giống createOrder
+          const cart = await Cart.findOne({ user: payment.user }).session(session);
+          if (!cart) throw new Error("Cart is empty");
 
-      const cartItems = await CartItem.find({ cart: cart._id })
-        .populate("product")
-        .session(session);
+          const cartItems = await CartItem.find({ cart: cart._id })
+            .populate("product")
+            .session(session);
 
-      if (cartItems.length === 0) {
-        throw new Error("Cart is empty");
+          if (cartItems.length === 0) {
+            throw new Error("Cart is empty");
+          }
+
+          // Tạo order
+          const order = await Order.create([{
+            user: payment.user,
+            shippingAddress: payment.metadata?.shippingAddress,
+            note: payment.metadata?.note,
+            paymentMethod: "vnpay",
+            paymentStatus: "paid",
+            totalPrice: payment.amount,
+            paymentId: payment._id,
+          }], { session });
+          console.log(JSON.stringify(order[0], null, 2));
+          // Tạo order items giống createOrder
+          for (const item of cartItems) {
+            const price = item.product.price || 0;
+
+            await OrderItem.create([{
+              order: order[0]._id,
+              product: item.product._id,
+              quantity: item.quantity,
+              price,
+            }], { session });
+          }
+
+          // Clear cart
+          await CartItem.deleteMany({ cart: cart._id }).session(session);
+        }
+      } catch (e) {
+        console.log("lỗi khi tạo đơn hàng", e);
       }
-
-      // Tạo order
-      const order = await Order.create([{
-        user: payment.user,
-        shippingAddress: payment.metadata?.shippingAddress,
-        note: payment.metadata?.note,
-        paymentMethod: "vnpay",
-        paymentStatus: "paid",
-        totalPrice: payment.amount,
-        paymentId: payment._id,
-      }], { session });
-      console.log(JSON.stringify(order[0], null, 2));
-      // Tạo order items giống createOrder
-      for (const item of cartItems) {
-        const price = item.product.price || 0;
-
-        await OrderItem.create([{
-          order: order[0]._id,
-          product: item.product._id,
-          quantity: item.quantity,
-          price,
-        }], { session });
-      }
-
-      // Clear cart
-      await CartItem.deleteMany({ cart: cart._id }).session(session);
     }
-  } catch (e) {
-    console.log("lỗi khi tạo đơn hàng", e);
-  }
-}
 
     await session.commitTransaction();
     console.log("Thanh toán thành công:", orderId);

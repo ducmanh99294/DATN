@@ -77,7 +77,8 @@ const slides = [
     description: "Kết nối với bác sĩ mọi lúc, mọi nơi",
     image: slide1,
     cta: "Đặt lịch ngay",
-    color: "linear-gradient(135deg, #0E7490, #06B6D4)"
+    color: "linear-gradient(135deg, #0E7490, #06B6D4)",
+    path: "/booking"
   },
   {
     id: 2,
@@ -85,7 +86,8 @@ const slides = [
     description: "Giao thuốc tận nhà trong 2 giờ",
     image: slide2,
     cta: "Mua thuốc",
-    color: "linear-gradient(135deg, #1E40AF, #3B82F6)"
+    color: "linear-gradient(135deg, #1E40AF, #3B82F6)",
+    path: "/products"
   },
   {
     id: 3,
@@ -93,7 +95,8 @@ const slides = [
     description: "Lấy mẫu và trả kết quả tận nơi",
     image: slide3,
     cta: "Đặt dịch vụ",
-    color: "linear-gradient(135deg, #059669, #10B981)"
+    color: "linear-gradient(135deg, #059669, #10B981)",
+    path: "/"
   }
 ];
 
@@ -412,56 +415,6 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, [randomDoctors]);
 
-// useEffect(() => {
-//   if (!scrollRef.current) return;
-
-//   const container = scrollRef.current;
-
-//   let animation: any;
-
-//   if (!isHovering) {
-//     animation = gsap.to(container, {
-//       scrollLeft: container.scrollWidth,
-//       duration: 20,
-//       ease: "none",
-//       repeat: -1,
-//       modifiers: {
-//         scrollLeft: (value) => {
-//           const maxScroll =
-//             container.scrollWidth -
-//             container.clientWidth;
-
-//           return `${parseFloat(value) % maxScroll}`;
-//         },
-//       },
-//     });
-//   }
-
-//   return () => {
-//     if (animation) animation.kill();
-//   };
-// }, [isHovering]);
-
-const handleSlideHover = (el: any, isHovering: any) => {
-  if (!el) return;
-
-  const content = el.querySelector(".slide-content");
-
-  gsap.to(el, {
-    scale: isHovering ? 1.04 : 1,
-    width: isHovering ? "102%" : "100%",
-    height: isHovering ? "600px" : "100%",
-    duration: 0.4,
-    ease: "power3.out",
-  });
-
-  gsap.to(content, {
-    y: isHovering ? -10 : 0,
-    duration: 0.4,
-    ease: "power3.out",
-  });
-};
-
 const expandHero = () => {
   if (!heroRef.current) return;
 
@@ -631,44 +584,46 @@ const resetHero = () => {
               <div className="slider-container" >
                 <div className="slider" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                   {slides.map((slide) => (
- <div
-    className="slide"
-    key={slide.id}
-    onMouseEnter={(e) => {
-      setIsHovering(true);
-      handleSlideHover(e.currentTarget, true);
-    }}
-    onMouseLeave={(e) => {
-      setIsHovering(false);
-      handleSlideHover(e.currentTarget, false);
-    }}
-    style={{
-      backgroundImage: `
-        linear-gradient(
-          rgba(0,0,0,0.2),
-          rgba(0,0,0,0.5)
-        ),
-        url(${slide.image})
-      `,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    }}
-  >
-    <div className="slide-content">
-      <h3 className="slide-title">
-        {slide.title}
-      </h3>
+                <div
+                    className="slide"
+                    key={slide.id}
+                    onMouseEnter={(e) => {
+                      setIsHovering(true);
+                      handleSlideHover(e.currentTarget, true);
+                    }}
+                    onMouseLeave={(e) => {
+                      setIsHovering(false);
+                      handleSlideHover(e.currentTarget, false);
+                    }}
+                    style={{
+                      backgroundImage: `
+                        linear-gradient(
+                          rgba(0,0,0,0.2),
+                          rgba(0,0,0,0.5)
+                        ),
+                        url(${slide.image})
+                      `,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <div className="slide-content">
+                      <h3 className="slide-title">
+                        {slide.title}
+                      </h3>
 
-      <p className="slide-description">
-        {slide.description}
-      </p>
+                      <p className="slide-description">
+                        {slide.description}
+                      </p>
 
-      <button className="slide-cta">
-        {slide.cta}
-        <FaArrowRight />
-      </button>
-    </div>
-  </div>
+                    <button 
+                      className="slide-cta"
+                      onClick={() => navigate(slide.path)}>
+                      {slide.cta}
+                      <FaArrowRight />
+                    </button>
+                    </div>
+                  </div>
                   ))}
                 </div>
                 <button className="slider-nav prev" onClick={prevSlide}>
