@@ -3,7 +3,7 @@ const CartItem = require("../models/CartItem");
 const Product = require("../models/Product");
 
 /**
- * 🛒 GET USER CART
+ *  GET USER CART
  */
 exports.getCart = async (req, res) => {
   let cart = await Cart.findOne({ user: req.user.id });

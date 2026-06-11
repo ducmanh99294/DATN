@@ -2,9 +2,9 @@ const Appointment = require("../models/Appointment");
 const TimeSlot = require("../models/TimeSlot");
 const Doctor = require("../models/Doctor");
 const {sendNotification} = require("../sockets");
+const { emitSlotUpdate } = require("../sockets/index");
 
 exports.createAppointment = async (req, res) => {
-  console.log(req.body)
   try {
     const { doctorId, specialtyId, slotId, symptoms, description, patientId, price } = req.body;
 
@@ -43,6 +43,12 @@ exports.createAppointment = async (req, res) => {
     slot.status = "booked";
     slot.appointmentId = appointment._id;
     await slot.save();
+
+    emitSlotUpdate({
+      slotId: slot._id,
+      status: "booked",
+      appointmentId: appointment._id
+    });
 
     // notify patient
     sendNotification(appointment.patientId._id.toString(), {

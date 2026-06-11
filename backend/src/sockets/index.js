@@ -73,7 +73,7 @@ const initSocket = (server) => {
           data
         );
         
-        // 🔥 CHỈ EMIT 1 LẦN DUY NHẤT
+        // CHỈ EMIT 1 LẦN DUY NHẤT
         // Frontend của bạn đang đọc data.message.type, nên gửi object bọc ngoài chữ message
         socket.emit("ai_reply", {
           message: reply 
@@ -137,7 +137,6 @@ const initSocket = (server) => {
     );
 
     socket.on("disconnect", () => {
-      // Giữ kết nối đóng yên lặng, tránh spam log terminal
     });
 
     
@@ -153,7 +152,14 @@ const sendNotification = (userId, data) => {
   io.to(`user_${userId}`).emit("notification", data);
 };
 
+const emitSlotUpdate = (data) => {
+  if (!io) return;
+
+  io.emit("slot_updated", data);
+};
+
 module.exports = {
   initSocket,
-  sendNotification
+  sendNotification,
+  emitSlotUpdate
 };

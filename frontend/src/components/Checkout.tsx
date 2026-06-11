@@ -298,61 +298,61 @@ const Checkout = () => {
     });
   };
 
-const handlePayment = async () => {
-  try {
-    setIsProcessing(true);
+  const handlePayment = async () => {
+    try {
+      setIsProcessing(true);
 
-    if (selectedPayment !== "vnpay") {
-      const res = await createOrder(
-        selectedAddress,
-        orderNote,
-        selectedPayment
-      );
+      if (selectedPayment !== "vnpay") {
+        const res = await createOrder(
+          selectedAddress,
+          orderNote,
+          selectedPayment
+        );
 
-      if (!res) {
-        throw new Error("Tạo đơn hàng thất bại");
+        if (!res) {
+          throw new Error("Tạo đơn hàng thất bại");
+        }
+
+        const orderId = res.orderCode || res._id
+        setOrderSuccess(true);
+        navigate(`/checkout/success/${orderId}`);
+
+        notify.success(
+          `Đặt hàng thành công! Mã đơn hàng: ${res.orderCode || res._id}`
+        );
+
+        return;
       }
 
-      const orderId = res.orderCode || res._id
-      setOrderSuccess(true);
-      navigate(`/checkout/success/${orderId}`);
+      //VNPay
+      const res = await getPaymentUrl({
+        type: "medicine",
+        amount: summary.total,
+        metadata: {
+          shippingAddress: selectedAddress,
+          note: orderNote,
+          items: state,
+        },
+      });
 
-      notify.success(
-        `Đặt hàng thành công! Mã đơn hàng: ${res.orderCode || res._id}`
-      );
+      if (!res?.paymentUrl) {
+        throw new Error("Không tạo được link thanh toán");
+      }
 
-      return;
+      // 👉 redirect VNPay
+      window.location.href = res.paymentUrl;
+  
+      if(res.ok) {
+        notify.success('tạo đơn hàng thành công','thông báo')
+      }
+
+    } catch (error) {
+      console.error("Payment error:", error);
+      notify.error("Có lỗi xảy ra khi thanh toán");
+    } finally {
+      setIsProcessing(false);
     }
-
-    // 🔥 VNPay
-    const res = await getPaymentUrl({
-      type: "medicine",
-      amount: summary.total,
-      metadata: {
-        shippingAddress: selectedAddress,
-        note: orderNote,
-        items: state,
-      },
-    });
-
-    if (!res?.paymentUrl) {
-      throw new Error("Không tạo được link thanh toán");
-    }
-
-    // 👉 redirect VNPay
-    window.location.href = res.paymentUrl;
- 
-    if(res.ok) {
-       notify.success('tạo đơn hàng thành công','thông báo')
-    }
-
-  } catch (error) {
-    console.error("Payment error:", error);
-    notify.error("Có lỗi xảy ra khi thanh toán");
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
 
   // Go to next step
   const handleNextStep = () => {

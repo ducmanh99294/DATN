@@ -1060,7 +1060,7 @@ body {
   display: inline-block;
   width: 12px;
   height: 12px;
-  background: var(--error);
+  background: #f59e0b;
   border-radius: 2px;
   margin: 0 5px;
 }
@@ -1737,6 +1737,32 @@ body {
   color: var(--primary);
 }
 
+.booking-flow-container .time-slots-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.booking-flow-container .time-period {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.booking-flow-container .period-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a0aec0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.booking-flow-container .period-label i {
+  font-size: 13px;
+}
 /* Tips Card */
 .booking-flow-container .tips-list {
   list-style: none;

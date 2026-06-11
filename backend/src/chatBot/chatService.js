@@ -21,9 +21,12 @@ function extractCoreKeywords(specialtyName) {
 }
 
 module.exports = async function chatService(userId, message) {
-
   const msgText = message.toLowerCase().trim();
   let conversation = await Conversation.findOne({participants:userId}).populate("participants");
+  const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 giờ
+  const now = new Date();
+  const lastActive = conversation.lastActiveAt;
+
   if(!conversation){
     conversation = await Conversation.create({
         participants:[userId],
@@ -35,6 +38,93 @@ module.exports = async function chatService(userId, message) {
     conversation.context = {};
   }
 
+  // Nếu idle quá 2 giờ hoặc chưa có phiên → reset toàn bộ
+  if (!lastActive || (now - lastActive) > SESSION_TIMEOUT_MS) {
+    conversation.messages = [];
+    conversation.context = {};
+    console.log("Phiên mới: đã reset messages và context");
+  }
+
+  // Cập nhật thời gian hoạt động
+  conversation.lastActiveAt = now;
+
+  // chờ user chọn slot
+if (conversation.context.waitingSlotSelection === true) {
+  const savedSlotIds = conversation.context.availableSlots || [];
+  const savedSlots = await TimeSlot.find({ _id: { $in: savedSlotIds } });
+
+  // ── KIỂM TRA CÂU HỎI VỀ NGÀY CỤ THỂ ────────────────────
+  const isAskingAboutDate = msgText.match(/còn.*lịch|lịch.*không|khung.*giờ|giờ.*nào|còn.*không/);
+  // ... giữ nguyên phần này ...
+
+  // ── CHỌN THEO GIỜ ("17 giờ", "17h", "17:00") ────────────
+  const timeMatch = msgText.match(/(\d{1,2})\s*(giờ|h|:)/);
+  if (timeMatch) {
+    const hour = timeMatch[1].padStart(2, "0");
+    // Tìm slot có startTime bắt đầu bằng "HH"
+    const chosenSlot = savedSlots.find(s => s.startTime.startsWith(hour + ":"));
+
+    if (!chosenSlot) {
+      const slotList = savedSlots.map((s, i) => `${i + 1}. Lúc ${s.startTime}`).join("\n");
+      return {
+        type: "text",
+        message: `Không có khung giờ lúc ${hour}:xx. Các khung còn trống:\n${slotList}\n\nBạn muốn chọn khung số mấy?`
+      };
+    }
+
+    const dateText = `${chosenSlot.date.toISOString().split("T")[0]} lúc ${chosenSlot.startTime}`;
+    conversation.context.slotId = chosenSlot._id;
+    conversation.context.waitingSlotSelection = false;
+    conversation.context.waitingBooking = true;
+    conversation.context.dateText = dateText;
+    await conversation.save();
+
+    return {
+      type: "text",
+      message: `Bạn chọn khung ngày ${dateText}. Xác nhận đặt lịch không? (có/không)`
+    };
+  }
+
+  // ── CHỌN THEO SỐ THỨ TỰ (mở rộng từ 1-5 thành 1-99) ────
+  const numberMatch = msgText.match(/\b(\d{1,2})\b/);
+  if (numberMatch) {
+    const chosenIndex = parseInt(numberMatch[1]) - 1;
+
+    if (chosenIndex < 0 || chosenIndex >= savedSlots.length) {
+      return {
+        type: "text",
+        message: `Vui lòng chọn số từ 1 đến ${savedSlots.length}.`
+      };
+    }
+
+    const chosenSlot = savedSlots[chosenIndex];
+
+    if (!chosenSlot || chosenSlot.status !== "available") {
+      return { type: "text", message: "Khung giờ này vừa có người đặt rồi. Bạn chọn khung khác không?" };
+    }
+
+    const dateText = `${chosenSlot.date.toISOString().split("T")[0]} lúc ${chosenSlot.startTime}`;
+    conversation.context.slotId = chosenSlot._id;
+    conversation.context.waitingSlotSelection = false;
+    conversation.context.waitingBooking = true;
+    conversation.context.dateText = dateText;
+    await conversation.save();
+
+    return {
+      type: "text",
+      message: `Bạn chọn khung ngày ${dateText}. Xác nhận đặt lịch không? (có/không)`
+    };
+  }
+
+  // ── KHÔNG KHỚP GÌ → hiển thị lại danh sách ─────────────
+  const slotList = savedSlots.map((s, i) => `${i + 1}. Lúc ${s.startTime}`).join("\n");
+  return {
+    type: "text",
+    message: `Các khung giờ còn trống:\n${slotList}\n\nBạn muốn chọn khung số mấy hoặc nhập giờ cụ thể (VD: "17 giờ")?`
+  };
+}
+
+  // chờ user xác nhận
   if (conversation.context.waitingBooking == true) {
     const session = conversation.context;
 
@@ -65,7 +155,7 @@ module.exports = async function chatService(userId, message) {
         status: "booked", 
         patientId: userId 
       });
-
+      console.log(session)
       // 2. Tạo Appointment
       await Appointment.create({
         patientId: userId,
@@ -100,6 +190,14 @@ module.exports = async function chatService(userId, message) {
       await conversation.save();
     }
   }
+
+  // Lưu tin nhắn người dùng vào phiên
+  conversation.messages.push({ role: "user", content: message });
+  if (conversation.messages.length > 20) {
+    conversation.messages = conversation.messages.slice(-20);
+  }
+  await conversation.save();
+
   const nlpResult = await detectIntent(message); 
   const intent = nlpResult.intent;
   const entities = nlpResult.entities; 
@@ -228,13 +326,13 @@ module.exports = async function chatService(userId, message) {
     context.type = "booking";
   }
 
-  if (context.slot && context.doctor) {
-    conversation.context.slotId= context.slot._id;
-    conversation.context.doctorId= context.doctor._id;
+  if (context.slots?.length > 0 && context.doctor) {
+    // Lưu danh sách slot ID để sau còn lấy lại
+    conversation.context.availableSlots = context.slots.map(s => s._id);
+    conversation.context.doctorId = context.doctor._id;
     conversation.context.specialtyId = context.specialty?._id;
-    conversation.context.waitingBooking= true;
-    conversation.context.lastIntent= "BOOKING";
-
+    conversation.context.waitingSlotSelection = true;  // ← chờ chọn slot
+    conversation.context.waitingBooking = false;
     await conversation.save();
   }
 
@@ -243,6 +341,9 @@ try {
   console.log("gọi generateReply với context: ", context);
     const reply = await generateReply(message, context);
     
+    conversation.messages.push({ role: "assistant", content: reply });
+    await conversation.save();
+
     return {
       type: "text",
       message: reply,

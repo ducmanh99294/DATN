@@ -31,32 +31,29 @@ async function handleBookingContext(entities, userId, conversationContext) {
   // Nếu khoa "da liễu" chưa có bác sĩ nào
   if (!doctor) return { specialty, error: "no_doctor" };
 
-  const slot = await TimeSlot.findOne({
+  const allSlots = await TimeSlot.find({
     doctorId: doctor._id,
     status: "available",
     date: { $gte: new Date() }
-  }).sort({ date: 1 });
+  }).sort({ date: 1, startTime: 1 });
 
   // Nếu bác sĩ đó hết lịch rảnh
-  if (!slot) return { specialty, doctor, error: "no_slot" };
+  if (!allSlots) return { specialty, doctor, error: "no_slot" };
 
-  // 🔥 HOLD SLOT
-  let holdSuccess = false;
-
-  try {
-    // Giả sử bạn đã có hàm holdSlotByAI
-    // const held = await holdSlotByAI(slot._id, userId);
-    // holdSuccess = !!held;
-  } catch (e) {
-    holdSuccess = false;
-  }
-
+  const seen = new Set();
+  const slots = allSlots.filter(s => {
+    const dateKey = s.date.toISOString().split("T")[0];
+    if (seen.has(dateKey)) return false;
+    seen.add(dateKey);
+    return true;
+  }).slice(0, 5);
+  
   return {
     type: "booking",
     specialty,
     doctor,
-    slot,
-    holdSuccess
+    slots,      
+    slot: slots[0],
   };
 }
 
