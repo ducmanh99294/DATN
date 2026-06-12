@@ -415,7 +415,7 @@ exports.getMonthlyStats = async (req, res) => {
             $gte: startOfMonth,
             $lt: endOfMonth
           },
-          status: { $in: ["completed"] }
+            status: "completed",
         }
       },
       {

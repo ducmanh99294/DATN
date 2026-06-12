@@ -6,7 +6,7 @@ import { getAllOrders, getStats } from '../../api/orderApi';
 import { useAuthContext } from '../../context/AuthContext';
 import { useNotify } from '../../hooks/useNotification';
 import { getAllProducts } from '../../api/productApi';
-import { getReports } from '../../api/reportApi';
+import { getReportByMonth, getReports } from '../../api/reportApi';
 
 const AdminDashboard = () => {
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
@@ -35,6 +35,7 @@ const AdminDashboard = () => {
     fetchTopSellProduct();
     fetchStatsOrders();
     fetchRecentOrders();
+    fetchReportByMonth();
   }, [user]);
 
   const formatPrice = (price: any) => {
@@ -43,6 +44,19 @@ const AdminDashboard = () => {
       currency: 'VND'
     }).format(price);
   };
+
+    const fetchReportByMonth = async () => {
+    try {
+      const data = await getReportByMonth();
+      // const list = (data as any).products || [];
+      // const sorted = [...list].sort(
+      //   (a: any, b: any) => (b.sellCount || 0) - (a.sellCount || 0)
+      // );
+      setMonthReports(data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   const fetchTopSellProduct = async () => {
     try {
@@ -100,7 +114,7 @@ const AdminDashboard = () => {
       const dailyRevenue = orders
         .filter((order: any) => {
           const createdAt = new Date(order.createdAt);
-          return createdAt >= day && createdAt < nextDay && order.status !== "cancelled";
+          return createdAt >= day && createdAt < nextDay && order.status === "completed";
         })
         .reduce((sum: number, order: any) => sum + (order.totalPrice || 0), 0);
 

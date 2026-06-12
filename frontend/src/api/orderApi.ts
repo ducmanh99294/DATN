@@ -21,6 +21,8 @@ export const getOrderById = async (id: string) => {
   return await apiGet(`/api/orders/${id}`);
 };
 
+
+
 export const updateOrderStatus = async (id: string, status: string) => {
   return await apiPut(`/api/orders/${id}/status`,{status});
 };
