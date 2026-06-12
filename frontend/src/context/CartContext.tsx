@@ -156,7 +156,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           payload: mapBackendCartToState(data) 
         });
       } catch (e) {
-        notify.error("Không tìm thấy giỏ hàng", "Thông báo");
+        console.log(e)
       } finally {
         setLoading(false);
       }
