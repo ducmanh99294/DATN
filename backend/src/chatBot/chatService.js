@@ -55,8 +55,6 @@ if (conversation.context.waitingSlotSelection === true) {
 
   // ── KIỂM TRA CÂU HỎI VỀ NGÀY CỤ THỂ ────────────────────
   const isAskingAboutDate = msgText.match(/còn.*lịch|lịch.*không|khung.*giờ|giờ.*nào|còn.*không/);
-  // ... giữ nguyên phần này ...
-
   // ── CHỌN THEO GIỜ ("17 giờ", "17h", "17:00") ────────────
   const timeMatch = msgText.match(/(\d{1,2})\s*(giờ|h|:)/);
   if (timeMatch) {
@@ -65,8 +63,11 @@ if (conversation.context.waitingSlotSelection === true) {
     const chosenSlot = savedSlots.find(s => s.startTime.startsWith(hour + ":"));
 
     if (!chosenSlot) {
-      const slotList = savedSlots.map((s, i) => `${i + 1}. Lúc ${s.startTime}`).join("\n");
-      return {
+const slotList = savedSlots.map((s, i) => {
+  const dateStr = s.date.toISOString().split("T")[0];
+  return `${i + 1}. Ngày ${dateStr} lúc ${s.startTime}`;
+}).join("\n");
+    return {
         type: "text",
         message: `Không có khung giờ lúc ${hour}:xx. Các khung còn trống:\n${slotList}\n\nBạn muốn chọn khung số mấy?`
       };
@@ -91,10 +92,14 @@ if (conversation.context.waitingSlotSelection === true) {
     const chosenIndex = parseInt(numberMatch[1]) - 1;
 
     if (chosenIndex < 0 || chosenIndex >= savedSlots.length) {
-      return {
-        type: "text",
-        message: `Vui lòng chọn số từ 1 đến ${savedSlots.length}.`
-      };
+const slotList = savedSlots.map((s, i) => {
+  const dateStr = s.date.toISOString().split("T")[0];
+  return `${i + 1}. Ngày ${dateStr} lúc ${s.startTime}`;
+}).join("\n");
+return {
+  type: "text",
+  message: `Vui lòng chọn số từ 1 đến ${savedSlots.length}:\n${slotList}`
+};
     }
 
     const chosenSlot = savedSlots[chosenIndex];
@@ -117,7 +122,10 @@ if (conversation.context.waitingSlotSelection === true) {
   }
 
   // ── KHÔNG KHỚP GÌ → hiển thị lại danh sách ─────────────
-  const slotList = savedSlots.map((s, i) => `${i + 1}. Lúc ${s.startTime}`).join("\n");
+const slotList = savedSlots.map((s, i) => {
+  const dateStr = s.date.toISOString().split("T")[0];
+  return `${i + 1}. Ngày ${dateStr} lúc ${s.startTime}`;
+}).join("\n");
   return {
     type: "text",
     message: `Các khung giờ còn trống:\n${slotList}\n\nBạn muốn chọn khung số mấy hoặc nhập giờ cụ thể (VD: "17 giờ")?`
@@ -168,6 +176,8 @@ if (conversation.context.waitingSlotSelection === true) {
       });
       
       // Xóa bộ nhớ tạm
+      const slot = await TimeSlot.findById(session.slotId);
+
       conversation.context.waitingBooking=false;
 
       delete conversation.context.slotId;
@@ -175,9 +185,12 @@ if (conversation.context.waitingSlotSelection === true) {
 
       await conversation.save();
 
+      const dateStr = slot
+        ? `${slot.date.toISOString().split("T")[0]} lúc ${slot.startTime}`
+        : session.dateText;
       return { 
         type: "text", 
-        message: `Đặt lịch thành công! Bạn đã đặt lịch khám với Bác sĩ vào ngày ${session.dateText}. Bạn có thể vào mục "Lịch khám của tôi" để xem chi tiết nhé.` 
+        message: `Đặt lịch thành công! Bạn đã đặt lịch khám với Bác sĩ vào ngày ${dateStr}. Bạn có thể vào mục "Lịch khám của tôi" để xem chi tiết nhé.` 
       };
     } 
     // Nếu chat tào lao (VD: "thời tiết nay đẹp nhỉ") -> Xóa phiên chờ, xuống cho AI xử lý
@@ -328,11 +341,26 @@ if (conversation.context.waitingSlotSelection === true) {
 
   if (context.slots?.length > 0 && context.doctor) {
     // Lưu danh sách slot ID để sau còn lấy lại
-    conversation.context.availableSlots = context.slots.map(s => s._id);
-    conversation.context.doctorId = context.doctor._id;
-    conversation.context.specialtyId = context.specialty?._id;
-    conversation.context.waitingSlotSelection = true;  // ← chờ chọn slot
+    // conversation.context.availableSlots = context.slots.map(s => s._id);
+    // conversation.context.doctorId = context.doctor._id;
+    // conversation.context.specialtyId = context.specialty?._id;
+    // conversation.context.waitingSlotSelection = true;  // ← chờ chọn slot
+    // conversation.context.waitingBooking = false;
+      conversation.context.availableSlots = context.slots.map(s => s._id);
+  conversation.context.doctorId = context.doctor._id;
+  conversation.context.specialtyId = context.specialty?._id;
+
+  // Nếu AI đã gợi ý 1 slot cụ thể (slot gần nhất) → đặt luôn, không cần chọn
+  if (context.slot) {
+    conversation.context.slotId = context.slot._id;
+    conversation.context.dateText = `${context.slot.date.toISOString().split("T")[0]} lúc ${context.slot.startTime}`;
+    conversation.context.waitingSlotSelection = false;
+    conversation.context.waitingBooking = true;   // ← chờ xác nhận có/không
+  } else {
+    // Không có slot gợi ý sẵn → mới cần user chọn
+    conversation.context.waitingSlotSelection = true;
     conversation.context.waitingBooking = false;
+  }
     await conversation.save();
   }
 
